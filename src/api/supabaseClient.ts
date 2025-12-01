@@ -1,3 +1,19 @@
+/**
+ * @deprecated DO NOT USE THIS FILE!
+ * 
+ * ⚠️⚠️⚠️ SECURITY WARNING ⚠️⚠️⚠️
+ * 
+ * This file used direct Supabase connection with a service-role key.
+ * This approach is INSECURE for client apps.
+ * 
+ * USE INSTEAD: import { apiClient } from './client';
+ * 
+ * The REST API client (client.ts) properly authenticates via
+ * the secure /api/tablet/* endpoints.
+ */
+
+console.error('⚠️ DEPRECATED: Do not use supabaseClient.ts - use client.ts instead!');
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase, SCHEMA } from '../lib/supabase';
 import {

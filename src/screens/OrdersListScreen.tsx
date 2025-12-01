@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,24 @@ import {
   StyleSheet,
   RefreshControl,
   ActivityIndicator,
+  Alert,
+  Vibration,
+  Image,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useStore } from '../store/useStore';
 import { Order, OrderStatus } from '../types';
-import { OrderCard } from '../components/OrderCard';
+import { 
+  printKitchenTicket, 
+  printCustomerReceipt, 
+  printBoth,
+  connectPrinter, 
+  isPrinterConnected 
+} from '../services/printService';
+import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus } from '../components/orders';
+import { useTheme } from '../theme';
 
 type RootStackParamList = {
   Orders: undefined;
@@ -21,99 +33,268 @@ type RootStackParamList = {
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Orders'>;
+type PrintType = 'kitchen' | 'receipt' | 'both';
+
+// Storage keys
+const PRINTED_ORDERS_KEY = '@printed_order_ids';
+
+// Track printed orders
+let printedOrderIds = new Set<string>();
+
+const loadPrintedOrderIds = async () => {
+  try {
+    const stored = await AsyncStorage.getItem(PRINTED_ORDERS_KEY);
+    if (stored) {
+      printedOrderIds = new Set(JSON.parse(stored));
+      console.log(`[PrintQueue] Loaded ${printedOrderIds.size} printed order IDs`);
+    }
+  } catch (error) {
+    console.error('[PrintQueue] Error loading printed IDs:', error);
+  }
+};
+
+const savePrintedOrderIds = async () => {
+  try {
+    await AsyncStorage.setItem(
+      PRINTED_ORDERS_KEY,
+      JSON.stringify([...printedOrderIds])
+    );
+  } catch (error) {
+    console.error('[PrintQueue] Error saving printed IDs:', error);
+  }
+};
+
+// Initialize
+loadPrintedOrderIds();
 
 export const OrdersListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { theme, themeMode } = useTheme();
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastKnownOrderIds = useRef<Set<string>>(new Set());
+  
+  // Local state
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterStatus>('all');
+  const [refreshing, setRefreshing] = useState(false);
+  const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
+  const [, forceUpdate] = useState(0);
 
+  // Store state
   const {
     orders,
     fetchOrders,
-    selectOrder,
-    acknowledgeOrder,
+    updateOrderStatus,
     settings,
-    offline,
+    updateSettings,
     auth,
   } = useStore();
+  
+  const printerConnected = settings?.printerConnected ?? false;
+  const ordersList = orders?.orders || [];
+  
+  // Find selected order
+  const selectedOrder = selectedOrderId 
+    ? ordersList.find(o => o.id === selectedOrderId) || null
+    : null;
 
-  // Start polling when screen is focused
+  // Print function
+  const handlePrint = useCallback(async (order: Order) => {
+    if (!printerConnected) {
+      Alert.alert('Printer Not Connected', 'Please connect a printer in Settings first.');
+      return;
+    }
+
+    setPrintingOrderId(order.id);
+    try {
+      const printType = settings?.defaultPrintType || 'kitchen';
+      let success = false;
+      
+      switch (printType) {
+        case 'kitchen':
+          success = await printKitchenTicket(order);
+          break;
+        case 'receipt':
+          success = await printCustomerReceipt(order);
+          break;
+        case 'both':
+          success = await printBoth(order);
+          break;
+      }
+
+      if (success) {
+        printedOrderIds.add(order.id);
+        savePrintedOrderIds();
+        Vibration.vibrate(100);
+        forceUpdate(n => n + 1);
+      } else {
+        Alert.alert('Print Failed', 'Could not print the order. Please try again.');
+      }
+    } catch (error) {
+      console.error('[Print] Error:', error);
+      Alert.alert('Print Error', 'An error occurred while printing.');
+    } finally {
+      setPrintingOrderId(null);
+    }
+  }, [printerConnected, settings?.defaultPrintType]);
+
+  // Auto-print new orders
+  const autoPrintOrder = useCallback(async (order: Order) => {
+    if (!settings?.autoPrint || !printerConnected) return;
+    
+    console.log(`[AutoPrint] Printing order #${order.order_number}...`);
+    await handlePrint(order);
+  }, [settings?.autoPrint, printerConnected, handlePrint]);
+
+  // Check for new orders
+  useEffect(() => {
+    if (lastKnownOrderIds.current.size === 0 && ordersList.length > 0) {
+      lastKnownOrderIds.current = new Set(ordersList.map(o => o.id));
+      return;
+    }
+
+    const newOrders = ordersList.filter(order =>
+      !lastKnownOrderIds.current.has(order.id) &&
+      !printedOrderIds.has(order.id) &&
+      order.status === 'pending'
+    );
+
+    if (newOrders.length > 0) {
+      console.log(`[NewOrders] Found ${newOrders.length} new orders!`);
+      Vibration.vibrate([0, 500, 200, 500]);
+      newOrders.forEach((order, index) => {
+        setTimeout(() => autoPrintOrder(order), index * 2000);
+      });
+    }
+
+    lastKnownOrderIds.current = new Set(ordersList.map(o => o.id));
+  }, [ordersList, autoPrintOrder]);
+
+  // Auto-reconnect printer
+  useEffect(() => {
+    const autoReconnect = async () => {
+      if (settings?.printerMacAddress && !isPrinterConnected()) {
+        console.log(`[AutoConnect] Reconnecting to ${settings.printerName}...`);
+        try {
+          const success = await connectPrinter(settings.printerMacAddress);
+          if (success) {
+            updateSettings({ printerConnected: true });
+            console.log('[AutoConnect] Reconnected successfully!');
+          }
+        } catch (error) {
+          console.error('[AutoConnect] Failed:', error);
+        }
+      }
+    };
+    
+    const timer = setTimeout(autoReconnect, 2000);
+    return () => clearTimeout(timer);
+  }, [settings?.printerMacAddress, settings?.printerName, updateSettings]);
+
+  // Polling
   useFocusEffect(
     useCallback(() => {
-      // Initial fetch
       fetchOrders();
-
-      // Set up polling
+      
       pollIntervalRef.current = setInterval(() => {
-        if (offline.isOnline) {
-          fetchOrders();
-        }
-      }, settings.pollIntervalMs);
+        fetchOrders();
+      }, settings?.pollIntervalMs || 5000);
 
       return () => {
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current);
         }
       };
-    }, [settings.pollIntervalMs, offline.isOnline])
+    }, [fetchOrders, settings?.pollIntervalMs])
   );
 
-  const handleOrderPress = useCallback(
-    (order: Order) => {
-      selectOrder(order);
-      navigation.navigate('OrderDetail', { orderId: order.id });
-    },
-    [navigation, selectOrder]
-  );
-
-  const handleAcknowledge = useCallback(
-    async (order: Order) => {
-      await acknowledgeOrder(order.id);
-    },
-    [acknowledgeOrder]
-  );
-
-  const handleRefresh = useCallback(() => {
-    fetchOrders();
+  // Refresh handler
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchOrders();
+    setRefreshing(false);
   }, [fetchOrders]);
 
-  // Separate orders by status
-  const pendingOrders = orders.orders.filter((o) => o.status === 'pending');
-  const activeOrders = orders.orders.filter(
-    (o) => o.status === 'confirmed' || o.status === 'preparing'
-  );
-  const readyOrders = orders.orders.filter((o) => o.status === 'ready');
+  // Status change handler
+  const handleStatusChange = useCallback(async (orderId: string, status: string) => {
+    try {
+      await updateOrderStatus(orderId, status as OrderStatus);
+    } catch (error) {
+      console.error('[StatusChange] Error:', error);
+      Alert.alert('Error', 'Failed to update order status');
+    }
+  }, [updateOrderStatus]);
 
-  const renderSectionHeader = (title: string, count: number, color: string) => (
-    <View style={[styles.sectionHeader, { backgroundColor: color }]}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{count}</Text>
-      </View>
-    </View>
-  );
+  // Mark as printed callback
+  const handlePrinted = useCallback((orderId: string) => {
+    printedOrderIds.add(orderId);
+    savePrintedOrderIds();
+    forceUpdate(n => n + 1);
+  }, []);
 
-  const renderOrder = ({ item }: { item: Order }) => (
-    <OrderCard
-      order={item}
-      onPress={handleOrderPress}
-      onAcknowledge={handleAcknowledge}
-    />
-  );
+  // Filter orders
+  const getFilteredOrders = useCallback(() => {
+    switch (activeFilter) {
+      case 'new':
+        return ordersList.filter(o => o.status === 'pending');
+      case 'active':
+        return ordersList.filter(o => o.status === 'preparing' || o.status === 'confirmed');
+      case 'ready':
+        return ordersList.filter(o => o.status === 'ready');
+      case 'completed':
+        return ordersList.filter(o => o.status === 'completed' || o.status === 'cancelled');
+      default:
+        return ordersList;
+    }
+  }, [ordersList, activeFilter]);
+
+  const filteredOrders = getFilteredOrders();
+
+  // Count orders by status
+  const counts = {
+    all: ordersList.length,
+    new: ordersList.filter(o => o.status === 'pending').length,
+    active: ordersList.filter(o => o.status === 'preparing' || o.status === 'confirmed').length,
+    ready: ordersList.filter(o => o.status === 'ready').length,
+    completed: ordersList.filter(o => o.status === 'completed' || o.status === 'cancelled').length,
+  };
+
+  // Dynamic styles based on theme
+  const dynamicStyles = {
+    container: { backgroundColor: theme.background },
+    header: { backgroundColor: theme.headerBg, borderBottomColor: theme.headerBorder },
+    headerText: { color: theme.text },
+    headerSubtext: { color: theme.textSecondary },
+    listColumn: { backgroundColor: theme.surface, borderRightColor: theme.cardBorder },
+    detailColumn: { backgroundColor: theme.background },
+    printerBadge: { backgroundColor: printerConnected ? theme.success : theme.danger },
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, dynamicStyles.container]}>
       {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.restaurantName}>{auth.restaurantName}</Text>
-          <Text style={styles.deviceName}>{auth.deviceName}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          {!offline.isOnline && (
-            <View style={styles.offlineBadge}>
-              <Text style={styles.offlineText}>Offline</Text>
+      <View style={[styles.header, dynamicStyles.header]}>
+        <View style={styles.headerLeft}>
+          <Image 
+            source={require('../../assets/logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <View style={styles.headerInfo}>
+            <Text style={[styles.headerTitle, dynamicStyles.headerText]}>
+              {auth?.restaurantName || 'Kitchen Printer'}
+            </Text>
+            <View style={styles.statusRow}>
+              <View style={[styles.printerBadge, dynamicStyles.printerBadge]}>
+                <Text style={styles.printerBadgeText}>
+                  {printerConnected ? '🖨️ Connected' : '⚠️ No Printer'}
+                </Text>
+              </View>
             </View>
-          )}
+          </View>
+        </View>
+        
+        <View style={styles.headerRight}>
           <TouchableOpacity
             style={styles.settingsButton}
             onPress={() => navigation.navigate('Settings')}
@@ -123,91 +304,72 @@ export const OrdersListScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Loading indicator */}
-      {orders.isLoading && orders.orders.length === 0 && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
-          <Text style={styles.loadingText}>Loading orders...</Text>
-        </View>
-      )}
-
-      {/* Error message */}
-      {orders.error && !orders.isLoading && (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{orders.error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={handleRefresh}>
-            <Text style={styles.retryText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Orders Grid - Tablet Layout */}
-      <View style={styles.gridContainer}>
-        {/* Pending Orders - Most Important */}
-        <View style={styles.column}>
-          {renderSectionHeader('New Orders', pendingOrders.length, '#FF5722')}
-          <FlatList
-            data={pendingOrders}
-            renderItem={renderOrder}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-            refreshControl={
-              <RefreshControl
-                refreshing={orders.isLoading}
-                onRefresh={handleRefresh}
-                colors={['#4CAF50']}
-              />
-            }
-            ListEmptyComponent={
-              <View style={styles.emptySection}>
-                <Text style={styles.emptyIcon}>✓</Text>
-                <Text style={styles.emptyText}>No new orders</Text>
-              </View>
-            }
+      {/* Main Content - Split View */}
+      <View style={styles.content}>
+        {/* Order List Column */}
+        <View style={[styles.listColumn, dynamicStyles.listColumn]}>
+          <View style={styles.listHeader}>
+            <Text style={[styles.listTitle, dynamicStyles.headerText]}>Orders</Text>
+            <TouchableOpacity onPress={handleRefresh}>
+              <Text style={styles.refreshIcon}>🔄</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <OrderFilters
+            selectedFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            counts={counts}
           />
+
+          {orders?.isLoading && ordersList.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.primary} />
+              <Text style={[styles.loadingText, dynamicStyles.headerSubtext]}>
+                Loading orders...
+              </Text>
+            </View>
+          ) : filteredOrders.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyIcon}>📋</Text>
+              <Text style={[styles.emptyText, dynamicStyles.headerSubtext]}>
+                No orders found
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredOrders}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <OrderListItem
+                  order={item}
+                  isSelected={selectedOrderId === item.id}
+                  isPrinted={printedOrderIds.has(item.id)}
+                  onPress={() => setSelectedOrderId(item.id)}
+                />
+              )}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  tintColor={theme.primary}
+                />
+              }
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
         </View>
 
-        {/* Active Orders */}
-        <View style={styles.column}>
-          {renderSectionHeader('In Progress', activeOrders.length, '#2196F3')}
-          <FlatList
-            data={activeOrders}
-            renderItem={renderOrder}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={
-              <View style={styles.emptySection}>
-                <Text style={styles.emptyText}>No active orders</Text>
-              </View>
-            }
-          />
-        </View>
-
-        {/* Ready Orders */}
-        <View style={styles.column}>
-          {renderSectionHeader('Ready', readyOrders.length, '#4CAF50')}
-          <FlatList
-            data={readyOrders}
-            renderItem={renderOrder}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-            ListEmptyComponent={
-              <View style={styles.emptySection}>
-                <Text style={styles.emptyText}>No orders ready</Text>
-              </View>
-            }
+        {/* Detail Column */}
+        <View style={[styles.detailColumn, dynamicStyles.detailColumn]}>
+          <OrderDetailPanel
+            order={selectedOrder}
+            onStatusChange={handleStatusChange}
+            onPrinted={handlePrinted}
+            printerConnected={printerConnected}
           />
         </View>
       </View>
-
-      {/* Queue indicator */}
-      {offline.queuedActions.length > 0 && (
-        <View style={styles.queueIndicator}>
-          <Text style={styles.queueText}>
-            {offline.queuedActions.length} actions queued (will sync when online)
-          </Text>
-        </View>
-      )}
     </View>
   );
 };
@@ -215,53 +377,89 @@ export const OrdersListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 2,
   },
-  restaurantName: {
-    fontSize: 20,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    marginRight: 15,
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#333',
+    marginBottom: 4,
   },
-  deviceName: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  printerBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  printerBadgeText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  offlineBadge: {
-    backgroundColor: '#FF5722',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 12,
-  },
-  offlineText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    gap: 12,
   },
   settingsButton: {
-    padding: 8,
+    padding: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
   },
   settingsIcon: {
-    fontSize: 28,
+    fontSize: 24,
+  },
+  content: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  listColumn: {
+    flex: 2,
+    borderRightWidth: 1,
+    paddingTop: 16,
+  },
+  listHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  listTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  refreshIcon: {
+    fontSize: 20,
+  },
+  listContent: {
+    paddingHorizontal: 12,
+    paddingBottom: 20,
+  },
+  detailColumn: {
+    flex: 3,
   },
   loadingContainer: {
     flex: 1,
@@ -269,94 +467,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 16,
+    marginTop: 12,
     fontSize: 16,
-    color: '#666',
   },
-  errorContainer: {
-    margin: 20,
-    padding: 20,
-    backgroundColor: '#ffebee',
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  errorText: {
-    color: '#c62828',
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  retryButton: {
-    backgroundColor: '#f44336',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  retryText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  gridContainer: {
+  emptyContainer: {
     flex: 1,
-    flexDirection: 'row',
-    padding: 8,
-  },
-  column: {
-    flex: 1,
-    marginHorizontal: 8,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  badge: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  badgeText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  listContent: {
-    padding: 12,
-  },
-  emptySection: {
-    padding: 40,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   emptyIcon: {
     fontSize: 48,
-    color: '#4CAF50',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   emptyText: {
     fontSize: 16,
-    color: '#999',
-  },
-  queueIndicator: {
-    backgroundColor: '#FF9800',
-    padding: 12,
-    alignItems: 'center',
-  },
-  queueText: {
-    color: '#fff',
-    fontWeight: '600',
   },
 });
+
+export default OrdersListScreen;

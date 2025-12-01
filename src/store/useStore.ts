@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Order, DeviceConfig, QueuedAction, OrderStatus } from '../types';
-import { supabaseApiClient as apiClient } from '../api/supabaseClient';
+import { apiClient } from '../api/client';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -27,6 +27,8 @@ interface SettingsState {
   pollIntervalMs: number;
   printerConnected: boolean;
   printerName: string | null;
+  printerMacAddress: string | null;
+  defaultPrintType: 'kitchen' | 'receipt' | 'both';
 }
 
 interface OfflineState {
@@ -312,6 +314,8 @@ export const useStore = create<AppStore>()(
         pollIntervalMs: 5000,
         printerConnected: false,
         printerName: null,
+        printerMacAddress: null,
+        defaultPrintType: 'kitchen', // Default to kitchen tickets
       },
 
       updateSettings: (settings) =>

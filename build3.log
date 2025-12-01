@@ -1,0 +1,502 @@
+› Building app...
+Configuration on demand is an incubating feature.
+> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:shared:compileJava NO-SOURCE
+> Task :gradle-plugin:shared:processResources NO-SOURCE
+> Task :gradle-plugin:shared:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:classes UP-TO-DATE
+> Task :gradle-plugin:shared:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:jar UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:settings-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-module-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-module-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-module-gradle-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:jar UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:jar UP-TO-DATE
+> Task :expo-module-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-module-gradle-plugin:compileJava NO-SOURCE
+> Task :expo-module-gradle-plugin:classes UP-TO-DATE
+> Task :expo-module-gradle-plugin:jar UP-TO-DATE
+
+> Configure project :
+[32m[ExpoRootProject][0m Using the following versions:
+  - buildTools:  [32m36.0.0[0m
+  - minSdk:      [32m24[0m
+  - compileSdk:  [32m36[0m
+  - targetSdk:   [32m36[0m
+  - ndk:         [32m27.1.12297006[0m
+  - kotlin:      [32m2.1.20[0m
+  - ksp:         [32m2.1.20-2.0.1[0m
+
+> Configure project :expo
+
+Using expo modules
+  - [32mexpo-barcode-scanner[0m (12.8.0)
+  - [32mexpo-constants[0m (18.0.10)
+  - [32mexpo-image-loader[0m (4.5.0)
+  - [32mexpo-modules-core[0m (3.0.26)
+  - [33m[📦][0m [32mexpo-asset[0m (12.0.10)
+  - [33m[📦][0m [32mexpo-av[0m (16.0.7)
+  - [33m[📦][0m [32mexpo-file-system[0m (19.0.19)
+  - [33m[📦][0m [32mexpo-font[0m (14.0.9)
+  - [33m[📦][0m [32mexpo-keep-awake[0m (15.0.7)
+  - [33m[📦][0m [32mexpo-linking[0m (8.0.9)
+  - [33m[📦][0m [32mexpo-network[0m (8.0.7)
+
+WARNING: The specified Android SDK Build Tools version (32.0.0) is ignored, as it is below the minimum supported version (35.0.0) for Android Gradle Plugin 8.11.0.
+Android SDK Build Tools 35.0.0 will be used.
+To suppress this warning, remove "buildToolsVersion '32.0.0'" from your build.gradle file, as each version of the Android Gradle Plugin now has a default version of the build tools.
+
+> Task :expo-modules-core:preBuild UP-TO-DATE
+> Task :expo-image-loader:preBuild UP-TO-DATE
+> Task :expo-modules-core:preDebugBuild UP-TO-DATE
+> Task :expo-barcode-scanner:preBuild UP-TO-DATE
+> Task :expo-image-loader:preDebugBuild UP-TO-DATE
+> Task :expo-barcode-scanner:preDebugBuild UP-TO-DATE
+> Task :app:generateAutolinkingNewArchitectureFiles
+> Task :app:generateAutolinkingPackageList
+> Task :app:generateCodegenSchemaFromJavaScript SKIPPED
+> Task :app:generateCodegenArtifactsFromSchema SKIPPED
+> Task :app:generateReactNativeEntryPoint
+> Task :expo-image-loader:writeDebugAarMetadata
+> Task :expo-barcode-scanner:writeDebugAarMetadata
+> Task :expo-modules-core:writeDebugAarMetadata
+> Task :react-native-thermal-receipt-printer-image-qr:preBuild UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:preDebugBuild UP-TO-DATE
+> Task :app:preBuild
+> Task :app:preDebugBuild
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-barcode-scanner:generateDebugResValues FROM-CACHE
+> Task :react-native-thermal-receipt-printer-image-qr:writeDebugAarMetadata
+> Task :expo-barcode-scanner:generateDebugResources FROM-CACHE
+> Task :expo-image-loader:generateDebugResValues FROM-CACHE
+> Task :app:generateDebugBuildConfig
+> Task :expo-image-loader:generateDebugResources FROM-CACHE
+> Task :app:generateDebugResValues FROM-CACHE
+> Task :expo-modules-core:generateDebugResValues FROM-CACHE
+> Task :expo-modules-core:generateDebugResources FROM-CACHE
+> Task :expo-constants:createExpoConfig
+> Task :expo-constants:preBuild
+> Task :expo-constants:preDebugBuild
+> Task :expo-constants:writeDebugAarMetadata
+> Task :expo-constants:generateDebugResValues FROM-CACHE
+> Task :expo-constants:generateDebugResources FROM-CACHE
+> Task :expo-modules-core:packageDebugResources FROM-CACHE
+> Task :expo-constants:packageDebugResources FROM-CACHE
+> Task :expo-image-loader:packageDebugResources
+> Task :react-native-thermal-receipt-printer-image-qr:generateDebugResValues FROM-CACHE
+> Task :expo-constants:extractDeepLinksDebug FROM-CACHE
+> Task :react-native-thermal-receipt-printer-image-qr:generateDebugResources FROM-CACHE
+> Task :react-native-thermal-receipt-printer-image-qr:packageDebugResources FROM-CACHE
+> Task :expo-constants:processDebugManifest FROM-CACHE
+> Task :app:generateDebugResources
+> Task :expo-barcode-scanner:packageDebugResources
+> Task :expo-image-loader:extractDeepLinksDebug FROM-CACHE
+> Task :expo-barcode-scanner:extractDeepLinksDebug FROM-CACHE
+> Task :expo-modules-core:extractDeepLinksDebug FROM-CACHE
+> Task :expo-modules-core:processDebugManifest FROM-CACHE
+> Task :react-native-thermal-receipt-printer-image-qr:extractDeepLinksDebug FROM-CACHE
+> Task :react-native-async-storage_async-storage:generateCodegenSchemaFromJavaScript
+> Task :react-native-thermal-receipt-printer-image-qr:processDebugManifest FROM-CACHE
+> Task :expo-barcode-scanner:compileDebugLibraryResources FROM-CACHE
+> Task :expo-barcode-scanner:processDebugManifest
+> Task :expo-constants:compileDebugLibraryResources FROM-CACHE
+> Task :app:packageDebugResources
+> Task :react-native-safe-area-context:generateCodegenSchemaFromJavaScript
+> Task :expo-barcode-scanner:parseDebugLocalResources FROM-CACHE
+> Task :expo-constants:parseDebugLocalResources FROM-CACHE
+> Task :expo-image-loader:processDebugManifest
+> Task :app:createDebugCompatibleScreenManifests
+> Task :expo-barcode-scanner:generateDebugRFile FROM-CACHE
+> Task :expo-constants:generateDebugRFile FROM-CACHE
+> Task :react-native-screens:generateCodegenSchemaFromJavaScript
+> Task :app:extractDeepLinksDebug FROM-CACHE
+> Task :react-native-thermal-receipt-printer-image-qr:compileDebugLibraryResources FROM-CACHE
+> Task :expo-modules-core:compileDebugLibraryResources FROM-CACHE
+> Task :expo-modules-core:parseDebugLocalResources FROM-CACHE
+> Task :expo-modules-core:generateDebugRFile FROM-CACHE
+> Task :expo-barcode-scanner:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-barcode-scanner:generateDebugBuildConfig FROM-CACHE
+> Task :expo-modules-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-modules-core:generateDebugBuildConfig FROM-CACHE
+> Task :react-native-async-storage_async-storage:generateCodegenArtifactsFromSchema
+> Task :react-native-async-storage_async-storage:preBuild
+> Task :react-native-async-storage_async-storage:preDebugBuild
+> Task :react-native-async-storage_async-storage:writeDebugAarMetadata
+> Task :react-native-async-storage_async-storage:generateDebugResValues FROM-CACHE
+> Task :expo-image-loader:compileDebugLibraryResources FROM-CACHE
+> Task :app:parseDebugLocalResources
+> Task :expo-barcode-scanner:javaPreCompileDebug FROM-CACHE
+> Task :expo-image-loader:parseDebugLocalResources FROM-CACHE
+> Task :expo-constants:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-image-loader:generateDebugRFile FROM-CACHE
+> Task :expo-image-loader:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-constants:generateDebugBuildConfig FROM-CACHE
+> Task :expo-image-loader:generateDebugBuildConfig FROM-CACHE
+> Task :expo-constants:javaPreCompileDebug FROM-CACHE
+> Task :expo-image-loader:javaPreCompileDebug FROM-CACHE
+> Task :app:javaPreCompileDebug FROM-CACHE
+> Task :expo-barcode-scanner:mergeDebugShaders
+> Task :expo-barcode-scanner:compileDebugShaders NO-SOURCE
+> Task :expo-barcode-scanner:generateDebugAssets UP-TO-DATE
+> Task :expo-barcode-scanner:mergeDebugAssets
+> Task :expo-constants:mergeDebugShaders
+> Task :expo-constants:compileDebugShaders NO-SOURCE
+> Task :expo-constants:generateDebugAssets UP-TO-DATE
+> Task :expo:generatePackagesList
+> Task :expo:preBuild
+> Task :expo:preDebugBuild
+> Task :expo:writeDebugAarMetadata
+> Task :react-native-async-storage_async-storage:generateDebugResources FROM-CACHE
+> Task :react-native-thermal-receipt-printer-image-qr:parseDebugLocalResources FROM-CACHE
+> Task :expo:generateDebugResValues FROM-CACHE
+> Task :expo:generateDebugResources FROM-CACHE
+> Task :react-native-thermal-receipt-printer-image-qr:generateDebugRFile FROM-CACHE
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:generateDebugBuildConfig FROM-CACHE
+> Task :expo-image-loader:mergeDebugShaders
+> Task :react-native-thermal-receipt-printer-image-qr:javaPreCompileDebug FROM-CACHE
+> Task :expo:packageDebugResources FROM-CACHE
+> Task :expo-image-loader:compileDebugShaders NO-SOURCE
+> Task :expo-image-loader:generateDebugAssets UP-TO-DATE
+> Task :expo:extractDeepLinksDebug FROM-CACHE
+> Task :expo-image-loader:mergeDebugAssets
+> Task :app:desugarDebugFileDependencies FROM-CACHE
+> Task :expo-constants:mergeDebugAssets
+> Task :expo:processDebugManifest FROM-CACHE
+> Task :react-native-async-storage_async-storage:packageDebugResources
+> Task :expo:compileDebugLibraryResources FROM-CACHE
+> Task :react-native-async-storage_async-storage:extractDeepLinksDebug FROM-CACHE
+> Task :expo:parseDebugLocalResources FROM-CACHE
+> Task :expo:generateDebugRFile FROM-CACHE
+> Task :expo-barcode-scanner:mergeDebugJniLibFolders
+> Task :expo:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-async-storage_async-storage:compileDebugLibraryResources FROM-CACHE
+> Task :react-native-async-storage_async-storage:parseDebugLocalResources FROM-CACHE
+> Task :expo:generateDebugBuildConfig FROM-CACHE
+> Task :expo:javaPreCompileDebug FROM-CACHE
+> Task :react-native-async-storage_async-storage:generateDebugBuildConfig
+> Task :react-native-async-storage_async-storage:javaPreCompileDebug FROM-CACHE
+
+> Task :react-native-async-storage_async-storage:processDebugManifest
+package="com.reactnativecommunity.asyncstorage" found in source AndroidManifest.xml: /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.asyncstorage" from the source AndroidManifest.xml: /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native-async-storage/async-storage/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-async-storage_async-storage:mergeDebugShaders
+> Task :react-native-async-storage_async-storage:compileDebugShaders NO-SOURCE
+> Task :react-native-async-storage_async-storage:generateDebugAssets UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeDebugAssets
+> Task :expo:mergeDebugShaders
+> Task :expo:compileDebugShaders NO-SOURCE
+> Task :expo:generateDebugAssets UP-TO-DATE
+> Task :react-native-async-storage_async-storage:processDebugJavaRes NO-SOURCE
+> Task :expo-barcode-scanner:mergeDebugNativeLibs NO-SOURCE
+> Task :expo:mergeDebugAssets
+> Task :expo-barcode-scanner:copyDebugJniLibsProjectOnly
+> Task :react-native-async-storage_async-storage:generateDebugRFile
+> Task :expo:mergeDebugJniLibFolders
+> Task :expo:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-safe-area-context:generateCodegenArtifactsFromSchema
+> Task :react-native-safe-area-context:preBuild
+> Task :react-native-safe-area-context:preDebugBuild
+> Task :react-native-safe-area-context:writeDebugAarMetadata
+> Task :expo:copyDebugJniLibsProjectOnly
+> Task :react-native-safe-area-context:generateDebugResValues FROM-CACHE
+> Task :react-native-safe-area-context:generateDebugResources FROM-CACHE
+> Task :expo-constants:mergeDebugJniLibFolders
+> Task :expo-constants:mergeDebugNativeLibs NO-SOURCE
+> Task :expo-constants:copyDebugJniLibsProjectOnly
+> Task :expo-image-loader:mergeDebugJniLibFolders
+> Task :react-native-safe-area-context:packageDebugResources
+> Task :app:checkDebugDuplicateClasses
+> Task :expo-image-loader:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-safe-area-context:extractDeepLinksDebug FROM-CACHE
+> Task :expo-image-loader:copyDebugJniLibsProjectOnly
+> Task :react-native-safe-area-context:compileDebugLibraryResources FROM-CACHE
+> Task :react-native-safe-area-context:parseDebugLocalResources FROM-CACHE
+
+> Task :react-native-safe-area-context:processDebugManifest
+package="com.th3rdwave.safeareacontext" found in source AndroidManifest.xml: /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.th3rdwave.safeareacontext" from the source AndroidManifest.xml: /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-safe-area-context/android/src/main/AndroidManifest.xml.
+
+> Task :react-native-safe-area-context:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-safe-area-context:generateDebugBuildConfig
+> Task :react-native-safe-area-context:javaPreCompileDebug FROM-CACHE
+> Task :react-native-safe-area-context:mergeDebugShaders
+> Task :react-native-safe-area-context:generateDebugRFile
+> Task :react-native-safe-area-context:compileDebugShaders NO-SOURCE
+> Task :react-native-screens:generateCodegenArtifactsFromSchema
+> Task :react-native-screens:preBuild
+> Task :react-native-screens:preDebugBuild
+> Task :react-native-screens:writeDebugAarMetadata
+> Task :react-native-screens:generateDebugResValues FROM-CACHE
+> Task :react-native-screens:generateDebugResources
+> Task :react-native-safe-area-context:generateDebugAssets UP-TO-DATE
+> Task :react-native-safe-area-context:mergeDebugAssets
+> Task :react-native-safe-area-context:mergeDebugJniLibFolders
+> Task :react-native-safe-area-context:mergeDebugNativeLibs NO-SOURCE
+> Task :react-native-safe-area-context:copyDebugJniLibsProjectOnly
+> Task :expo-modules-core:compileDebugKotlin FROM-CACHE
+> Task :react-native-screens:packageDebugResources
+> Task :react-native-screens:extractDeepLinksDebug FROM-CACHE
+> Task :expo-modules-core:javaPreCompileDebug FROM-CACHE
+> Task :react-native-screens:processDebugManifest
+> Task :react-native-screens:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-screens:generateDebugBuildConfig
+> Task :react-native-screens:parseDebugLocalResources
+> Task :react-native-screens:javaPreCompileDebug FROM-CACHE
+> Task :react-native-screens:mergeDebugShaders
+> Task :react-native-screens:compileDebugShaders NO-SOURCE
+> Task :react-native-screens:generateDebugAssets UP-TO-DATE
+> Task :react-native-screens:mergeDebugAssets
+> Task :react-native-screens:generateDebugRFile
+> Task :react-native-screens:compileDebugLibraryResources
+> Task :react-native-thermal-receipt-printer-image-qr:compileDebugJavaWithJavac FROM-CACHE
+> Task :react-native-thermal-receipt-printer-image-qr:mergeDebugShaders
+> Task :react-native-thermal-receipt-printer-image-qr:compileDebugShaders NO-SOURCE
+> Task :react-native-thermal-receipt-printer-image-qr:generateDebugAssets UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:mergeDebugAssets
+> Task :react-native-thermal-receipt-printer-image-qr:bundleLibRuntimeToJarDebug
+> Task :react-native-thermal-receipt-printer-image-qr:bundleLibCompileToJarDebug
+> Task :react-native-thermal-receipt-printer-image-qr:processDebugJavaRes NO-SOURCE
+> Task :react-native-thermal-receipt-printer-image-qr:bundleLibRuntimeToDirDebug
+> Task :app:configureCMakeDebug[arm64-v8a]
+> Task :react-native-screens:configureCMakeDebug[arm64-v8a]
+> Task :expo-modules-core:compileDebugJavaWithJavac FROM-CACHE
+> Task :expo-modules-core:bundleLibCompileToJarDebug
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+
+> Task :react-native-async-storage_async-storage:compileDebugJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native-async-storage/async-storage/android/src/javaPackage/java/com/reactnativecommunity/asyncstorage/AsyncStoragePackage.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :expo-image-loader:compileDebugKotlin
+
+> Task :react-native-safe-area-context:compileDebugKotlin
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaView.kt:59:23 'val uiImplementation: UIImplementation!' is deprecated. Deprecated in Java.
+
+> Task :react-native-async-storage_async-storage:bundleLibCompileToJarDebug
+> Task :expo-modules-core:mergeDebugShaders
+> Task :expo-modules-core:compileDebugShaders NO-SOURCE
+> Task :expo-modules-core:generateDebugAssets UP-TO-DATE
+> Task :expo-modules-core:mergeDebugAssets
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarDebug
+
+> Task :expo-constants:compileDebugKotlin
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-constants/android/src/main/java/expo/modules/constants/ConstantsModule.kt:12:5 'fun Constants(legacyConstantsProvider: () -> Map<String, Any?>): Unit' is deprecated. Use `Constant` or `Property` instead.
+
+> Task :expo-barcode-scanner:compileDebugKotlin FAILED
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:10:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:77:21 Unresolved reference 'setSettings'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:78:15 Unresolved reference 'BarCodeScannerSettings'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:78:40 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:78:46 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:79:17 Unresolved reference 'putTypes'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:84:38 Unresolved reference 'scanMultiple'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:85:49 Unresolved reference 'it'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:86:64 Unresolved reference 'it'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:115:26 Unresolved reference 'BarCodeScannerSettings'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:115:51 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:115:57 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerModule.kt:116:13 Unresolved reference 'putTypes'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:5:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:6:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:9:48 Unresolved reference 'BarCodeScannerProviderInterface'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:10:16 Return type of 'getExportedInterfaces' is not a subtype of the return type of the overridden member 'fun getExportedInterfaces(): (Mutable)List<out (Class<Any!>..Class<*>?)>!' defined in 'expo/modules/core/interfaces/InternalModule'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:11:5 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:11:12 Unresolved reference 'BarCodeScannerProviderInterface'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:11:12 Argument type mismatch: actual type is 'Class<T#1 (of val <T> KClass<T>.java)>', but 'T#2 (of fun <T> listOf)' was expected.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:11:51 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:11:51 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+val <T> KClass<T>.java: Class<T>
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:13:3 'createBarCodeDetectorWithContext' overrides nothing.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerProvider.kt:13:68 Unresolved reference 'BarCodeScannerInterface'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:14:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:15:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:65:33 Unresolved reference 'BarCodeScannerResult'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:67:77 Unresolved reference 'cornerPoints'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:67:99 Unresolved reference 'boundingBox'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:71:24 Unresolved reference 'value'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:72:24 Unresolved reference 'type'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:82:71 Unresolved reference 'BarCodeScannerResult'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:83:32 Unresolved reference 'cornerPoints'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:89:35 Unresolved reference 'referenceImageHeight'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:89:58 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:92:35 Unresolved reference 'referenceImageWidth'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:92:57 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:96:8 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:96:50 Unresolved reference 'referenceImageWidth'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:100:8 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:100:51 Unresolved reference 'referenceImageHeight'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:103:13 Unresolved reference 'referenceImageHeight'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:104:13 Unresolved reference 'referenceImageWidth'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:105:13 Unresolved reference 'cornerPoints'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:110:18 Unresolved reference 'BarCodeScannerResult'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:128:37 Unresolved reference 'x'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:129:37 Unresolved reference 'y'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:135:41 Unresolved reference 'width'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:136:42 Unresolved reference 'height'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerView.kt:149:43 Unresolved reference 'BarCodeScannerSettings'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt:12:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt:13:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt:14:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt:44:31 Unresolved reference 'BarCodeScannerInterface'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt:166:58 Unresolved reference 'BarCodeScannerProviderInterface'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt:167:46 Unresolved reference 'createBarCodeDetectorWithContext'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt:177:43 Unresolved reference 'BarCodeScannerSettings'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/BarCodeScannerViewFinder.kt:178:21 Unresolved reference 'setSettings'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/ExpoBarCodeScanner.kt:4:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/ExpoBarCodeScanner.kt:5:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/ExpoBarCodeScanner.kt:7:91 Unresolved reference 'BarCodeScannerInterface'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/ExpoBarCodeScanner.kt:25:47 Unresolved reference 'BarCodeScannerSettings'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/ExpoBarCodeScanner.kt:26:42 Unresolved reference 'types'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:11:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:12:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:27:3 'scan' overrides nothing.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:30:17 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:30:17 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T> Collection<T>.isNotEmpty(): Boolean
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:36:3 'scanMultiple' overrides nothing.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:36:51 Unresolved reference 'BarCodeScannerResult'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:41:58 Unresolved reference 'BarCodeScannerResult'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:41:82 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:44:35 Unresolved reference 'BarCodeScannerResult'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:61:21 Unresolved reference 'BarCodeScannerResult'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:66:26 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:66:26 Argument type mismatch: actual type is 'List<T (of fun <T> emptyList)>', but 'MutableList<ERROR CLASS: Cannot infer argument for type parameter T>' was expected.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:70:3 'setSettings' overrides nothing.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/scanners/MLKitBarCodeScanner.kt:70:38 Unresolved reference 'BarCodeScannerSettings'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:5:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:6:32 Unresolved reference 'barcodescanner'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:9:24 Unresolved reference 'BarCodeScannerResult'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:11:32 Unresolved reference 'value'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:12:29 Unresolved reference 'type'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:13:77 Unresolved reference 'cornerPoints'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:13:98 Unresolved reference 'boundingBox'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:20:18 Unresolved reference 'BoundingBox'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:31:52 Unresolved reference 'x'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:31:87 Unresolved reference 'y'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:32:49 Unresolved reference 'width'.
+e: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-barcode-scanner/android/src/main/java/expo/modules/barcodescanner/utils/BarCodeScannerResultSerializer.kt:32:88 Unresolved reference 'height'.
+
+> Task :expo-image-loader:compileDebugJavaWithJavac
+> Task :expo-constants:compileDebugJavaWithJavac
+
+> Task :app:processDebugMainManifest
+/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/app/src/debug/AndroidManifest.xml:6:5-162 Warning:
+	application@android:usesCleartextTraffic was tagged at AndroidManifest.xml:6 to replace other declarations but no other declaration present
+/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/app/src/debug/AndroidManifest.xml Warning:
+	provider#expo.modules.filesystem.FileSystemFileProvider@android:authorities was tagged at AndroidManifest.xml:0 to replace other declarations but no other declaration present
+
+> Task :react-native-safe-area-context:compileDebugJavaWithJavac
+> Task :app:mergeDebugResources
+> Task :react-native-screens:buildCMakeDebug[arm64-v8a]
+
+> Task :react-native-screens:compileDebugKotlin
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:58:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'name'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:59:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'reactContext'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:72:17 'constructor(name: String, className: String, canOverrideExistingModule: Boolean, needsEagerInit: Boolean, hasConstants: Boolean, isCxxModule: Boolean, isTurboModule: Boolean): ReactModuleInfo' is deprecated. This constructor is deprecated and will be removed in the future. Use ReactModuleInfo(String, String, boolean, boolean, boolean, boolean)].
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:49:77 Unchecked cast of '(CoordinatorLayout.Behavior<View!>?..CoordinatorLayout.Behavior<*>?)' to 'BottomSheetBehavior<Screen>'.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:218:31 'var targetElevation: Float' is deprecated. Deprecated in Java.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:221:13 'fun setHasOptionsMenu(p0: Boolean): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:398:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:405:22 'fun onPrepareOptionsMenu(p0: Menu): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:408:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:413:22 'fun onCreateOptionsMenu(p0: Menu, p1: MenuInflater): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt:428:18 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:48:42 'fun replaceSystemWindowInsets(p0: Int, p1: Int, p2: Int, p3: Int): WindowInsetsCompat' is deprecated. Deprecated in Java.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:49:39 'val systemWindowInsetLeft: Int' is deprecated. Deprecated in Java.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:51:39 'val systemWindowInsetRight: Int' is deprecated. Deprecated in Java.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:52:39 'val systemWindowInsetBottom: Int' is deprecated. Deprecated in Java.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:7:8 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:25:13 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:32:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'left'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:33:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'top'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:34:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'right'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:35:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'bottom'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:71:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:72:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:79:46 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:83:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:84:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:95:34 The corresponding parameter in the supertype 'RootView' is named 't'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:63:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchX'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:64:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchY'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:68:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchX'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:69:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchY'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/gamma/tabs/TabsHostViewManager.kt:37:9 The corresponding parameter in the supertype 'TabsHostViewManager' is named 'view'. This may cause problems when calling this function with named arguments.
+w: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/safearea/SafeAreaView.kt:183:31 'val uiImplementation: UIImplementation!' is deprecated. Deprecated in Java.
+
+[Incubating] Problems report is available at: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/android/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':expo-barcode-scanner:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 27s
+198 actionable tasks: 96 executed, 78 from cache, 24 up-to-date
+Error: /Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradlew app:assembleDebug -x lint -x test --configure-on-demand --build-cache -PreactNativeDevServerPort=8081 -PreactNativeArchitectures=arm64-v8a,armeabi-v7a exited with non-zero code: 1
+Error: /Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradlew app:assembleDebug -x lint -x test --configure-on-demand --build-cache -PreactNativeDevServerPort=8081 -PreactNativeArchitectures=arm64-v8a,armeabi-v7a exited with non-zero code: 1
+    at ChildProcess.completionListener (/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@expo/spawn-async/src/spawnAsync.ts:67:13)
+    at Object.onceWrapper (node:events:623:26)
+    at ChildProcess.emit (node:events:508:28)
+    at maybeClose (node:internal/child_process:1101:16)
+    at Process.ChildProcess._handle.onexit (node:internal/child_process:305:5)
+    ...
+    at spawnAsync (/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@expo/spawn-async/src/spawnAsync.ts:28:21)
+    at spawnGradleAsync (/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@expo/cli/src/start/platforms/android/gradle.ts:134:28)
+    at assembleAsync (/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@expo/cli/src/start/platforms/android/gradle.ts:83:16)
+    at runAndroidAsync (/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@expo/cli/src/run/android/runAndroidAsync.ts:62:24)

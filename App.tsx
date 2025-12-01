@@ -3,9 +3,12 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { useNetworkStatus, useOrderNotifications, useHeartbeat } from './src/hooks';
+import { ThemeProvider, useTheme } from './src/theme';
 
 // App wrapper component to use hooks
 const AppContent: React.FC = () => {
+  const { themeMode } = useTheme();
+  
   // Initialize network monitoring
   useNetworkStatus();
 
@@ -17,7 +20,7 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <AppNavigator />
     </>
   );
@@ -26,7 +29,9 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppContent />
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

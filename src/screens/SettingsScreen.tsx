@@ -7,10 +7,95 @@ import {
   StyleSheet,
   Switch,
   Alert,
+  ActivityIndicator,
+  Platform,
+  PermissionsAndroid,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useStore } from '../store/useStore';
+import { 
+  discoverPrinters, 
+  connectPrinter, 
+  disconnectPrinter, 
+  isPrinterConnected,
+  printTestReceipt 
+} from '../services/printService';
+import { useTheme } from '../theme';
+
+// Request Bluetooth permissions for Android 12+
+const requestBluetoothPermissions = async (): Promise<boolean> => {
+  console.log('[Permissions] Starting permission request, Platform:', Platform.OS, 'Version:', Platform.Version);
+  
+  if (Platform.OS !== 'android') {
+    console.log('[Permissions] Not Android, returning true');
+    return true;
+  }
+
+  try {
+    // For Android 12+ (API 31+)
+    if (Platform.Version >= 31) {
+      console.log('[Permissions] Android 12+, requesting BLUETOOTH_SCAN and BLUETOOTH_CONNECT');
+      
+      // Check if already granted first
+      const scanStatus = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN);
+      const connectStatus = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT);
+      
+      console.log('[Permissions] Current status - SCAN:', scanStatus, 'CONNECT:', connectStatus);
+      
+      if (scanStatus && connectStatus) {
+        console.log('[Permissions] Already granted!');
+        return true;
+      }
+
+      const permissions = [
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+      ];
+
+      console.log('[Permissions] Calling requestMultiple...');
+      const results = await PermissionsAndroid.requestMultiple(permissions);
+      console.log('[Permissions] Results:', JSON.stringify(results));
+      
+      const allGranted = Object.values(results).every(
+        result => result === PermissionsAndroid.RESULTS.GRANTED
+      );
+
+      if (!allGranted) {
+        console.log('[Permissions] Not all granted');
+        Alert.alert(
+          'Bluetooth Permission Required',
+          'Please grant Bluetooth permissions to scan for printers. Go to Settings → Apps → Kitchen Printer → Permissions → Nearby Devices → Allow',
+          [{ text: 'OK' }]
+        );
+        return false;
+      }
+      console.log('[Permissions] All granted!');
+      return true;
+    } else {
+      // For Android 11 and below
+      console.log('[Permissions] Android 11 or below, requesting FINE_LOCATION');
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Location Permission',
+          message: 'Bluetooth scanning requires location permission on older Android versions.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
+      const result = granted === PermissionsAndroid.RESULTS.GRANTED;
+      console.log('[Permissions] Location permission result:', result);
+      return result;
+    }
+  } catch (err) {
+    console.error('[Permissions] Error:', err);
+    // If permission check fails, try to proceed anyway
+    Alert.alert('Permission Error', 'Could not check permissions. Trying to scan anyway...');
+    return true; // Try anyway
+  }
+};
 
 type RootStackParamList = {
   Orders: undefined;
@@ -20,12 +105,10 @@ type RootStackParamList = {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Settings'>;
 
-const NOTIFICATION_TONES = [
-  { id: 'default', label: 'Default', icon: '🔔' },
-  { id: 'chime', label: 'Chime', icon: '🎵' },
-  { id: 'bell', label: 'Bell', icon: '🔔' },
-  { id: 'alert', label: 'Alert', icon: '⚠️' },
-] as const;
+interface PrinterDevice {
+  device_name: string;
+  inner_mac_address: string;
+}
 
 const POLL_INTERVALS = [
   { value: 3000, label: '3 seconds (fast)' },
@@ -37,8 +120,14 @@ const POLL_INTERVALS = [
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { settings, updateSettings, logout, auth, offline } = useStore();
-  const [showToneSelector, setShowToneSelector] = useState(false);
+  const { themeMode, toggleTheme } = useTheme();
   const [showIntervalSelector, setShowIntervalSelector] = useState(false);
+  
+  // Printer state
+  const [isScanning, setIsScanning] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [discoveredPrinters, setDiscoveredPrinters] = useState<PrinterDevice[]>([]);
+  const [showPrinterList, setShowPrinterList] = useState(false);
 
   const handleLogout = useCallback(() => {
     Alert.alert(
@@ -57,25 +146,103 @@ export const SettingsScreen: React.FC = () => {
     );
   }, [logout]);
 
-  const handleTestPrinter = useCallback(() => {
-    // TODO: Implement printer test
+  const handleScanPrinters = useCallback(async () => {
+    console.log('[Settings] 🔵 SCAN BUTTON PRESSED - scanning directly!');
+    
+    setIsScanning(true);
+    setShowPrinterList(true);
+    setDiscoveredPrinters([]);
+    
+    try {
+      console.log('[Settings] Scanning for Bluetooth printers...');
+      const printers = await discoverPrinters();
+      console.log('[Settings] Found printers:', printers);
+      setDiscoveredPrinters(printers);
+      
+      if (printers.length === 0) {
+        Alert.alert(
+          'No Printers Found',
+          'Make sure your Bluetooth printer is:\n\n• Powered on\n• In pairing mode\n• Paired with this tablet in Bluetooth settings',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error: any) {
+      console.error('[Settings] Scan error:', error);
+      Alert.alert('Scan Error', error.message || 'Failed to scan for printers');
+    } finally {
+      setIsScanning(false);
+    }
+  }, []);
+
+  const handleConnectPrinter = useCallback(async (printer: PrinterDevice) => {
+    setIsConnecting(true);
+    
+    try {
+      console.log(`[Settings] Connecting to ${printer.device_name}...`);
+      const success = await connectPrinter(printer.inner_mac_address);
+      
+      if (success) {
+        updateSettings({ 
+          printerConnected: true, 
+          printerName: printer.device_name,
+          printerMacAddress: printer.inner_mac_address, // Save for auto-reconnect
+        });
+        Alert.alert('✓ Connected!', `Successfully connected to ${printer.device_name}\n\nThis printer will auto-reconnect on app restart.`);
+        setShowPrinterList(false);
+      } else {
+        Alert.alert('Connection Failed', 'Could not connect to printer. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('[Settings] Connect error:', error);
+      Alert.alert('Connection Error', error.message || 'Failed to connect to printer');
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [updateSettings]);
+
+  const handleDisconnectPrinter = useCallback(async () => {
+    try {
+      await disconnectPrinter();
+      updateSettings({ 
+        printerConnected: false, 
+        printerName: null 
+      });
+      Alert.alert('Disconnected', 'Printer has been disconnected');
+    } catch (error: any) {
+      console.error('[Settings] Disconnect error:', error);
+    }
+  }, [updateSettings]);
+
+  const handleTestPrint = useCallback(async () => {
+    if (!settings.printerConnected) {
+      Alert.alert('No Printer', 'Please connect a printer first');
+      return;
+    }
+
     Alert.alert(
       'Test Print',
-      'This will print a test page on the connected printer.',
+      'This will print a test receipt on the connected printer.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Print Test',
-          onPress: () => {
-            // printTestPage();
-            Alert.alert('Info', 'Printer testing will be implemented with the printing service');
+          onPress: async () => {
+            try {
+              const success = await printTestReceipt();
+              if (success) {
+                Alert.alert('✓ Success', 'Test receipt sent to printer!');
+              } else {
+                Alert.alert('Print Failed', 'Could not print test receipt');
+              }
+            } catch (error: any) {
+              Alert.alert('Print Error', error.message || 'Unknown error');
+            }
           },
         },
       ]
     );
-  }, []);
+  }, [settings.printerConnected]);
 
-  const selectedTone = NOTIFICATION_TONES.find((t) => t.id === settings.notificationTone);
   const selectedInterval = POLL_INTERVALS.find((i) => i.value === settings.pollIntervalMs);
 
   return (
@@ -93,6 +260,156 @@ export const SettingsScreen: React.FC = () => {
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        {/* Printer Section - MOST IMPORTANT */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🖨️ Printer Connection</Text>
+          <View style={styles.card}>
+            {/* Current Printer Status */}
+            <View style={styles.printerStatusRow}>
+              <View style={styles.printerStatusInfo}>
+                <Text style={styles.printerStatusLabel}>
+                  {settings.printerConnected ? settings.printerName : 'No Printer Connected'}
+                </Text>
+                <Text style={styles.printerStatusSubtext}>
+                  {settings.printerConnected 
+                    ? '✓ Ready to print' 
+                    : 'Tap "Scan for Printers" to connect'}
+                </Text>
+              </View>
+              <View style={[
+                styles.statusBadge,
+                { backgroundColor: settings.printerConnected ? '#22c55e' : '#ef4444' }
+              ]}>
+                <Text style={styles.statusBadgeText}>
+                  {settings.printerConnected ? 'CONNECTED' : 'OFFLINE'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Scan Button */}
+            <TouchableOpacity 
+              style={styles.scanButton}
+              onPress={handleScanPrinters}
+              disabled={isScanning}
+            >
+              {isScanning ? (
+                <>
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text style={styles.scanButtonText}>Scanning...</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.scanButtonIcon}>📡</Text>
+                  <Text style={styles.scanButtonText}>Scan for Printers</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            {/* Discovered Printers List */}
+            {showPrinterList && (
+              <View style={styles.printerList}>
+                <Text style={styles.printerListTitle}>
+                  {discoveredPrinters.length > 0 
+                    ? `Found ${discoveredPrinters.length} Printer(s):` 
+                    : 'Scanning...'}
+                </Text>
+                
+                {discoveredPrinters.map((printer, index) => (
+                  <TouchableOpacity
+                    key={printer.inner_mac_address || index}
+                    style={styles.printerItem}
+                    onPress={() => handleConnectPrinter(printer)}
+                    disabled={isConnecting}
+                  >
+                    <View style={styles.printerItemInfo}>
+                      <Text style={styles.printerItemName}>
+                        {printer.device_name || 'Unknown Printer'}
+                      </Text>
+                      <Text style={styles.printerItemMac}>
+                        {printer.inner_mac_address}
+                      </Text>
+                    </View>
+                    {isConnecting ? (
+                      <ActivityIndicator size="small" color="#4CAF50" />
+                    ) : (
+                      <Text style={styles.connectText}>Connect →</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+
+                {!isScanning && discoveredPrinters.length === 0 && (
+                  <Text style={styles.noPrintersText}>
+                    No printers found. Make sure your printer is powered on and paired.
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {/* Action Buttons */}
+            {settings.printerConnected && (
+              <View style={styles.printerActions}>
+                <TouchableOpacity 
+                  style={styles.testPrintButton}
+                  onPress={handleTestPrint}
+                >
+                  <Text style={styles.testPrintText}>🖨️ Test Print</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.disconnectButton}
+                  onPress={handleDisconnectPrinter}
+                >
+                  <Text style={styles.disconnectText}>Disconnect</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Theme Setting */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+          <View style={styles.card}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>
+                  {themeMode === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+                </Text>
+                <Text style={styles.settingDescription}>
+                  Switch between dark and light themes
+                </Text>
+              </View>
+              <Switch
+                value={themeMode === 'light'}
+                onValueChange={toggleTheme}
+                trackColor={{ false: '#0f3460', true: '#FF8A65' }}
+                thumbColor={themeMode === 'light' ? '#FF5722' : '#e94560'}
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Auto-Print Setting */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Printing Options</Text>
+          <View style={styles.card}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Auto-Print New Orders</Text>
+                <Text style={styles.settingDescription}>
+                  Automatically print orders when they arrive
+                </Text>
+              </View>
+              <Switch
+                value={settings.autoPrint}
+                onValueChange={(value) => updateSettings({ autoPrint: value })}
+                trackColor={{ false: '#374151', true: '#22c55e' }}
+                thumbColor={settings.autoPrint ? '#fff' : '#9ca3af'}
+              />
+            </View>
+          </View>
+        </View>
+
         {/* Device Info Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Device Information</Text>
@@ -111,137 +428,14 @@ export const SettingsScreen: React.FC = () => {
                 <View
                   style={[
                     styles.statusDot,
-                    { backgroundColor: offline.isOnline ? '#4CAF50' : '#F44336' },
+                    { backgroundColor: offline.isOnline ? '#22c55e' : '#ef4444' },
                   ]}
                 />
                 <Text style={styles.statusText}>
-                  {offline.isOnline ? 'Connected' : 'Offline'}
+                  {offline.isOnline ? 'Online' : 'Offline'}
                 </Text>
               </View>
             </View>
-            {offline.queuedActions.length > 0 && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Queued Actions</Text>
-                <Text style={styles.infoValueWarning}>
-                  {offline.queuedActions.length} pending
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {/* Printing Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Printing</Text>
-          <View style={styles.card}>
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Auto-Print New Orders</Text>
-                <Text style={styles.settingDescription}>
-                  Automatically print orders when received
-                </Text>
-              </View>
-              <Switch
-                value={settings.autoPrint}
-                onValueChange={(value) => updateSettings({ autoPrint: value })}
-                trackColor={{ false: '#ddd', true: '#81C784' }}
-                thumbColor={settings.autoPrint ? '#4CAF50' : '#f5f5f5'}
-              />
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Printer Status</Text>
-                <Text style={styles.settingDescription}>
-                  {settings.printerConnected
-                    ? settings.printerName || 'Connected'
-                    : 'No printer connected'}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.printerStatus,
-                  {
-                    backgroundColor: settings.printerConnected
-                      ? '#E8F5E9'
-                      : '#FFEBEE',
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.printerStatusText,
-                    {
-                      color: settings.printerConnected ? '#4CAF50' : '#F44336',
-                    },
-                  ]}
-                >
-                  {settings.printerConnected ? '✓ Ready' : '✗ Not Found'}
-                </Text>
-              </View>
-            </View>
-            <TouchableOpacity style={styles.actionButton} onPress={handleTestPrinter}>
-              <Text style={styles.actionButtonIcon}>🖨️</Text>
-              <Text style={styles.actionButtonText}>Test Printer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Notifications Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <View style={styles.card}>
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Sound Notifications</Text>
-                <Text style={styles.settingDescription}>
-                  Play a sound when new orders arrive
-                </Text>
-              </View>
-              <Switch
-                value={settings.soundEnabled}
-                onValueChange={(value) => updateSettings({ soundEnabled: value })}
-                trackColor={{ false: '#ddd', true: '#81C784' }}
-                thumbColor={settings.soundEnabled ? '#4CAF50' : '#f5f5f5'}
-              />
-            </View>
-            <View style={styles.divider} />
-            <TouchableOpacity
-              style={styles.settingRowTouchable}
-              onPress={() => setShowToneSelector(!showToneSelector)}
-            >
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Notification Tone</Text>
-                <Text style={styles.settingDescription}>
-                  {selectedTone?.icon} {selectedTone?.label}
-                </Text>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </TouchableOpacity>
-            {showToneSelector && (
-              <View style={styles.selectorContainer}>
-                {NOTIFICATION_TONES.map((tone) => (
-                  <TouchableOpacity
-                    key={tone.id}
-                    style={[
-                      styles.selectorOption,
-                      settings.notificationTone === tone.id &&
-                        styles.selectorOptionSelected,
-                    ]}
-                    onPress={() => {
-                      updateSettings({ notificationTone: tone.id });
-                      setShowToneSelector(false);
-                    }}
-                  >
-                    <Text style={styles.selectorOptionIcon}>{tone.icon}</Text>
-                    <Text style={styles.selectorOptionLabel}>{tone.label}</Text>
-                    {settings.notificationTone === tone.id && (
-                      <Text style={styles.checkmark}>✓</Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
           </View>
         </View>
 
@@ -256,7 +450,7 @@ export const SettingsScreen: React.FC = () => {
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>Polling Interval</Text>
                 <Text style={styles.settingDescription}>
-                  Check for new orders every {selectedInterval?.label || '5 seconds'}
+                  {selectedInterval?.label || '5 seconds'}
                 </Text>
               </View>
               <Text style={styles.chevron}>›</Text>
@@ -292,7 +486,7 @@ export const SettingsScreen: React.FC = () => {
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutButtonText}>Disconnect Device</Text>
           </TouchableOpacity>
-          <Text style={styles.versionText}>Tablet Order App v1.0.0</Text>
+          <Text style={styles.versionText}>Kitchen Printer App v1.0.3</Text>
         </View>
       </ScrollView>
     </View>
@@ -302,16 +496,16 @@ export const SettingsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#1a1a2e',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
+    backgroundColor: '#16213e',
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomWidth: 2,
+    borderBottomColor: '#0f3460',
   },
   backButton: {
     padding: 8,
@@ -319,13 +513,13 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 16,
-    color: '#4CAF50',
+    color: '#22c55e',
     fontWeight: '600',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   placeholder: {
     minWidth: 80,
@@ -345,59 +539,148 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#666',
+    color: '#94a3b8',
     textTransform: 'uppercase',
     marginBottom: 10,
     marginLeft: 4,
     letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#16213e',
     borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#334155',
   },
-  infoRow: {
+  // Printer Status
+  printerStatusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#334155',
   },
-  infoLabel: {
-    fontSize: 15,
-    color: '#666',
+  printerStatusInfo: {
+    flex: 1,
   },
-  infoValue: {
-    fontSize: 15,
+  printerStatusLabel: {
+    fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#fff',
+    marginBottom: 4,
   },
-  infoValueWarning: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#FF9800',
+  printerStatusSubtext: {
+    fontSize: 14,
+    color: '#94a3b8',
   },
-  statusIndicator: {
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  statusBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  // Scan Button
+  scanButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3b82f6',
+    padding: 16,
+    margin: 16,
+    borderRadius: 12,
   },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
+  scanButtonIcon: {
+    fontSize: 20,
+    marginRight: 10,
   },
-  statusText: {
-    fontSize: 15,
+  scanButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
-    color: '#333',
   },
+  // Printer List
+  printerList: {
+    padding: 16,
+    paddingTop: 0,
+  },
+  printerListTitle: {
+    fontSize: 14,
+    color: '#94a3b8',
+    marginBottom: 12,
+  },
+  printerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#1e293b',
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  printerItemInfo: {
+    flex: 1,
+  },
+  printerItemName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  printerItemMac: {
+    fontSize: 12,
+    color: '#64748b',
+    fontFamily: 'monospace',
+  },
+  connectText: {
+    color: '#22c55e',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  noPrintersText: {
+    color: '#64748b',
+    textAlign: 'center',
+    padding: 20,
+    fontSize: 14,
+  },
+  // Printer Actions
+  printerActions: {
+    flexDirection: 'row',
+    padding: 16,
+    paddingTop: 0,
+    gap: 12,
+  },
+  testPrintButton: {
+    flex: 1,
+    backgroundColor: '#22c55e',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  testPrintText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  disconnectButton: {
+    flex: 1,
+    backgroundColor: '#374151',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  disconnectText: {
+    color: '#94a3b8',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  // Settings Rows
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -417,26 +700,55 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#fff',
     marginBottom: 4,
   },
   settingDescription: {
     fontSize: 14,
-    color: '#666',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
-    marginHorizontal: 16,
+    color: '#94a3b8',
   },
   chevron: {
     fontSize: 24,
-    color: '#999',
+    color: '#64748b',
   },
+  // Info Rows
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
+  },
+  infoLabel: {
+    fontSize: 15,
+    color: '#94a3b8',
+  },
+  infoValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+  },
+  statusText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  // Selector
   selectorContainer: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#1e293b',
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: '#334155',
   },
   selectorOption: {
     flexDirection: 'row',
@@ -444,56 +756,26 @@ const styles = StyleSheet.create({
     padding: 14,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#334155',
   },
   selectorOptionSelected: {
-    backgroundColor: '#E8F5E9',
-  },
-  selectorOptionIcon: {
-    fontSize: 18,
-    marginRight: 12,
+    backgroundColor: '#0f3460',
   },
   selectorOptionLabel: {
     fontSize: 15,
-    color: '#333',
+    color: '#fff',
     flex: 1,
   },
   checkmark: {
     fontSize: 18,
-    color: '#4CAF50',
+    color: '#22c55e',
     fontWeight: 'bold',
   },
-  printerStatus: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  printerStatusText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    backgroundColor: '#f9f9f9',
-  },
-  actionButtonIcon: {
-    fontSize: 18,
-    marginRight: 8,
-  },
-  actionButtonText: {
-    fontSize: 15,
-    color: '#4CAF50',
-    fontWeight: '600',
-  },
+  // Logout
   logoutButton: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#F44336',
+    borderColor: '#ef4444',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -501,11 +783,11 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#F44336',
+    color: '#ef4444',
   },
   versionText: {
     textAlign: 'center',
-    color: '#999',
+    color: '#64748b',
     fontSize: 13,
     marginTop: 16,
   },

@@ -13,11 +13,13 @@ import {
 } from 'react-native';
 import * as Linking from 'expo-linking';
 import { useStore } from '../store/useStore';
-import { supabaseApiClient as apiClient } from '../api/supabaseClient';
+// Use the secure REST API client (NOT direct Supabase!)
+import { apiClient } from '../api/client';
 
 // TEST BUILD - Hardcoded credentials for testing
-const TEST_UUID = '006fe8aa-eec7-465c-bb8d-9180d3a2c910';
-const TEST_KEY = 'aU2065zyc6zJrOwhQajVXToYLs4TNsOPlCgzKPVbyDE';
+// TODO: Remove these for production builds
+const TEST_UUID = __DEV__ ? '006fe8aa-eec7-465c-bb8d-9180d3a2c910' : '';
+const TEST_KEY = __DEV__ ? 'aU2065zyc6zJrOwhQajVXToYLs4TNsOPlCgzKPVbyDE' : '';
 
 export const LoginScreen: React.FC = () => {
   const [deviceUuid, setDeviceUuid] = useState(TEST_UUID);
@@ -98,15 +100,6 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleScanQR = () => {
-    // TODO: Implement QR code scanning
-    Alert.alert(
-      'QR Scanner',
-      'QR code scanning will be implemented with react-native-camera',
-      [{ text: 'OK' }]
-    );
-  };
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -115,10 +108,12 @@ export const LoginScreen: React.FC = () => {
       <View style={styles.content}>
         {/* Logo/Header */}
         <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Text style={styles.logoIcon}>🍽️</Text>
-          </View>
-          <Text style={styles.title}>Restaurant Order Tablet</Text>
+          <Image 
+            source={require('../../assets/logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>Kitchen Order Display</Text>
           <Text style={styles.subtitle}>
             Enter your device credentials to connect
           </Text>
@@ -174,28 +169,14 @@ export const LoginScreen: React.FC = () => {
             )}
           </TouchableOpacity>
 
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <TouchableOpacity
-            style={styles.qrButton}
-            onPress={handleScanQR}
-            disabled={isLoading}
-          >
-            <Text style={styles.qrButtonIcon}>📷</Text>
-            <Text style={styles.qrButtonText}>Scan QR Code</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Don't have credentials? Contact your restaurant administrator.
-          </Text>
-          <Text style={styles.versionText}>v1.0.2</Text>
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          Don't have credentials? Contact your restaurant administrator.
+        </Text>
+          <Text style={styles.versionText}>v1.0.3</Text>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -219,6 +200,11 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: 40,
+  },
+  logo: {
+    width: 200,
+    height: 60,
+    marginBottom: 20,
   },
   logoContainer: {
     width: 100,
@@ -306,40 +292,6 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#ddd',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    color: '#999',
-    fontSize: 14,
-  },
-  qrButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#4CAF50',
-    borderRadius: 12,
-    padding: 16,
-  },
-  qrButtonIcon: {
-    fontSize: 24,
-    marginRight: 10,
-  },
-  qrButtonText: {
-    color: '#4CAF50',
-    fontSize: 16,
     fontWeight: '600',
   },
   footer: {

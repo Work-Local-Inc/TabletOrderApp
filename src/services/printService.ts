@@ -1,20 +1,24 @@
 /**
  * Thermal Printer Service for ESC/POS Compatible Printers
- *
- * This service handles printing order receipts to 80mm thermal printers
- * connected via USB or Bluetooth.
- *
- * NOTE: For actual printing, you'll need to add a native printing library.
- * Options include:
- * - react-native-thermal-receipt-printer-image-qr
- * - react-native-bluetooth-escpos-printer
- * - react-native-esc-pos-printer
- *
- * This file provides the ESC/POS formatting logic that can be used
- * with any of these libraries.
+ * Uses react-native-thermal-receipt-printer-image-qr for Bluetooth printing
  */
 
 import { Order, OrderItem } from '../types';
+
+// Import the printer library - install with:
+// npm install react-native-thermal-receipt-printer-image-qr
+let BLEPrinter: any = null;
+let printerConnected = false;
+let connectedPrinterAddress: string | null = null;
+
+// Try to import the printer library (may not be installed yet)
+try {
+  const printerLib = require('react-native-thermal-receipt-printer-image-qr');
+  BLEPrinter = printerLib.BLEPrinter;
+  console.log('[PrintService] Bluetooth printer library loaded');
+} catch (e) {
+  console.warn('[PrintService] Printer library not installed. Run: npm install react-native-thermal-receipt-printer-image-qr');
+}
 
 // ESC/POS Commands
 const ESC = '\x1B';
@@ -277,89 +281,482 @@ export const generateTestReceipt = (): string => {
 };
 
 /**
- * Print an order receipt
- *
- * NOTE: This is a placeholder implementation.
- * You'll need to integrate with an actual printing library like:
- * - react-native-thermal-receipt-printer-image-qr
- * - react-native-bluetooth-escpos-printer
- *
- * Example with react-native-thermal-receipt-printer-image-qr:
- * ```
- * import { USBPrinter, BLEPrinter } from 'react-native-thermal-receipt-printer-image-qr';
- *
- * export const printOrder = async (order: Order): Promise<void> => {
- *   const receiptData = generateReceiptData(order);
- *   await USBPrinter.printRaw(receiptData);
- * };
- * ```
+ * Initialize the Bluetooth printer module
  */
-export const printOrder = async (order: Order): Promise<void> => {
-  const receiptData = generateReceiptData(order);
+export const initPrinter = async (): Promise<boolean> => {
+  if (!BLEPrinter) {
+    console.error('[PrintService] Printer library not available');
+    return false;
+  }
+  
+  try {
+    await BLEPrinter.init();
+    console.log('[PrintService] Printer initialized');
+    return true;
+  } catch (error) {
+    console.error('[PrintService] Init failed:', error);
+    return false;
+  }
+};
 
-  // Log receipt data for development
-  console.log('=== RECEIPT DATA ===');
-  console.log(receiptData.replace(/[\x00-\x1F]/g, '')); // Remove ESC/POS commands for logging
-  console.log('===================');
+/**
+ * Discover available Bluetooth printers
+ */
+export const discoverPrinters = async (): Promise<Array<{device_name: string, inner_mac_address: string}>> => {
+  if (!BLEPrinter) {
+    console.warn('[PrintService] Printer library not installed');
+    return [];
+  }
 
-  // TODO: Integrate with actual printer library
-  // For now, simulate a print delay
-  return new Promise((resolve) => {
-    setTimeout(resolve, 1000);
+  try {
+    console.log('[PrintService] Scanning for Bluetooth printers...');
+    await BLEPrinter.init();
+    const devices = await BLEPrinter.getDeviceList();
+    console.log('[PrintService] Found devices:', devices);
+    return devices || [];
+  } catch (error) {
+    console.error('[PrintService] Discovery failed:', error);
+    return [];
+  }
+};
+
+/**
+ * Connect to a Bluetooth printer by MAC address
+ */
+export const connectPrinter = async (macAddress: string): Promise<boolean> => {
+  if (!BLEPrinter) {
+    console.error('[PrintService] Printer library not available');
+    return false;
+  }
+
+  try {
+    console.log(`[PrintService] Initializing printer module...`);
+    // MUST init before connecting!
+    await BLEPrinter.init();
+    
+    console.log(`[PrintService] Connecting to printer: ${macAddress}`);
+    await BLEPrinter.connectPrinter(macAddress);
+    printerConnected = true;
+    connectedPrinterAddress = macAddress;
+    console.log('[PrintService] Connected successfully!');
+    return true;
+  } catch (error) {
+    console.error('[PrintService] Connection failed:', error);
+    printerConnected = false;
+    return false;
+  }
+};
+
+/**
+ * Disconnect from printer
+ */
+export const disconnectPrinter = async (): Promise<void> => {
+  if (BLEPrinter && printerConnected) {
+    try {
+      await BLEPrinter.closeConn();
+      printerConnected = false;
+      connectedPrinterAddress = null;
+      console.log('[PrintService] Disconnected');
+    } catch (error) {
+      console.error('[PrintService] Disconnect error:', error);
+    }
+  }
+};
+
+/**
+ * Check if printer is connected
+ */
+export const isPrinterConnected = (): boolean => {
+  return printerConnected;
+};
+
+/**
+ * Print an order receipt
+ */
+export const printOrder = async (order: Order): Promise<boolean> => {
+  const receiptText = generateReceiptText(order);
+
+  // Always log for debugging
+  console.log('[PrintService] Printing order:', order.order_number);
+
+  if (!BLEPrinter || !printerConnected) {
+    console.warn('[PrintService] No printer connected, logging receipt only:');
+    console.log(receiptText);
+    return false;
+  }
+
+  try {
+    // Print using the library's text method
+    await BLEPrinter.printText(receiptText, {
+      encoding: 'UTF8',
+      codepage: 0,
+      widthtimes: 0,
+      heigthtimes: 0,
+      fonttype: 0,
+    });
+    
+    // Cut paper
+    await BLEPrinter.printText('\n\n\n');
+    
+    console.log('[PrintService] Print successful!');
+    return true;
+  } catch (error) {
+    console.error('[PrintService] Print failed:', error);
+    return false;
+  }
+};
+
+/**
+ * Generate receipt - plain text, wider format
+ * Using 48 characters width for 80mm paper
+ */
+const PAPER_WIDTH = 48;
+
+const centerText = (text: string, width: number = PAPER_WIDTH): string => {
+  const trimmed = text.substring(0, width);
+  const padding = Math.max(0, Math.floor((width - trimmed.length) / 2));
+  return ' '.repeat(padding) + trimmed;
+};
+
+const rightAlign = (left: string, right: string, width: number = PAPER_WIDTH): string => {
+  const maxLeft = width - right.length - 1;
+  const leftTrimmed = left.substring(0, maxLeft);
+  const spaces = width - leftTrimmed.length - right.length;
+  return leftTrimmed + ' '.repeat(Math.max(1, spaces)) + right;
+};
+
+const dividerLine = (char: string = '-', width: number = PAPER_WIDTH): string => {
+  return char.repeat(width);
+};
+
+// ============================================
+// 🍳 KITCHEN TICKET - For the cook board
+// ============================================
+
+/**
+ * Generate a KITCHEN TICKET for the cook
+ * - Big, bold text they can read from distance
+ * - Customer name prominent
+ * - Items with mods/instructions
+ * - NO prices (cook doesn't need them)
+ */
+const generateKitchenTicket = (order: Order): string => {
+  let text = '';
+  const W = PAPER_WIDTH;
+  
+  // Big header
+  text += dividerLine('=') + '\n';
+  text += centerText('** KITCHEN ORDER **') + '\n';
+  text += dividerLine('=') + '\n';
+  text += '\n';
+  
+  // ORDER TYPE - Very prominent
+  const orderType = (order.order_type || 'PICKUP').toUpperCase();
+  text += centerText(`[ ${orderType} ]`) + '\n';
+  text += '\n';
+  
+  // CUSTOMER NAME - The most important thing
+  text += dividerLine('=') + '\n';
+  const customerName = (order.customer?.name || 'GUEST').toUpperCase();
+  text += centerText(customerName) + '\n';
+  text += dividerLine('=') + '\n';
+  text += '\n';
+  
+  // Order number and time
+  text += `Order: ${order.order_number}\n`;
+  text += `Time:  ${formatDateTime(order.created_at)}\n`;
+  text += '\n';
+  
+  // Delivery info if applicable
+  if (order.order_type === 'delivery' && order.delivery_address) {
+    text += dividerLine('-') + '\n';
+    text += centerText('DELIVER TO') + '\n';
+    text += dividerLine('-') + '\n';
+    if (order.delivery_address.street) {
+      text += `${order.delivery_address.street}\n`;
+    }
+    const cityLine = [order.delivery_address.city, order.delivery_address.postalCode].filter(Boolean).join(' ');
+    if (cityLine) {
+      text += `${cityLine}\n`;
+    }
+    text += '\n';
+  }
+  
+  // ITEMS TO MAKE - The main content
+  text += dividerLine('=') + '\n';
+  text += centerText('>>> MAKE THESE ITEMS <<<') + '\n';
+  text += dividerLine('=') + '\n';
+  text += '\n';
+  
+  (order.items || []).forEach((item, index) => {
+    // Item with quantity - make it stand out
+    const qty = item.quantity || 1;
+    const itemName = (item.name || 'Unknown Item').toUpperCase();
+    
+    text += `>>> ${qty}x ${itemName}\n`;
+    
+    // Modifiers - indented
+    (item.modifiers || []).forEach((mod) => {
+      text += `    - ${mod.name}\n`;
+    });
+    
+    // Item notes - important!
+    if (item.notes) {
+      text += `    ** ${item.notes} **\n`;
+    }
+    
+    text += '\n';
   });
+  
+  // SPECIAL INSTRUCTIONS - Can't miss these!
+  if (order.notes) {
+    text += dividerLine('!') + '\n';
+    text += centerText('!! SPECIAL INSTRUCTIONS !!') + '\n';
+    text += dividerLine('!') + '\n';
+    text += `${order.notes}\n`;
+    text += dividerLine('!') + '\n';
+    text += '\n';
+  }
+  
+  // Delivery instructions
+  if (order.delivery_address?.instructions) {
+    text += dividerLine('-') + '\n';
+    text += 'DELIVERY NOTE:\n';
+    text += `${order.delivery_address.instructions}\n`;
+    text += dividerLine('-') + '\n';
+    text += '\n';
+  }
+  
+  // Footer with time
+  text += dividerLine('=') + '\n';
+  const now = new Date();
+  text += centerText(`Printed: ${now.toLocaleTimeString()}`) + '\n';
+  text += dividerLine('=') + '\n';
+  text += '\n\n\n';
+  
+  return text;
+};
+
+// ============================================
+// 🧾 CUSTOMER RECEIPT - For the bag/customer
+// ============================================
+
+const generateReceiptText = (order: Order): string => {
+  let text = '';
+  
+  // Header
+  text += dividerLine('=') + '\n';
+  text += centerText(`ORDER #${order.order_number}`) + '\n';
+  text += dividerLine('=') + '\n';
+  text += centerText(`*** ${(order.order_type || 'PICKUP').toUpperCase()} ***`) + '\n';
+  text += centerText(formatDateTime(order.created_at)) + '\n';
+  text += dividerLine('-') + '\n';
+  
+  // Customer
+  text += `Customer: ${order.customer?.name || 'Guest'}\n`;
+  if (order.customer?.phone) {
+    text += `Phone: ${order.customer.phone}\n`;
+  }
+  
+  // Delivery address
+  if (order.delivery_address) {
+    text += '\n' + centerText('DELIVER TO') + '\n';
+    text += dividerLine('-') + '\n';
+    if (order.delivery_address.street) {
+      text += `${order.delivery_address.street}\n`;
+    }
+    const cityLine = [order.delivery_address.city, order.delivery_address.postalCode].filter(Boolean).join(' ');
+    if (cityLine) {
+      text += `${cityLine}\n`;
+    }
+    if (order.delivery_address.instructions) {
+      text += `Note: ${order.delivery_address.instructions}\n`;
+    }
+  }
+  
+  // Items section
+  text += '\n' + dividerLine('=') + '\n';
+  text += centerText('ITEMS') + '\n';
+  text += dividerLine('=') + '\n';
+  
+  // Items
+  (order.items || []).forEach((item) => {
+    const itemTotal = (item.price || 0) * (item.quantity || 1);
+    const itemLine = `${item.quantity}x ${item.name}`;
+    const priceLine = `$${itemTotal.toFixed(2)}`;
+    text += rightAlign(itemLine, priceLine) + '\n';
+    
+    // Modifiers
+    (item.modifiers || []).forEach((mod) => {
+      const modPrice = mod.price > 0 ? `+$${mod.price.toFixed(2)}` : '';
+      text += `  - ${mod.name} ${modPrice}\n`;
+    });
+    
+    if (item.notes) {
+      text += `  >> ${item.notes}\n`;
+    }
+  });
+  
+  // Totals
+  text += dividerLine('-') + '\n';
+  text += rightAlign('Subtotal:', `$${(order.subtotal || 0).toFixed(2)}`) + '\n';
+  text += rightAlign('Tax:', `$${(order.tax || 0).toFixed(2)}`) + '\n';
+  if (order.delivery_fee) {
+    text += rightAlign('Delivery:', `$${order.delivery_fee.toFixed(2)}`) + '\n';
+  }
+  if (order.tip) {
+    text += rightAlign('Tip:', `$${order.tip.toFixed(2)}`) + '\n';
+  }
+  text += dividerLine('=') + '\n';
+  text += rightAlign('TOTAL:', `$${(order.total || 0).toFixed(2)}`) + '\n';
+  text += dividerLine('=') + '\n';
+  
+  // Notes
+  if (order.notes) {
+    text += '\n' + centerText('ORDER NOTES') + '\n';
+    text += dividerLine('-') + '\n';
+    text += `${order.notes}\n`;
+  }
+  
+  // Footer
+  text += '\n' + centerText('Thank you!') + '\n';
+  text += '\n\n\n';
+  
+  return text;
+};
+
+/**
+ * Print a KITCHEN TICKET (for the cook board)
+ */
+export const printKitchenTicket = async (order: Order): Promise<boolean> => {
+  const ticketText = generateKitchenTicket(order);
+
+  console.log('[PrintService] Printing KITCHEN TICKET for order:', order.order_number);
+
+  if (!BLEPrinter || !printerConnected) {
+    console.warn('[PrintService] No printer connected, logging kitchen ticket:');
+    console.log(ticketText);
+    return false;
+  }
+
+  try {
+    await BLEPrinter.printText(ticketText, {
+      encoding: 'UTF8',
+      codepage: 0,
+      widthtimes: 0,
+      heigthtimes: 0,
+      fonttype: 0,
+    });
+    
+    console.log('[PrintService] Kitchen ticket printed!');
+    return true;
+  } catch (error) {
+    console.error('[PrintService] Kitchen ticket print failed:', error);
+    return false;
+  }
+};
+
+/**
+ * Print a CUSTOMER RECEIPT (for the bag/customer)
+ */
+export const printCustomerReceipt = async (order: Order): Promise<boolean> => {
+  const receiptText = generateReceiptText(order);
+
+  console.log('[PrintService] Printing CUSTOMER RECEIPT for order:', order.order_number);
+
+  if (!BLEPrinter || !printerConnected) {
+    console.warn('[PrintService] No printer connected, logging receipt:');
+    console.log(receiptText);
+    return false;
+  }
+
+  try {
+    await BLEPrinter.printText(receiptText, {
+      encoding: 'UTF8',
+      codepage: 0,
+      widthtimes: 0,
+      heigthtimes: 0,
+      fonttype: 0,
+    });
+    
+    console.log('[PrintService] Customer receipt printed!');
+    return true;
+  } catch (error) {
+    console.error('[PrintService] Customer receipt print failed:', error);
+    return false;
+  }
+};
+
+/**
+ * Print BOTH kitchen ticket and customer receipt
+ */
+export const printBoth = async (order: Order): Promise<boolean> => {
+  console.log('[PrintService] Printing BOTH for order:', order.order_number);
+  
+  const kitchenResult = await printKitchenTicket(order);
+  
+  // Small pause between prints
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const receiptResult = await printCustomerReceipt(order);
+  
+  return kitchenResult && receiptResult;
 };
 
 /**
  * Print a test page
  */
-export const printTestPage = async (): Promise<void> => {
-  const testData = generateTestReceipt();
+export const printTestPage = async (): Promise<boolean> => {
+  const testText = `
+${dividerLine('=')}
+${centerText('PRINTER TEST')}
+${dividerLine('=')}
 
-  console.log('=== TEST RECEIPT ===');
-  console.log(testData.replace(/[\x00-\x1F]/g, ''));
-  console.log('====================');
+${centerText('If you can read this,')}
+${centerText('your printer is working!')}
 
-  // TODO: Integrate with actual printer library
-  return new Promise((resolve) => {
-    setTimeout(resolve, 1000);
-  });
+${centerText(new Date().toLocaleString())}
+
+${dividerLine('=')}
+\n\n\n`;
+
+  console.log('[PrintService] Printing test page');
+
+  if (!BLEPrinter || !printerConnected) {
+    console.warn('[PrintService] No printer connected');
+    console.log(testText);
+    return false;
+  }
+
+  try {
+    await BLEPrinter.printText(testText, {});
+    console.log('[PrintService] Test print successful!');
+    return true;
+  } catch (error) {
+    console.error('[PrintService] Test print failed:', error);
+    return false;
+  }
 };
 
-/**
- * Discover available printers
- */
-export const discoverPrinters = async (): Promise<string[]> => {
-  // TODO: Implement printer discovery
-  // This would typically scan for USB and Bluetooth printers
-
-  console.log('Discovering printers...');
-
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([]);
-    }, 2000);
-  });
-};
-
-/**
- * Connect to a specific printer
- */
-export const connectPrinter = async (printerId: string): Promise<boolean> => {
-  // TODO: Implement printer connection
-  console.log(`Connecting to printer: ${printerId}`);
-
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(false);
-    }, 1000);
-  });
-};
+// Alias for test print
+export const printTestReceipt = printTestPage;
 
 export default {
-  printOrder,
+  // Print functions
+  printOrder,           // Legacy - prints receipt format
+  printKitchenTicket,   // 🍳 For the cook board
+  printCustomerReceipt, // 🧾 For the customer/bag
+  printBoth,            // Print both at once
   printTestPage,
+  printTestReceipt,
+  
+  // Receipt generators
   generateReceiptData,
   generateTestReceipt,
+  
+  // Printer management
   discoverPrinters,
   connectPrinter,
+  disconnectPrinter,
+  isPrinterConnected,
 };

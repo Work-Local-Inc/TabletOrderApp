@@ -1,10 +1,27 @@
+/**
+ * @deprecated DO NOT USE THIS FILE!
+ * 
+ * ⚠️⚠️⚠️ SECURITY WARNING ⚠️⚠️⚠️
+ * 
+ * This file contained a Supabase service-role key which has FULL DATABASE ACCESS.
+ * Exposing this key in a client app is a CRITICAL SECURITY VULNERABILITY.
+ * 
+ * The key has been removed. Use the REST API client instead:
+ * import { apiClient } from '../api/client';
+ * 
+ * The service-role key should be REVOKED in the Supabase dashboard
+ * once this fix is confirmed working.
+ */
+
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Supabase configuration
+// ❌ REMOVED - Service role key was exposed here
+// This key should be REVOKED in Supabase dashboard
 const SUPABASE_URL = 'https://nthpbtdjhhnwfxqsxbvy.supabase.co';
-// Using service role key for tablet app (internal use only, not public-facing)
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50aHBidGRqaGhud2Z4cXN4YnZ5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTI3MzQ4NCwiZXhwIjoyMDcwODQ5NDg0fQ.THhg9RhwfeN2B9V1SZdef0iJIeBntwd2w67p_J0ch1g';
+const SUPABASE_KEY = 'KEY_REMOVED_FOR_SECURITY';
+
+console.error('⚠️ DEPRECATED: Do not use lib/supabase.ts - use api/client.ts instead!');
 
 // Schema name for all queries
 export const SCHEMA = 'menuca_v3';

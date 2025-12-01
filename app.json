@@ -1,45 +1,39 @@
 {
   "expo": {
-    "name": "Restaurant Order Tablet",
+    "name": "TabletOrderApp",
     "slug": "TabletOrderApp",
     "version": "1.0.0",
     "orientation": "landscape",
     "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#4CAF50"
+      "backgroundColor": "#ffffff"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.TabletOrderApp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#4CAF50"
+        "backgroundColor": "#ffffff"
       },
       "package": "com.anonymous.TabletOrderApp",
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "menuca"
-            }
-          ],
-          "category": ["BROWSABLE", "DEFAULT"]
-        }
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_SCAN"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "a8b29fb9-0480-49fb-b993-b008bfb974bf"
-      }
-    },
-    "owner": "brianworklocal"
+    "plugins": []
   }
 }
