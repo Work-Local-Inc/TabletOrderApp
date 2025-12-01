@@ -117,11 +117,18 @@ const POLL_INTERVALS = [
   { value: 30000, label: '30 seconds (battery saver)' },
 ];
 
+const PRINT_TYPES = [
+  { value: 'kitchen', label: '🍳 Kitchen Ticket Only', description: 'Large text for cooks - no prices' },
+  { value: 'receipt', label: '🧾 Customer Receipt Only', description: 'Full receipt with prices' },
+  { value: 'both', label: '🖨️ Both Tickets', description: 'Print kitchen ticket + customer receipt' },
+] as const;
+
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { settings, updateSettings, logout, auth, offline } = useStore();
   const { themeMode, toggleTheme } = useTheme();
   const [showIntervalSelector, setShowIntervalSelector] = useState(false);
+  const [showPrintTypeSelector, setShowPrintTypeSelector] = useState(false);
   
   // Printer state
   const [isScanning, setIsScanning] = useState(false);
@@ -407,6 +414,46 @@ export const SettingsScreen: React.FC = () => {
                 thumbColor={settings.autoPrint ? '#fff' : '#9ca3af'}
               />
             </View>
+
+            {/* Default Print Type Selector */}
+            <TouchableOpacity
+              style={[styles.settingRowTouchable, { borderTopWidth: 1, borderTopColor: '#334155' }]}
+              onPress={() => setShowPrintTypeSelector(!showPrintTypeSelector)}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Default Print Type</Text>
+                <Text style={styles.settingDescription}>
+                  {PRINT_TYPES.find(t => t.value === settings.defaultPrintType)?.label || '🍳 Kitchen Ticket Only'}
+                </Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+            
+            {showPrintTypeSelector && (
+              <View style={styles.selectorContainer}>
+                {PRINT_TYPES.map((type) => (
+                  <TouchableOpacity
+                    key={type.value}
+                    style={[
+                      styles.selectorOption,
+                      settings.defaultPrintType === type.value && styles.selectorOptionSelected,
+                    ]}
+                    onPress={() => {
+                      updateSettings({ defaultPrintType: type.value });
+                      setShowPrintTypeSelector(false);
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.selectorOptionLabel}>{type.label}</Text>
+                      <Text style={[styles.settingDescription, { marginTop: 2 }]}>{type.description}</Text>
+                    </View>
+                    {settings.defaultPrintType === type.value && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
         </View>
 
