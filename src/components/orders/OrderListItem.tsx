@@ -108,22 +108,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   customerColumn: {
-    flex: 2,
+    minWidth: 120,
+    maxWidth: 240,
+    marginRight: 30,
   },
   customerName: {
     fontSize: 15,
     fontWeight: '500',
   },
   typeColumn: {
-    flex: 1,
+    width: 100,
+    marginRight: 30,
   },
   typeText: {
     fontSize: 14,
   },
   printedColumn: {
-    width: 70,
+    width: 85,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 20,
   },
   printedYes: {
     width: 28,
@@ -152,7 +156,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   timeColumn: {
-    width: 80,
+    width: 100,
     alignItems: 'flex-end',
   },
   timeText: {

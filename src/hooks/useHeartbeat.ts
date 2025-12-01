@@ -30,7 +30,7 @@ export const useHeartbeat = () => {
       });
 
       console.log('[Heartbeat] Response:', response.success);
-      
+
       if (response.success && response.data) {
         // Apply any config updates from server
         if (response.data.config_updates) {

@@ -18,7 +18,6 @@ interface OrderFiltersProps {
 }
 
 const FILTERS: { key: FilterStatus; label: string }[] = [
-  { key: 'all', label: 'Orders' },  // Changed from "All" to "Orders"
   { key: 'new', label: 'New' },
   { key: 'active', label: 'Active' },
   { key: 'ready', label: 'Ready' },

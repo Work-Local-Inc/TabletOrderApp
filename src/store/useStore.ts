@@ -259,47 +259,52 @@ export const useStore = create<AppStore>()(
       },
 
       updateOrderStatus: async (orderId, status) => {
+        console.log(`[Store] Updating order ${orderId} to ${status}`);
         const { offline } = get();
 
+        // ALWAYS update local state immediately (optimistic update)
+        set((state) => ({
+          orders: {
+            ...state.orders,
+            orders: state.orders.orders.map((o) =>
+              o.id === orderId ? { ...o, status } : o
+            ),
+            selectedOrder:
+              state.orders.selectedOrder?.id === orderId
+                ? { ...state.orders.selectedOrder, status }
+                : state.orders.selectedOrder,
+          },
+        }));
+        console.log(`[Store] ✓ Local state updated to ${status}`);
+
         if (!offline.isOnline) {
+          console.log(`[Store] Offline - queuing status update`);
           get().addToQueue({
             type: 'status_update',
             order_id: orderId,
             payload: { status },
           });
-          // Optimistically update local state
-          set((state) => ({
-            orders: {
-              ...state.orders,
-              orders: state.orders.orders.map((o) =>
-                o.id === orderId ? { ...o, status } : o
-              ),
-              selectedOrder:
-                state.orders.selectedOrder?.id === orderId
-                  ? { ...state.orders.selectedOrder, status }
-                  : state.orders.selectedOrder,
-            },
-          }));
           return true;
         }
 
+        // Try to update on backend
         const result = await apiClient.updateOrderStatus(orderId, status);
-        if (result.success && result.data) {
-          set((state) => ({
-            orders: {
-              ...state.orders,
-              orders: state.orders.orders.map((o) =>
-                o.id === orderId ? result.data! : o
-              ),
-              selectedOrder:
-                state.orders.selectedOrder?.id === orderId
-                  ? result.data!
-                  : state.orders.selectedOrder,
-            },
-          }));
+        console.log(`[Store] API result:`, result.success, result.error || 'OK');
+        
+        if (result.success) {
+          console.log(`[Store] ✓ Backend updated to ${status}`);
           return true;
+        } else {
+          // SHOW ERROR ON SCREEN so user can see what's wrong
+          const { Alert } = require('react-native');
+          Alert.alert(
+            'Status Update Failed',
+            `Could not update order to ${status}.\n\nError: ${result.error}\n\nOrder ID: ${orderId}`,
+            [{ text: 'OK' }]
+          );
+          console.error(`[Store] ✗ Backend update failed: ${result.error}`);
+          return false;
         }
-        return false;
       },
 
       selectOrder: (order) =>

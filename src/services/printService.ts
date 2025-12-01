@@ -433,105 +433,123 @@ const dividerLine = (char: string = '-', width: number = PAPER_WIDTH): string =>
 // 🍳 KITCHEN TICKET - For the cook board
 // ============================================
 
+// Format time only (for kitchen ticket)
+const formatTimeOnly = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
+// Format scheduled time with date
+const formatScheduledTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+};
+
 /**
- * Generate a KITCHEN TICKET for the cook
- * - Big, bold text they can read from distance
- * - Customer name prominent
- * - Items with mods/instructions
- * - NO prices (cook doesn't need them)
+ * Generate a KITCHEN TICKET (KOT) for the cook
+ * Clean, simple format optimized for readability
+ * - No prices (cook doesn't need them)
+ * - Large item names
+ * - Clear modifiers
+ * - Allergy alerts prominent
  */
 const generateKitchenTicket = (order: Order): string => {
   let text = '';
-  const W = PAPER_WIDTH;
   
-  // Big header
+  // Header
   text += dividerLine('=') + '\n';
-  text += centerText('** KITCHEN ORDER **') + '\n';
+  text += centerText('KITCHEN ORDER') + '\n';
   text += dividerLine('=') + '\n';
-  text += '\n';
   
-  // ORDER TYPE - Very prominent
-  const orderType = (order.order_type || 'PICKUP').toUpperCase();
-  text += centerText(`[ ${orderType} ]`) + '\n';
-  text += '\n';
+  // Order info
+  text += `Order #: ${order.order_number}\n`;
+  text += `Type: ${(order.order_type || 'PICKUP').toUpperCase()}\n`;
+  text += `Customer: ${order.customer?.name || 'Guest'}\n`;
+  text += `Time: ${formatTimeOnly(order.created_at)}\n`;
   
-  // CUSTOMER NAME - The most important thing
-  text += dividerLine('=') + '\n';
-  const customerName = (order.customer?.name || 'GUEST').toUpperCase();
-  text += centerText(customerName) + '\n';
-  text += dividerLine('=') + '\n';
-  text += '\n';
-  
-  // Order number and time
-  text += `Order: ${order.order_number}\n`;
-  text += `Time:  ${formatDateTime(order.created_at)}\n`;
-  text += '\n';
-  
-  // Delivery info if applicable
-  if (order.order_type === 'delivery' && order.delivery_address) {
-    text += dividerLine('-') + '\n';
-    text += centerText('DELIVER TO') + '\n';
-    text += dividerLine('-') + '\n';
-    if (order.delivery_address.street) {
-      text += `${order.delivery_address.street}\n`;
+  // Scheduled time (if future order)
+  if (order.estimated_ready_time) {
+    const orderDate = new Date(order.created_at);
+    const readyDate = new Date(order.estimated_ready_time);
+    // Only show if ready time is more than 30 mins in the future
+    if (readyDate.getTime() - orderDate.getTime() > 30 * 60 * 1000) {
+      text += '\n' + dividerLine('-') + '\n';
+      text += 'SCHEDULED FOR:\n';
+      text += formatScheduledTime(order.estimated_ready_time) + '\n';
     }
-    const cityLine = [order.delivery_address.city, order.delivery_address.postalCode].filter(Boolean).join(' ');
-    if (cityLine) {
-      text += `${cityLine}\n`;
-    }
-    text += '\n';
   }
   
-  // ITEMS TO MAKE - The main content
-  text += dividerLine('=') + '\n';
-  text += centerText('>>> MAKE THESE ITEMS <<<') + '\n';
-  text += dividerLine('=') + '\n';
-  text += '\n';
+  // Items header
+  text += '\n' + dividerLine('-') + '\n';
+  text += 'ITEM                         QTY\n';
+  text += dividerLine('-') + '\n';
   
-  (order.items || []).forEach((item, index) => {
-    // Item with quantity - make it stand out
+  // Items - BIG and clear
+  (order.items || []).forEach((item) => {
     const qty = item.quantity || 1;
-    const itemName = (item.name || 'Unknown Item').toUpperCase();
+    const itemName = item.name || 'Unknown Item';
     
-    text += `>>> ${qty}x ${itemName}\n`;
+    // Item line: QTYx ITEM NAME
+    text += `${qty}x ${itemName}\n`;
     
     // Modifiers - indented
     (item.modifiers || []).forEach((mod) => {
-      text += `    - ${mod.name}\n`;
+      text += `  - ${mod.name}\n`;
     });
     
-    // Item notes - important!
+    // Item-specific notes
     if (item.notes) {
-      text += `    ** ${item.notes} **\n`;
+      text += `  >> ${item.notes}\n`;
     }
-    
-    text += '\n';
   });
   
-  // SPECIAL INSTRUCTIONS - Can't miss these!
-  if (order.notes) {
-    text += dividerLine('!') + '\n';
-    text += centerText('!! SPECIAL INSTRUCTIONS !!') + '\n';
-    text += dividerLine('!') + '\n';
-    text += `${order.notes}\n`;
-    text += dividerLine('!') + '\n';
-    text += '\n';
+  text += '\n' + dividerLine('-') + '\n';
+  
+  // Allergy alert (if any item has allergy info or notes mention allergy)
+  const allergyKeywords = ['allergy', 'allergic', 'allergen', 'nut', 'gluten', 'dairy', 'shellfish', 'egg'];
+  const hasAllergy = order.notes && allergyKeywords.some(k => order.notes!.toLowerCase().includes(k));
+  
+  if (hasAllergy) {
+    text += 'ALLERGY ALERT:\n';
+    text += order.notes + '\n';
+    text += dividerLine('-') + '\n';
+  }
+  
+  // General notes (if not allergy-related)
+  if (order.notes && !hasAllergy) {
+    text += 'NOTES:\n';
+    text += order.notes + '\n';
+    text += dividerLine('-') + '\n';
   }
   
   // Delivery instructions
   if (order.delivery_address?.instructions) {
-    text += dividerLine('-') + '\n';
     text += 'DELIVERY NOTE:\n';
-    text += `${order.delivery_address.instructions}\n`;
+    text += order.delivery_address.instructions + '\n';
     text += dividerLine('-') + '\n';
-    text += '\n';
   }
   
-  // Footer with time
-  text += dividerLine('=') + '\n';
-  const now = new Date();
-  text += centerText(`Printed: ${now.toLocaleTimeString()}`) + '\n';
-  text += dividerLine('=') + '\n';
+  // Pack checklist for takeout/delivery
+  if (order.order_type === 'pickup' || order.order_type === 'delivery' || order.order_type === 'takeout') {
+    text += '\nPACK / CHECK:\n';
+    text += '[ ] Utensils\n';
+    text += '[ ] Napkins\n';
+    text += '[ ] Condiments\n';
+  }
+  
+  // Footer
+  text += '\n' + dividerLine('=') + '\n';
   text += '\n\n\n';
   
   return text;

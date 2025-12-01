@@ -38,37 +38,8 @@ type RootStackParamList = {
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Orders'>;
 type PrintType = 'kitchen' | 'receipt' | 'both';
 
-// Storage keys
+// Storage key for printed orders
 const PRINTED_ORDERS_KEY = '@printed_order_ids';
-
-// Track printed orders
-let printedOrderIds = new Set<string>();
-
-const loadPrintedOrderIds = async () => {
-  try {
-    const stored = await AsyncStorage.getItem(PRINTED_ORDERS_KEY);
-    if (stored) {
-      printedOrderIds = new Set(JSON.parse(stored));
-      console.log(`[PrintQueue] Loaded ${printedOrderIds.size} printed order IDs`);
-    }
-  } catch (error) {
-    console.error('[PrintQueue] Error loading printed IDs:', error);
-  }
-};
-
-const savePrintedOrderIds = async () => {
-  try {
-    await AsyncStorage.setItem(
-      PRINTED_ORDERS_KEY,
-      JSON.stringify([...printedOrderIds])
-    );
-  } catch (error) {
-    console.error('[PrintQueue] Error saving printed IDs:', error);
-  }
-};
-
-// Initialize
-loadPrintedOrderIds();
 
 export const OrdersListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -82,10 +53,57 @@ export const OrdersListScreen: React.FC = () => {
   
   // Local state
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterStatus>('all');
+  const [activeFilter, setActiveFilter] = useState<FilterStatus>('new');
   const [refreshing, setRefreshing] = useState(false);
   const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
-  const [, forceUpdate] = useState(0);
+  
+  // PRINTED ORDER TRACKING - React state so we properly wait for it to load
+  const [printedOrderIds, setPrintedOrderIds] = useState<Set<string>>(new Set());
+  const [printedIdsLoaded, setPrintedIdsLoaded] = useState(false);
+  
+  // Load printed IDs from storage on mount
+  useEffect(() => {
+    const loadPrintedIds = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(PRINTED_ORDERS_KEY);
+        if (stored) {
+          const ids = JSON.parse(stored);
+          setPrintedOrderIds(new Set(ids));
+          console.log(`[PrintQueue] ✓ Loaded ${ids.length} printed order IDs`);
+        }
+      } catch (error) {
+        console.error('[PrintQueue] Error loading:', error);
+      }
+      setPrintedIdsLoaded(true); // Mark as loaded even on error
+    };
+    loadPrintedIds();
+  }, []);
+  
+  // Save printed IDs whenever they change
+  const savePrintedIds = useCallback(async (ids: Set<string>) => {
+    try {
+      await AsyncStorage.setItem(PRINTED_ORDERS_KEY, JSON.stringify([...ids]));
+      console.log(`[PrintQueue] ✓ Saved ${ids.size} printed IDs`);
+    } catch (error) {
+      console.error('[PrintQueue] Error saving:', error);
+    }
+  }, []);
+  
+  // Mark order as printed
+  const markAsPrinted = useCallback((orderId: string) => {
+    setPrintedOrderIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(orderId);
+      savePrintedIds(newSet);
+      console.log(`[PrintQueue] 🖨️ Marked ${orderId} as printed`);
+      return newSet;
+    });
+  }, [savePrintedIds]);
+  
+  // Check if order was printed
+  const wasPrinted = useCallback((orderId: string): boolean => {
+    return printedOrderIds.has(orderId);
+  }, [printedOrderIds]);
 
   // Store state
   const {
@@ -96,7 +114,7 @@ export const OrdersListScreen: React.FC = () => {
     updateSettings,
     auth,
   } = useStore();
-  
+
   const printerConnected = settings?.printerConnected ?? false;
   const ordersList = orders?.orders || [];
   
@@ -130,10 +148,26 @@ export const OrdersListScreen: React.FC = () => {
       }
 
       if (success) {
-        printedOrderIds.add(order.id);
-        savePrintedOrderIds();
+        // MARK AS PRINTED - prevents ANY reprinting
+        markAsPrinted(order.id);
         Vibration.vibrate(100);
-        forceUpdate(n => n + 1);
+        
+        // Move to Active (preparing) status
+        if (order.status === 'pending') {
+          console.log(`[Print] ✓ Printed! Moving order #${order.order_number} to Active...`);
+          try {
+            const statusResult = await updateOrderStatus(order.id, 'preparing');
+            if (statusResult) {
+              console.log(`[Print] ✓ Order #${order.order_number} is now Active`);
+              Alert.alert('✓ Printed & Active', `Order #${order.order_number} printed and moved to Active`);
+            } else {
+              Alert.alert('⚠️ Printed but Status Failed', `Order printed but couldn't update status.\nOrder ID: ${order.id}`);
+            }
+          } catch (err: any) {
+            console.error('[Print] Failed to update status:', err);
+            Alert.alert('Status Update Error', `${err.message || err}`);
+          }
+        }
       } else {
         Alert.alert('Print Failed', 'Could not print the order. Please try again.');
       }
@@ -143,7 +177,7 @@ export const OrdersListScreen: React.FC = () => {
     } finally {
       setPrintingOrderId(null);
     }
-  }, [printerConnected, settings?.defaultPrintType]);
+  }, [printerConnected, settings?.defaultPrintType, markAsPrinted, updateOrderStatus]);
 
   // Auto-print new orders
   const autoPrintOrder = useCallback(async (order: Order) => {
@@ -153,47 +187,114 @@ export const OrdersListScreen: React.FC = () => {
     await handlePrint(order);
   }, [settings?.autoPrint, printerConnected, handlePrint]);
 
-  // Check for new orders - ONLY auto-print truly new orders (created in last 5 mins)
+  // AUTO-PRINT - Only prints NEW orders, NEVER reprints
   useEffect(() => {
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    // WAIT until printed IDs are loaded from storage
+    if (!printedIdsLoaded) {
+      console.log('[AutoPrint] Waiting for printed IDs to load...');
+      return;
+    }
     
-    // On first load, just record existing order IDs - don't print anything
+    // First load - mark all existing orders as known (don't print old orders)
     if (lastKnownOrderIds.current.size === 0 && ordersList.length > 0) {
-      console.log(`[AutoPrint] Initial load - marking ${ordersList.length} orders as known (won't auto-print)`);
+      console.log(`[AutoPrint] Initial load - ${ordersList.length} existing orders marked as known`);
       lastKnownOrderIds.current = new Set(ordersList.map(o => o.id));
       return;
     }
-
-    // Find truly NEW orders:
-    // 1. Not in our known list (just arrived)
-    // 2. Not already printed
+    
+    // Skip if auto-print disabled or no printer
+    if (!settings?.autoPrint || !printerConnected) {
+      lastKnownOrderIds.current = new Set(ordersList.map(o => o.id));
+      return;
+    }
+    
+    // Find NEW orders to print:
+    // 1. NOT already printed (check printedOrderIds first!)
+    // 2. Not in known list (just arrived)
     // 3. Status is pending
-    // 4. Created within last 5 minutes (truly fresh)
+    // 4. Created in last 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    
     const newOrders = ordersList.filter(order => {
-      const orderDate = new Date(order.created_at);
-      const isNew = !lastKnownOrderIds.current.has(order.id);
-      const notPrinted = !printedOrderIds.has(order.id);
-      const isPending = order.status === 'pending';
-      const isRecent = orderDate > fiveMinutesAgo;
-      
-      if (isNew && notPrinted && isPending) {
-        console.log(`[AutoPrint] Order #${order.order_number}: recent=${isRecent}, created=${order.created_at}`);
+      // MOST IMPORTANT: Skip if already printed
+      if (printedOrderIds.has(order.id)) {
+        return false;
       }
       
-      return isNew && notPrinted && isPending && isRecent;
+      const isNewToSession = !lastKnownOrderIds.current.has(order.id);
+      const isPending = order.status === 'pending';
+      const isRecent = new Date(order.created_at) > fiveMinutesAgo;
+      
+      return isNewToSession && isPending && isRecent;
     });
-
+    
     if (newOrders.length > 0) {
       console.log(`[AutoPrint] 🆕 ${newOrders.length} NEW orders to print!`);
       Vibration.vibrate([0, 500, 200, 500]);
+      
+      // Print each order with delay
       newOrders.forEach((order, index) => {
-        setTimeout(() => autoPrintOrder(order), index * 2000);
+        setTimeout(() => {
+          // Double-check not printed before actually printing
+          if (!printedOrderIds.has(order.id)) {
+            autoPrintOrder(order);
+          }
+        }, index * 2000);
       });
     }
-
+    
     // Update known orders
     lastKnownOrderIds.current = new Set(ordersList.map(o => o.id));
-  }, [ordersList, autoPrintOrder]);
+  }, [ordersList, printedIdsLoaded, printedOrderIds, settings?.autoPrint, printerConnected, autoPrintOrder]);
+
+  // Sync printed orders to Active status on load
+  // Direct: pending → preparing (backend now allows this)
+  useEffect(() => {
+    // Wait for printed IDs to load
+    if (!printedIdsLoaded) return;
+    
+    const syncPrintedOrdersToActive = async () => {
+      console.log(`[Sync] Checking ${ordersList.length} orders, ${printedOrderIds.size} printed IDs`);
+      
+      const printedButPending = ordersList.filter(
+        order => printedOrderIds.has(order.id) && order.status === 'pending'
+      );
+      
+      if (printedButPending.length > 0) {
+        console.log(`[Sync] 🔄 Moving ${printedButPending.length} printed orders to Active...`);
+        for (const order of printedButPending) {
+          try {
+            console.log(`[Sync] → Order #${order.order_number} to preparing...`);
+            await updateOrderStatus(order.id, 'preparing');
+            console.log(`[Sync] ✓ Done`);
+          } catch (err) {
+            console.error(`[Sync] ✗ Failed:`, err);
+          }
+        }
+        // Refresh after sync
+        setTimeout(() => fetchOrders(), 500);
+      }
+    };
+    
+    if (ordersList.length > 0 && printedOrderIds.size > 0) {
+      syncPrintedOrdersToActive();
+    }
+  }, [ordersList.length, printedIdsLoaded, printedOrderIds, updateOrderStatus, fetchOrders]);
+
+  // Auto-select the most recent order on load
+  useEffect(() => {
+    if (ordersList.length > 0 && !selectedOrderId) {
+      // Sort by created_at descending and select the newest
+      const sortedOrders = [...ordersList].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      const newestOrder = sortedOrders[0];
+      if (newestOrder) {
+        console.log(`[AutoSelect] Opening most recent order #${newestOrder.order_number}`);
+        setSelectedOrderId(newestOrder.id);
+      }
+    }
+  }, [ordersList.length]); // Only run when order count changes
 
   // Auto-reconnect printer
   useEffect(() => {
@@ -220,9 +321,9 @@ export const OrdersListScreen: React.FC = () => {
   useFocusEffect(
     useCallback(() => {
       fetchOrders();
-      
+
       pollIntervalRef.current = setInterval(() => {
-        fetchOrders();
+          fetchOrders();
       }, settings?.pollIntervalMs || 5000);
 
       return () => {
@@ -250,12 +351,10 @@ export const OrdersListScreen: React.FC = () => {
     }
   }, [updateOrderStatus]);
 
-  // Mark as printed callback
+  // Mark as printed callback (used by detail panel)
   const handlePrinted = useCallback((orderId: string) => {
-    printedOrderIds.add(orderId);
-    savePrintedOrderIds();
-    forceUpdate(n => n + 1);
-  }, []);
+    markAsPrinted(orderId);
+  }, [markAsPrinted]);
 
   // Filter orders
   const getFilteredOrders = useCallback(() => {
@@ -322,15 +421,15 @@ export const OrdersListScreen: React.FC = () => {
           <Text style={styles.printerBadgeText}>
             {printerConnected ? '🖨️ Connected' : '⚠️ No Printer'}
           </Text>
-        </View>
+            </View>
         <View style={styles.headerSpacer} />
-        <TouchableOpacity
+          <TouchableOpacity
           style={[styles.settingsButton, { backgroundColor: theme.surface }]}
-          onPress={() => navigation.navigate('Settings')}
-        >
-          <Text style={styles.settingsIcon}>⚙️</Text>
-        </TouchableOpacity>
-      </View>
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Text style={styles.settingsIcon}>⚙️</Text>
+          </TouchableOpacity>
+        </View>
 
       {/* Main Content */}
       <View style={styles.content}>
@@ -349,26 +448,26 @@ export const OrdersListScreen: React.FC = () => {
             <Text style={[styles.tableHeaderText, styles.typeCol, { color: theme.textMuted }]}>Type</Text>
             <Text style={[styles.tableHeaderText, styles.printedCol, { color: theme.textMuted }]}>Printed</Text>
             <Text style={[styles.tableHeaderText, styles.timeCol, { color: theme.textMuted }]}>Time</Text>
-          </View>
+      </View>
 
           {orders?.isLoading && ordersList.length === 0 ? (
-            <View style={styles.loadingContainer}>
+        <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={theme.primary} />
               <Text style={[styles.loadingText, dynamicStyles.headerSubtext]}>
                 Loading orders...
               </Text>
-            </View>
+        </View>
           ) : filteredOrders.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyIcon}>📋</Text>
               <Text style={[styles.emptyText, dynamicStyles.headerSubtext]}>
                 No orders found
               </Text>
-            </View>
+        </View>
           ) : (
-            <FlatList
+          <FlatList
               data={filteredOrders}
-              keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <OrderListItem
                   order={item}
@@ -377,32 +476,32 @@ export const OrdersListScreen: React.FC = () => {
                   onPress={() => setSelectedOrderId(item.id)}
                 />
               )}
-              refreshControl={
-                <RefreshControl
+            refreshControl={
+              <RefreshControl
                   refreshing={refreshing}
-                  onRefresh={handleRefresh}
+                onRefresh={handleRefresh}
                   tintColor={theme.primary}
                 />
               }
-              contentContainerStyle={styles.listContent}
+            contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
             />
           )}
         </View>
-
-        {/* Detail Panel - Overlay when order selected */}
-        {selectedOrder && (
-          <View style={[styles.detailOverlay, dynamicStyles.detailColumn]}>
-            <OrderDetailPanel
-              order={selectedOrder}
-              onStatusChange={handleStatusChange}
-              onPrinted={handlePrinted}
-              onClose={() => setSelectedOrderId(null)}
-              printerConnected={printerConnected}
-            />
-          </View>
-        )}
       </View>
+
+      {/* Detail Panel - Full height overlay when order selected */}
+      {selectedOrder && (
+        <View style={[styles.detailOverlay, dynamicStyles.detailColumn]}>
+          <OrderDetailPanel
+            order={selectedOrder}
+            onStatusChange={handleStatusChange}
+            onPrinted={handlePrinted}
+            onClose={() => setSelectedOrderId(null)}
+            printerConnected={printerConnected}
+          />
+        </View>
+      )}
     </View>
   );
 };
@@ -481,17 +580,21 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   customerCol: {
-    flex: 2,
+    minWidth: 120,
+    maxWidth: 240,
+    marginRight: 30,
   },
   typeCol: {
-    flex: 1,
+    width: 100,
+    marginRight: 30,
   },
   printedCol: {
-    width: 70,
+    width: 85,
     textAlign: 'center',
+    marginRight: 20,
   },
   timeCol: {
-    width: 80,
+    width: 100,
     textAlign: 'right',
   },
   listContent: {
@@ -505,9 +608,10 @@ const styles = StyleSheet.create({
     width: '45%',  // 45% of screen as overlay
     shadowColor: '#000',
     shadowOffset: { width: -4, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 10,
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 15,
+    zIndex: 100,
   },
   loadingContainer: {
     flex: 1,

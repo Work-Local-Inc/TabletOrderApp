@@ -330,13 +330,30 @@ class ApiClient {
     status: OrderStatus
   ): Promise<ApiResponse<Order>> {
     try {
-      const response = await this.client.patch<ApiResponse<Order>>(
+      console.log(`[API] Updating order ${orderId} to status: ${status}`);
+      const response = await this.client.patch<any>(
         `/api/tablet/orders/${orderId}/status`,
         { status }
       );
-      return response.data;
+      
+      console.log('[API] Status update response:', JSON.stringify(response.data));
+      
+      // Backend returns { success: true, order: {...}, status_history: [...] }
+      if (response.data?.success) {
+        return {
+          success: true,
+          data: response.data.order,
+        };
+      }
+      
+      return {
+        success: false,
+        error: response.data?.error || 'Unknown error',
+      };
     } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse<never>>;
+      const axiosError = error as AxiosError<any>;
+      console.error('[API] Status update FAILED:', axiosError.message);
+      console.error('[API] Response:', axiosError.response?.data);
       return {
         success: false,
         error: axiosError.response?.data?.error || 'Failed to update order status',
