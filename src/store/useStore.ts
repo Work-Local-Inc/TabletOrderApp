@@ -154,9 +154,11 @@ export const useStore = create<AppStore>()(
 
       fetchOrders: async () => {
         const { orders: currentState, offline } = get();
+        console.log('[Store] fetchOrders called, isOnline:', offline.isOnline);
 
         // Don't fetch if offline
         if (!offline.isOnline) {
+          console.log('[Store] Skipping fetch - offline');
           return;
         }
 
@@ -164,10 +166,9 @@ export const useStore = create<AppStore>()(
           orders: { ...state.orders, isLoading: true, error: null },
         }));
 
-        const result = await apiClient.getOrders({
-          // Fetch orders from last hour if we have a lastFetchTime
-          since: currentState.lastFetchTime || undefined,
-        });
+        console.log('[Store] Fetching orders from API...');
+        const result = await apiClient.getOrders({});
+        console.log('[Store] API result:', result.success, 'orders:', result.data?.orders?.length || 0);
 
         if (result.success && result.data) {
           const existingOrders = currentState.orders;

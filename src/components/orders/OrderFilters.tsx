@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTheme } from '../../theme';
 
 export type FilterStatus = 'all' | 'new' | 'active' | 'ready' | 'completed';
 
 interface OrderFiltersProps {
   selectedFilter: FilterStatus;
   onFilterChange: (filter: FilterStatus) => void;
+  onRefresh?: () => void;
   counts: {
     all: number;
     new: number;
@@ -16,7 +18,7 @@ interface OrderFiltersProps {
 }
 
 const FILTERS: { key: FilterStatus; label: string }[] = [
-  { key: 'all', label: 'All' },
+  { key: 'all', label: 'Orders' },  // Changed from "All" to "Orders"
   { key: 'new', label: 'New' },
   { key: 'active', label: 'Active' },
   { key: 'ready', label: 'Ready' },
@@ -26,10 +28,22 @@ const FILTERS: { key: FilterStatus; label: string }[] = [
 export const OrderFilters: React.FC<OrderFiltersProps> = ({
   selectedFilter,
   onFilterChange,
+  onRefresh,
   counts,
 }) => {
+  const { theme, themeMode } = useTheme();
+  
+  const colors = {
+    bg: themeMode === 'dark' ? '#16213e' : '#ffffff',
+    text: themeMode === 'dark' ? '#94a3b8' : '#64748b',
+    textActive: themeMode === 'dark' ? '#ffffff' : '#1e293b',
+    underline: '#3b82f6',
+    border: themeMode === 'dark' ? '#334155' : '#e2e8f0',
+    refreshBg: themeMode === 'dark' ? '#1e293b' : '#f1f5f9',
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { borderBottomColor: colors.border, backgroundColor: colors.bg }]}>
       {FILTERS.map((filter) => {
         const isSelected = selectedFilter === filter.key;
         const count = counts[filter.key];
@@ -37,35 +51,36 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
         return (
           <TouchableOpacity
             key={filter.key}
-            style={[
-              styles.filterButton,
-              isSelected && styles.filterButtonSelected,
-            ]}
+            style={styles.filterButton}
             onPress={() => onFilterChange(filter.key)}
           >
             <Text style={[
               styles.filterLabel,
-              isSelected && styles.filterLabelSelected,
+              { color: isSelected ? colors.textActive : colors.text },
+              isSelected && styles.filterLabelActive,
             ]}>
               {filter.label}
+              {count > 0 && (
+                <Text style={styles.countText}> ({count})</Text>
+              )}
             </Text>
-            {count > 0 && (
-              <View style={[
-                styles.badge,
-                isSelected && styles.badgeSelected,
-                filter.key === 'new' && count > 0 && styles.badgeNew,
-              ]}>
-                <Text style={[
-                  styles.badgeText,
-                  isSelected && styles.badgeTextSelected,
-                ]}>
-                  {count}
-                </Text>
-              </View>
+            {isSelected && (
+              <View style={[styles.underline, { backgroundColor: colors.underline }]} />
             )}
           </TouchableOpacity>
         );
       })}
+      
+      {/* Refresh button at the end */}
+      <View style={styles.spacer} />
+      {onRefresh && (
+        <TouchableOpacity 
+          style={[styles.refreshButton, { backgroundColor: colors.refreshBg }]} 
+          onPress={onRefresh}
+        >
+          <Text style={styles.refreshIcon}>🔄</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -73,55 +88,49 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#0f172a',
-    padding: 6,
-    borderRadius: 12,
-    marginBottom: 12,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
   },
   filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
+    paddingTop: 8,
+    paddingBottom: 10,
     paddingHorizontal: 14,
-    borderRadius: 8,
-    marginHorizontal: 2,
-  },
-  filterButtonSelected: {
-    backgroundColor: '#1e293b',
+    position: 'relative',
   },
   filterLabel: {
-    fontSize: 14,
-    color: '#64748b',
+    fontSize: 15,
     fontWeight: '500',
   },
-  filterLabelSelected: {
-    color: '#fff',
+  filterLabelActive: {
     fontWeight: '600',
   },
-  badge: {
-    backgroundColor: '#334155',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginLeft: 6,
-    minWidth: 24,
+  countText: {
+    fontWeight: '400',
+  },
+  underline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 14,
+    right: 14,
+    height: 2,
+    borderRadius: 1,
+  },
+  spacer: {
+    flex: 1,
+  },
+  refreshButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  badgeSelected: {
-    backgroundColor: '#475569',
-  },
-  badgeNew: {
-    backgroundColor: '#3b82f6',
-  },
-  badgeText: {
-    fontSize: 12,
-    color: '#94a3b8',
-    fontWeight: '600',
-  },
-  badgeTextSelected: {
-    color: '#fff',
+  refreshIcon: {
+    fontSize: 18,
   },
 });
 
 export default OrderFilters;
-

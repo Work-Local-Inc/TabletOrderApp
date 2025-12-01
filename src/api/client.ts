@@ -234,13 +234,60 @@ class ApiClient {
     limit?: number;
   }): Promise<ApiResponse<OrdersListResponse>> {
     try {
-      const response = await this.client.get<ApiResponse<OrdersListResponse>>(
+      const response = await this.client.get<any>(
         '/api/tablet/orders',
         { params }
       );
-      return response.data;
+      
+      console.log('[API] Raw orders response:', JSON.stringify(response.data).substring(0, 200));
+      
+      // Backend returns { orders: [], total_count, ... } directly, not wrapped in { success, data }
+      const rawData = response.data;
+      
+      if (rawData && Array.isArray(rawData.orders)) {
+        // Transform orders to match our internal format
+        const transformedOrders = rawData.orders.map((order: any) => ({
+          id: order.id?.toString() || '',
+          order_number: order.order_number || '',
+          status: order.order_status || order.status || 'pending',
+          order_type: order.order_type || 'pickup',
+          created_at: order.created_at || new Date().toISOString(),
+          customer: order.customer || {},
+          items: (order.items || []).map((item: any) => ({
+            name: item.name || '',
+            quantity: item.quantity || 1,
+            price: item.unit_price || item.price || 0,
+            notes: item.special_instructions || item.notes || '',
+            modifiers: item.modifiers || [],
+          })),
+          subtotal: order.subtotal || 0,
+          tax: order.tax_amount || order.tax || 0,
+          delivery_fee: order.delivery_fee || 0,
+          tip: order.tip_amount || order.tip || 0,
+          total: order.total_amount || order.total || 0,
+          notes: order.notes || '',
+          delivery_address: order.delivery_address,
+          estimated_ready_time: order.estimated_ready_time,
+        }));
+        
+        console.log('[API] Transformed', transformedOrders.length, 'orders');
+        
+        return {
+          success: true,
+          data: {
+            orders: transformedOrders,
+            total: rawData.total_count || transformedOrders.length,
+          },
+        };
+      }
+      
+      return {
+        success: true,
+        data: { orders: [], total: 0 },
+      };
     } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse<never>>;
+      const axiosError = error as AxiosError<any>;
+      console.error('[API] getOrders error:', axiosError.message, axiosError.response?.data);
       return {
         success: false,
         error: axiosError.response?.data?.error || 'Failed to fetch orders',
@@ -301,13 +348,23 @@ class ApiClient {
 
   async sendHeartbeat(payload: HeartbeatPayload): Promise<ApiResponse<HeartbeatResponse>> {
     try {
-      const response = await this.client.post<ApiResponse<HeartbeatResponse>>(
+      console.log('[API] Sending heartbeat...');
+      const response = await this.client.post<any>(
         '/api/tablet/heartbeat',
         payload
       );
-      return response.data;
+      
+      // Backend may return data directly, not wrapped
+      const data = response.data;
+      console.log('[API] Heartbeat response:', data);
+      
+      return {
+        success: true,
+        data: data,
+      };
     } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse<never>>;
+      const axiosError = error as AxiosError<any>;
+      console.error('[API] Heartbeat error:', axiosError.message);
       return {
         success: false,
         error: axiosError.response?.data?.error || 'Failed to send heartbeat',

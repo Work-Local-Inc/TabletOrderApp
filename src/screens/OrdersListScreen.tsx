@@ -10,7 +10,9 @@ import {
   Alert,
   Vibration,
   Image,
+  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -25,6 +27,7 @@ import {
 } from '../services/printService';
 import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus } from '../components/orders';
 import { useTheme } from '../theme';
+import { useHeartbeat } from '../hooks';
 
 type RootStackParamList = {
   Orders: undefined;
@@ -70,8 +73,12 @@ loadPrintedOrderIds();
 export const OrdersListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { theme, themeMode } = useTheme();
+  const insets = useSafeAreaInsets();
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastKnownOrderIds = useRef<Set<string>>(new Set());
+  
+  // Start heartbeat to keep device online in dashboard
+  useHeartbeat();
   
   // Local state
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -146,27 +153,45 @@ export const OrdersListScreen: React.FC = () => {
     await handlePrint(order);
   }, [settings?.autoPrint, printerConnected, handlePrint]);
 
-  // Check for new orders
+  // Check for new orders - ONLY auto-print truly new orders (created in last 5 mins)
   useEffect(() => {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    
+    // On first load, just record existing order IDs - don't print anything
     if (lastKnownOrderIds.current.size === 0 && ordersList.length > 0) {
+      console.log(`[AutoPrint] Initial load - marking ${ordersList.length} orders as known (won't auto-print)`);
       lastKnownOrderIds.current = new Set(ordersList.map(o => o.id));
       return;
     }
 
-    const newOrders = ordersList.filter(order =>
-      !lastKnownOrderIds.current.has(order.id) &&
-      !printedOrderIds.has(order.id) &&
-      order.status === 'pending'
-    );
+    // Find truly NEW orders:
+    // 1. Not in our known list (just arrived)
+    // 2. Not already printed
+    // 3. Status is pending
+    // 4. Created within last 5 minutes (truly fresh)
+    const newOrders = ordersList.filter(order => {
+      const orderDate = new Date(order.created_at);
+      const isNew = !lastKnownOrderIds.current.has(order.id);
+      const notPrinted = !printedOrderIds.has(order.id);
+      const isPending = order.status === 'pending';
+      const isRecent = orderDate > fiveMinutesAgo;
+      
+      if (isNew && notPrinted && isPending) {
+        console.log(`[AutoPrint] Order #${order.order_number}: recent=${isRecent}, created=${order.created_at}`);
+      }
+      
+      return isNew && notPrinted && isPending && isRecent;
+    });
 
     if (newOrders.length > 0) {
-      console.log(`[NewOrders] Found ${newOrders.length} new orders!`);
+      console.log(`[AutoPrint] 🆕 ${newOrders.length} NEW orders to print!`);
       Vibration.vibrate([0, 500, 200, 500]);
       newOrders.forEach((order, index) => {
         setTimeout(() => autoPrintOrder(order), index * 2000);
       });
     }
 
+    // Update known orders
     lastKnownOrderIds.current = new Set(ordersList.map(o => o.id));
   }, [ordersList, autoPrintOrder]);
 
@@ -262,64 +287,69 @@ export const OrdersListScreen: React.FC = () => {
   // Dynamic styles based on theme
   const dynamicStyles = {
     container: { backgroundColor: theme.background },
-    header: { backgroundColor: theme.headerBg, borderBottomColor: theme.headerBorder },
+    header: { 
+      backgroundColor: themeMode === 'dark' ? '#0f172a' : '#ffffff',
+      borderBottomColor: themeMode === 'dark' ? '#1e293b' : '#e2e8f0',
+    },
     headerText: { color: theme.text },
     headerSubtext: { color: theme.textSecondary },
     listColumn: { backgroundColor: theme.surface, borderRightColor: theme.cardBorder },
-    detailColumn: { backgroundColor: theme.background },
-    printerBadge: { backgroundColor: printerConnected ? theme.success : theme.danger },
+    detailColumn: { backgroundColor: themeMode === 'dark' ? '#1a1a2e' : '#ffffff' },
+    printerBadge: { backgroundColor: printerConnected ? '#22c55e' : '#ef4444' },
   };
+
+  // Top spacing to separate from Samsung status bar
+  const topPadding = Math.max(insets.top, 8);
 
   return (
     <View style={[styles.container, dynamicStyles.container]}>
-      {/* Header */}
+      {/* Spacer bar to separate from Samsung status bar */}
+      <View style={[styles.statusBarSpacer, { height: topPadding, backgroundColor: themeMode === 'dark' ? '#0a0f1a' : '#f1f5f9' }]} />
+      
+      {/* Header - Single Horizontal Line */}
       <View style={[styles.header, dynamicStyles.header]}>
-        <View style={styles.headerLeft}>
+        <View style={styles.logoContainer}>
           <Image 
             source={require('../../assets/logo.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
-          <View style={styles.headerInfo}>
-            <Text style={[styles.headerTitle, dynamicStyles.headerText]}>
-              {auth?.restaurantName || 'Kitchen Printer'}
-            </Text>
-            <View style={styles.statusRow}>
-              <View style={[styles.printerBadge, dynamicStyles.printerBadge]}>
-                <Text style={styles.printerBadgeText}>
-                  {printerConnected ? '🖨️ Connected' : '⚠️ No Printer'}
-                </Text>
-              </View>
-            </View>
-          </View>
         </View>
-        
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => navigation.navigate('Settings')}
-          >
-            <Text style={styles.settingsIcon}>⚙️</Text>
-          </TouchableOpacity>
+        <Text style={[styles.headerTitle, dynamicStyles.headerText]}>
+          {auth?.restaurantName || 'Kitchen Printer'}
+        </Text>
+        <View style={[styles.printerBadge, dynamicStyles.printerBadge]}>
+          <Text style={styles.printerBadgeText}>
+            {printerConnected ? '🖨️ Connected' : '⚠️ No Printer'}
+          </Text>
         </View>
+        <View style={styles.headerSpacer} />
+        <TouchableOpacity
+          style={[styles.settingsButton, { backgroundColor: theme.surface }]}
+          onPress={() => navigation.navigate('Settings')}
+        >
+          <Text style={styles.settingsIcon}>⚙️</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Main Content - Split View */}
+      {/* Main Content */}
       <View style={styles.content}>
-        {/* Order List Column */}
-        <View style={[styles.listColumn, dynamicStyles.listColumn]}>
-          <View style={styles.listHeader}>
-            <Text style={[styles.listTitle, dynamicStyles.headerText]}>Orders</Text>
-            <TouchableOpacity onPress={handleRefresh}>
-              <Text style={styles.refreshIcon}>🔄</Text>
-            </TouchableOpacity>
-          </View>
-          
+        {/* Order List Column - Full width when no order selected */}
+        <View style={[styles.listColumn, dynamicStyles.listColumn, !selectedOrder && styles.listColumnFull]}>
           <OrderFilters
             selectedFilter={activeFilter}
             onFilterChange={setActiveFilter}
+            onRefresh={handleRefresh}
             counts={counts}
           />
+
+          {/* Table Header */}
+          <View style={[styles.tableHeader, { borderBottomColor: theme.cardBorder }]}>
+            <Text style={[styles.tableHeaderText, styles.customerCol, { color: theme.textMuted }]}>Customer</Text>
+            <Text style={[styles.tableHeaderText, styles.typeCol, { color: theme.textMuted }]}>Type</Text>
+            <Text style={[styles.tableHeaderText, styles.printedCol, { color: theme.textMuted }]}>Printed</Text>
+            <Text style={[styles.tableHeaderText, styles.timeCol, { color: theme.textMuted }]}>Time</Text>
+          </View>
 
           {orders?.isLoading && ordersList.length === 0 ? (
             <View style={styles.loadingContainer}>
@@ -360,15 +390,18 @@ export const OrdersListScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Detail Column */}
-        <View style={[styles.detailColumn, dynamicStyles.detailColumn]}>
-          <OrderDetailPanel
-            order={selectedOrder}
-            onStatusChange={handleStatusChange}
-            onPrinted={handlePrinted}
-            printerConnected={printerConnected}
-          />
-        </View>
+        {/* Detail Panel - Overlay when order selected */}
+        {selectedOrder && (
+          <View style={[styles.detailOverlay, dynamicStyles.detailColumn]}>
+            <OrderDetailPanel
+              order={selectedOrder}
+              onStatusChange={handleStatusChange}
+              onPrinted={handlePrinted}
+              onClose={() => setSelectedOrderId(null)}
+              printerConnected={printerConnected}
+            />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -378,54 +411,47 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  statusBarSpacer: {
+    width: '100%',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 2,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 0,
+    gap: 16,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+  logoContainer: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   logo: {
-    width: 50,
-    height: 50,
-    marginRight: 15,
-  },
-  headerInfo: {
-    flex: 1,
+    width: 70,
+    height: 28,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   printerBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   printerBadgeText: {
     color: '#fff',
     fontSize: 13,
     fontWeight: '600',
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  headerSpacer: {
+    flex: 1,
   },
   settingsButton: {
     padding: 10,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 10,
   },
   settingsIcon: {
@@ -436,30 +462,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   listColumn: {
-    flex: 2,
+    flex: 55,  // 55% when order selected
     borderRightWidth: 1,
-    paddingTop: 16,
+    paddingTop: 0,
   },
-  listHeader: {
+  listColumnFull: {
+    flex: 1,  // Full width when no order selected
+    borderRightWidth: 0,
+  },
+  tableHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingVertical: 10,
     paddingHorizontal: 16,
-    marginBottom: 12,
+    borderBottomWidth: 1,
   },
-  listTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  tableHeaderText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
-  refreshIcon: {
-    fontSize: 20,
+  customerCol: {
+    flex: 2,
+  },
+  typeCol: {
+    flex: 1,
+  },
+  printedCol: {
+    width: 70,
+    textAlign: 'center',
+  },
+  timeCol: {
+    width: 80,
+    textAlign: 'right',
   },
   listContent: {
-    paddingHorizontal: 12,
     paddingBottom: 20,
   },
-  detailColumn: {
-    flex: 3,
+  detailOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: '45%',  // 45% of screen as overlay
+    shadowColor: '#000',
+    shadowOffset: { width: -4, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
   },
   loadingContainer: {
     flex: 1,

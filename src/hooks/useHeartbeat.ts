@@ -17,16 +17,20 @@ export const useHeartbeat = () => {
 
   const sendHeartbeat = useCallback(async () => {
     if (!auth.isAuthenticated || !offline.isOnline) {
+      console.log('[Heartbeat] Skipping - not authenticated or offline');
       return;
     }
 
+    console.log('[Heartbeat] Sending heartbeat...');
     try {
       const response = await apiClient.sendHeartbeat({
         app_version: APP_VERSION,
-        printer_status: settings.printerConnected ? 'connected' : 'disconnected',
-        last_order_received: lastHeartbeatRef.current || undefined,
+        battery_level: 100, // TODO: Get actual battery level
+        printer_status: settings.printerConnected ? 'online' : 'offline',
       });
 
+      console.log('[Heartbeat] Response:', response.success);
+      
       if (response.success && response.data) {
         // Apply any config updates from server
         if (response.data.config_updates) {
@@ -39,7 +43,7 @@ export const useHeartbeat = () => {
         }
       }
     } catch (error) {
-      console.error('Heartbeat failed:', error);
+      console.error('[Heartbeat] Failed:', error);
     }
   }, [auth.isAuthenticated, offline.isOnline, settings, updateSettings]);
 

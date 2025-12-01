@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Order } from '../../types';
-import { StatusBadge } from './StatusBadge';
+import { useTheme } from '../../theme';
 
 interface OrderListItemProps {
   order: Order;
@@ -19,12 +19,13 @@ const formatTime = (dateString: string): string => {
   });
 };
 
-const getOrderTypeIcon = (type: string): string => {
+const getOrderTypeLabel = (type: string): string => {
   switch (type?.toLowerCase()) {
-    case 'delivery': return '🚗';
-    case 'dine_in': return '🍽️';
+    case 'delivery': return 'Delivery';
+    case 'dine_in': return 'Dine-in';
     case 'pickup':
-    default: return '🛍️';
+    case 'takeout':
+    default: return 'Pickup';
   }
 };
 
@@ -34,58 +35,66 @@ export const OrderListItem: React.FC<OrderListItemProps> = ({
   isPrinted,
   onPress,
 }) => {
-  const customerName = order.customer?.name || 'Walk-in Customer';
-  const itemCount = order.items?.length || 0;
-  const orderType = order.order_type || order.order_type || 'pickup';
-  const typeIcon = getOrderTypeIcon(orderType);
+  const { theme, themeMode } = useTheme();
+  const customerName = order.customer?.name || 'Walk-in';
+  const orderType = order.order_type || 'pickup';
+  
+  const colors = {
+    bg: themeMode === 'dark' ? '#1e293b' : '#ffffff',
+    bgSelected: themeMode === 'dark' ? '#1e3a5f' : '#eff6ff',
+    text: theme.text,
+    textSecondary: theme.textSecondary,
+    textMuted: theme.textMuted,
+    border: themeMode === 'dark' ? '#334155' : '#e2e8f0',
+  };
   
   return (
     <TouchableOpacity
       style={[
         styles.container,
-        isSelected && styles.containerSelected,
+        { backgroundColor: isSelected ? colors.bgSelected : colors.bg, borderBottomColor: colors.border },
       ]}
       onPress={onPress}
       activeOpacity={0.7}
     >
-      {/* Left: Status indicator */}
-      <View style={styles.statusColumn}>
-        {!isPrinted && order.status === 'pending' && (
-          <View style={styles.newDot} />
-        )}
-        {isPrinted && (
-          <Text style={styles.printedCheck}>✓</Text>
+      {/* Customer Column */}
+      <View style={styles.customerColumn}>
+        <Text style={[styles.customerName, { color: colors.text }]} numberOfLines={1}>
+          {customerName}
+        </Text>
+      </View>
+      
+      {/* Type Column */}
+      <View style={styles.typeColumn}>
+        <Text style={[styles.typeText, { color: colors.textSecondary }]}>
+          {getOrderTypeLabel(orderType)}
+        </Text>
+      </View>
+      
+      {/* Printed Column - Green checkmark or Red circle */}
+      <View style={styles.printedColumn}>
+        {isPrinted ? (
+          <View style={styles.printedYes}>
+            <Text style={styles.printedYesText}>✓</Text>
+          </View>
+        ) : (
+          <View style={styles.printedNo}>
+            <Text style={styles.printedNoText}>○</Text>
+          </View>
         )}
       </View>
       
-      {/* Middle: Order info */}
-      <View style={styles.infoColumn}>
-        <View style={styles.topRow}>
-          <Text style={styles.customerName} numberOfLines={1}>
-            {customerName}
-          </Text>
-          <Text style={styles.time}>{formatTime(order.created_at)}</Text>
-        </View>
-        
-        <View style={styles.bottomRow}>
-          <Text style={styles.orderMeta}>
-            {typeIcon} {orderType.replace('_', ' ')} • {itemCount} item{itemCount !== 1 ? 's' : ''}
-          </Text>
-          <Text style={styles.total}>${order.total?.toFixed(2) || '0.00'}</Text>
-        </View>
-        
-        {/* Order notes preview */}
-        {order.notes && (
-          <Text style={styles.notes} numberOfLines={1}>
-            📝 {order.notes}
-          </Text>
-        )}
+      {/* Time Column */}
+      <View style={styles.timeColumn}>
+        <Text style={[styles.timeText, { color: colors.textMuted }]}>
+          {formatTime(order.created_at)}
+        </Text>
       </View>
       
-      {/* Right: Arrow indicator */}
-      <View style={styles.arrowColumn}>
-        <Text style={[styles.arrow, isSelected && styles.arrowSelected]}>›</Text>
-      </View>
+      {/* New order indicator dot */}
+      {!isPrinted && order.status === 'pending' && (
+        <View style={styles.newIndicator} />
+      )}
     </TouchableOpacity>
   );
 };
@@ -94,88 +103,71 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    marginBottom: 8,
-    padding: 14,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
   },
-  containerSelected: {
-    borderColor: '#3b82f6',
-    backgroundColor: '#1e3a5f',
-  },
-  statusColumn: {
-    width: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  newDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#3b82f6',
-  },
-  printedCheck: {
-    fontSize: 16,
-    color: '#22c55e',
-  },
-  infoColumn: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
+  customerColumn: {
+    flex: 2,
   },
   customerName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  typeColumn: {
     flex: 1,
-    marginRight: 8,
   },
-  time: {
-    fontSize: 13,
-    color: '#94a3b8',
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  orderMeta: {
-    fontSize: 13,
-    color: '#64748b',
-    textTransform: 'capitalize',
-  },
-  total: {
+  typeText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#22c55e',
   },
-  notes: {
-    fontSize: 12,
-    color: '#fbbf24',
-    marginTop: 6,
-    fontStyle: 'italic',
-  },
-  arrowColumn: {
-    width: 24,
+  printedColumn: {
+    width: 70,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  arrow: {
-    fontSize: 24,
-    color: '#475569',
-    fontWeight: '300',
+  printedYes: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#dcfce7',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  arrowSelected: {
-    color: '#3b82f6',
+  printedYesText: {
+    color: '#16a34a',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  printedNo: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#fee2e2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  printedNoText: {
+    color: '#dc2626',
+    fontSize: 18,
+    fontWeight: '400',
+  },
+  timeColumn: {
+    width: 80,
+    alignItems: 'flex-end',
+  },
+  timeText: {
+    fontSize: 13,
+  },
+  newIndicator: {
+    position: 'absolute',
+    left: 4,
+    top: '50%',
+    marginTop: -4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#3b82f6',
   },
 });
 
 export default OrderListItem;
-
