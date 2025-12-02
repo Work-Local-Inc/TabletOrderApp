@@ -225,11 +225,19 @@ export const OrdersListScreen: React.FC = () => {
 
   // Auto-print new orders
   const autoPrintOrder = useCallback(async (order: Order) => {
-    if (!settings?.autoPrint || !printerConnected) return;
+    if (!settings?.autoPrint) {
+      console.log('[AutoPrint] Auto-print disabled');
+      return;
+    }
     
-    console.log(`[AutoPrint] Printing order #${order.order_number}...`);
+    if (!settings?.printerMacAddress) {
+      console.log('[AutoPrint] No printer configured - skipping auto-print');
+      return;
+    }
+    
+    console.log(`[AutoPrint] 🖨️ Auto-printing order #${order.order_number}...`);
     await handlePrint(order);
-  }, [settings?.autoPrint, printerConnected, handlePrint]);
+  }, [settings?.autoPrint, settings?.printerMacAddress, handlePrint]);
 
   // AUTO-PRINT - Only prints NEW orders, NEVER reprints
   useEffect(() => {

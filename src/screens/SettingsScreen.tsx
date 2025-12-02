@@ -19,7 +19,8 @@ import {
   connectPrinter, 
   disconnectPrinter, 
   isPrinterConnected,
-  printTestReceipt 
+  printTestReceipt,
+  ensureConnected,
 } from '../services/printService';
 import { useTheme } from '../theme';
 
@@ -221,7 +222,7 @@ export const SettingsScreen: React.FC = () => {
   }, [updateSettings]);
 
   const handleTestPrint = useCallback(async () => {
-    if (!settings.printerConnected) {
+    if (!settings.printerConnected || !settings.printerMacAddress) {
       Alert.alert('No Printer', 'Please connect a printer first');
       return;
     }
@@ -235,20 +236,40 @@ export const SettingsScreen: React.FC = () => {
           text: 'Print Test',
           onPress: async () => {
             try {
+              // First verify the connection is actually active
+              console.log('[Settings] 🧪 Testing printer connection...');
+              const isConnected = await ensureConnected(settings.printerMacAddress!);
+              
+              if (!isConnected) {
+                console.log('[Settings] ❌ Connection verification failed');
+                updateSettings({ printerConnected: false });
+                Alert.alert(
+                  'Connection Lost', 
+                  'Printer connection was lost. Please reconnect the printer.',
+                  [{ text: 'OK' }]
+                );
+                return;
+              }
+              
+              console.log('[Settings] ✓ Connection verified, printing test...');
               const success = await printTestReceipt();
+              
               if (success) {
-                Alert.alert('✓ Success', 'Test receipt sent to printer!');
+                Alert.alert('✓ Success', 'Test receipt printed successfully!');
               } else {
-                Alert.alert('Print Failed', 'Could not print test receipt');
+                updateSettings({ printerConnected: false });
+                Alert.alert('Print Failed', 'Could not print test receipt. The printer may have disconnected.');
               }
             } catch (error: any) {
+              console.error('[Settings] Test print error:', error);
+              updateSettings({ printerConnected: false });
               Alert.alert('Print Error', error.message || 'Unknown error');
             }
           },
         },
       ]
     );
-  }, [settings.printerConnected]);
+  }, [settings.printerConnected, settings.printerMacAddress, updateSettings]);
 
   const selectedInterval = POLL_INTERVALS.find((i) => i.value === settings.pollIntervalMs);
 
