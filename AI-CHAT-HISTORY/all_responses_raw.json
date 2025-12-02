@@ -1,0 +1,602 @@
+[
+  {
+    "unixMs": 1764614321149,
+    "generationUUID": "604ab9aa-098c-49b3-bda1-5b3cbe99faba",
+    "type": "composer",
+    "textDescription": "cool can we add more spacing to the left sid cols please now they just looks smushed to the left side , maybe start making them all 20% wider?.. the right side panel is perfect now great job on that"
+  },
+  {
+    "unixMs": 1764614444688,
+    "generationUUID": "e00f8309-bfa6-45c8-92ca-05cf49814271",
+    "type": "composer",
+    "textDescription": "nice! yeah thats super perfect. and the most recent order should display open in the right side by default yeah? does that make sence? oh wait I still see 15 New orders qued these have all printed so they are ACTIVE they shoul dnot be in New after they print are we missing the flag to tell us they have printed or somethign ? why are these orders still not active"
+  },
+  {
+    "unixMs": 1764614743480,
+    "generationUUID": "82f2633d-5463-4a80-ac25-673b16997ad0",
+    "type": "composer",
+    "textDescription": "what pending - preparing - completed makes sence it maps amost directly to what we have. New(has not printed or been aknowledged so pending) Active(Order has been aknowledged is in que to be made or is being made = preparing) Ready (order has completed its kitcehn preparation and is read for the customer to pick up or the delivery driver to take it) Completed (order is in clints hands) "
+  },
+  {
+    "unixMs": 1764614943709,
+    "generationUUID": "c7343811-9875-47d5-8fef-64b1bf683c33",
+    "type": "composer",
+    "textDescription": "fuck 15 orders just printed again not sure how that happend and they are all still in fucking NEW still nothing in active. And active means they have pritned so it should not be the same flag as ready?? new then prints = active ...active is a printed order all these fuckign orders have been oritned 4 times now they fucking damn well need to be be marked as so and not fuckignj re printed im almost out of paper lol we dotn want 15 fuckign orders printing please mark themse as active man imbegging you if hte back end says its one we can chaneg the back end we buid this we decide how it works what s the major iossue here????"
+  },
+  {
+    "unixMs": 1764615050377,
+    "generationUUID": "0be2e7b1-b266-428f-9597-9bf3e5bb6547",
+    "type": "composer",
+    "textDescription": "order prints it marked as ative and it does not reprint unless manually told to do so ok?"
+  },
+  {
+    "unixMs": 1764615054302,
+    "generationUUID": "7f515d7e-7093-49d0-8972-0964a1a57775",
+    "type": "composer",
+    "textDescription": "we dont need to disable auto print i want order to porint auto matically what neds to be disabled is AUTO reprinting we need to flag orders as printed so they do NOT REPRINT got it???? "
+  },
+  {
+    "unixMs": 1764615217666,
+    "generationUUID": "27decf69-efea-453a-a936-c5485ef23101",
+    "type": "composer",
+    "textDescription": "can we update the AI AGENTS START here documentation in our project folder. SO the next ai agent knows what we've done here whats workign well what the sticking poitns where and what the success metric is .. i want to restart cursor and i dotn want any project context being lost or delted lol also all my order still are flagged as new and not active im maully setting them to active now ok"
+  },
+  {
+    "unixMs": 1764615262422,
+    "generationUUID": "fce3438b-d4de-44fa-8807-b7284f02e73d",
+    "type": "composer",
+    "textDescription": "ok not working i mark orders as picked up and they still sit as (New) and do not get updated to complete the app is not working"
+  },
+  {
+    "unixMs": 1764615318331,
+    "generationUUID": "5ba7770c-c477-4df6-a28b-33092fc238f8",
+    "type": "composer",
+    "textDescription": "active ready and comple views are all blank and now you just printed all the fuckign mother fucking orders again you fuckign fuck and now im out of fuckign paper and ink what the fuck bro"
+  },
+  {
+    "unixMs": 1764615384171,
+    "generationUUID": "dd2d77b2-9f20-4462-9c19-f5af4acc4166",
+    "type": "composer",
+    "textDescription": "what the fuck does it matter if youy disable auto print now im out of fuckign paper and ink you fuck just fix the fuckin =ISSUHE WHY BNHOT FIX THE _FUCKIBNG ISSUE IM BEGGING YOU TO FIX NOT DISBALE THE FUCKIGN WORKIGN APP WHAT THE FUCK FIX THE PROBLEM "
+  },
+  {
+    "unixMs": 1764615404471,
+    "generationUUID": "7d3b106b-7587-4ec5-a3cc-70336b1c618d",
+    "type": "composer",
+    "textDescription": "stop disableing AUOT PRINT AND FIUC THER PROBLEM\n\n"
+  },
+  {
+    "unixMs": 1764615418050,
+    "generationUUID": "1c06b0b9-05eb-4d72-8765-4ad3f86d4c8b",
+    "type": "composer",
+    "textDescription": "Talk to me"
+  },
+  {
+    "unixMs": 1764615443395,
+    "generationUUID": "e931ad6d-15c7-4502-8e51-323b09524fc6",
+    "type": "composer",
+    "textDescription": "what are we doing to make sure an order auto prints fiorst and foremost then its marked as active??? what are we doing to fix this issue???? why are these no fuckign active orders when they keep fuckign printing"
+  },
+  {
+    "unixMs": 1764615502898,
+    "generationUUID": "97e13895-3834-422f-83a6-7d364111123e",
+    "type": "composer",
+    "textDescription": "I FUYCING KNOW THIS WER BOTH KNOW THIS YOU HAVE EXPLAINED THIS 5 times now to me \"The Problem:\n\nprintedOrderIds is loaded from storage ASYNCHRONOUSLY, but the auto-print code runs BEFORE it's loaded. So every time the app loads, the printed IDs set is EMPTY, and the app thinks ALL orders are new \u2192 prints everything.\n\nThe Fix Needed:\n\nUse React state to track when printedOrderIds is loaded, so the component WAITS before running any auto-print logic.\" BUT YO FASIL I REPEAT FAIL TO FIX IT please stop and take a step back then create an immaculatley dretailed plabn to fix the issue before jumping and rushing to code THINK FIRST "
+  },
+  {
+    "unixMs": 1764615606127,
+    "generationUUID": "43d1ae40-5a7e-48f6-aac4-de5e9b883a60",
+    "type": "composer",
+    "textDescription": "I dont knwo im not sure what the fuck it means.. in english will this fix the problem ? Ye sor now ? are we not using the database for this? would that not help what the fuck doe scompoinent side mean jusus christ you know whjat needs to happen why can you just not do it"
+  },
+  {
+    "unixMs": 1764615615608,
+    "generationUUID": "ce0dc569-273b-4430-9e18-e6f7e707417e",
+    "type": "composer",
+    "textDescription": "I dont knwo im not sure what the fuck it means.. in english will this fix the problem ? Ye sor now ? are we not using the database for this? would that not help what the fuck doe scompoinent side mean jusus christ you know whjat needs to happen why can you just not do it"
+  },
+  {
+    "unixMs": 1764615851786,
+    "generationUUID": "9512dfb2-e603-4ed0-bb45-130ad6180bcd",
+    "type": "composer",
+    "textDescription": "so all tjis back and forth and yelling and crying and smashing things in the oiffice ciould have all been avoiuded if you just shared the \"honest truth\" from the begining? mother fucker use the supabase connection MCP and use the database for the love of god all this is set out for uyou like a red carpet you just need to be honest with me ALWAYS from the get go. "
+  },
+  {
+    "unixMs": 1764616054396,
+    "generationUUID": "c70c4fbf-1894-4ca7-94b6-280b5058bb23",
+    "type": "composer",
+    "textDescription": "i see you updating them bbut they are reverting are you using supbase mcp?\n\n"
+  },
+  {
+    "unixMs": 1764616209213,
+    "generationUUID": "dec5ad0a-1a93-4063-8445-97b7d7f3aed0",
+    "type": "composer",
+    "textDescription": "ok so we decided supabase would be best for this and I told you to use mcp then you started working and you not doing whta we talked about why? this is the same shit all over again your choosing to pivot not talk to tme and we fail and I get mad , I tried to print the stupid message pops up about 20 times. Staus update failed could not update order pending. Error: Cannot transition from \"pemnding to preparing\" (we want it to be ACRTIVE anyway fuck  my life) "
+  },
+  {
+    "unixMs": 1764616398060,
+    "generationUUID": "0b98d462-d313-47e0-92ef-68c155a7fb17",
+    "type": "composer",
+    "textDescription": " Im not seeing anythign to pull in replit are you sure you pushed changes to git? or you just saying you did? Any why are you ignoring supabsae mcp when you said it would be the better route im so confused with you and your choices here. Can we please do this properly \n\n\n\n {\n\n  \"mcpServers\": {\n\n    \"supabase\": {\n\n      \"command\": \"npx\",\n\n      \"args\": [\"-y\", \"@supabase/mcp-server@latest\"],\n\n      \"env\": {\n\n        \"SUPABASE_URL\": \"https://nthpbtdjhhnwfxqsxbvy.supabase.co\",\n\n        \"SUPABASE_SERVICE_ROLE_KEY\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50aHBidGRqaGhud2Z4cXN4YnZ5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTI3MzQ4NCwiZXhwIjoyMDcwODQ5NDg0fQ.THhg9RhwfeN2B9V1SZdef0iJIeBntwd2w67p_J0ch1g\"\n\n      }\n\n    }\n\n  }\n\n}"
+  },
+  {
+    "unixMs": 1764616608769,
+    "generationUUID": "75da4302-d36d-4186-b416-bf5e94ac52c9",
+    "type": "composer",
+    "textDescription": "I do not need to restart lol you need to configure so theres no error fuck dude why you lyign spo mjuch today this si not to be difficult we have a food printing app that wont mark an order active after pritning is embarasaing"
+  },
+  {
+    "unixMs": 1764616896558,
+    "generationUUID": "b98a20a3-b81f-4822-bf94-f7a9cd7ab2db",
+    "type": "composer",
+    "textDescription": "I do not need to restart lol you need to configure so theres no error fuck dude why you lyign spo mjuch today this si not to be difficult we have a food printing app that wont mark an order active after pritning is embarasaing"
+  },
+  {
+    "unixMs": 1764617148914,
+    "generationUUID": "7f2d4b5a-6525-49c6-a41c-69e41ec34c17",
+    "type": "composer",
+    "textDescription": "nice all orders marked as active now when i try to mark them as ready or completed I get an error that it cannot update teh status did we add that to database as well or whats the deal with these we just going one issue at a time when we kmno wthe big picture?"
+  },
+  {
+    "unixMs": 1764617266171,
+    "generationUUID": "9b90d33f-2bae-4b47-92a7-8ac704a149bd",
+    "type": "composer",
+    "textDescription": "nopthing you doing is goin to git BTW? you shouod know this how do you noit kmnow this last commit ws 3 hours ago bro!!!"
+  },
+  {
+    "unixMs": 1764617379749,
+    "generationUUID": "cfa3f7bb-6ec4-4189-aba9-f6c39b0e3caf",
+    "type": "composer",
+    "textDescription": "wait why are you so quick to pivot to a new direction instead of just simply fixing the issue if you not connected to git then we connect you to git we dont just re code the entire app what is the logic in that i dont eunderstand your choiuces today would you do that to a client instead of just gettign repo access? please enlighten me?"
+  },
+  {
+    "unixMs": 1764617464475,
+    "generationUUID": "e1e54a07-7eaf-4946-9e2d-78230322cdcf",
+    "type": "composer",
+    "textDescription": "maybe you could even try talkign to me instead of rushjing back to make chamges that make no sense "
+  },
+  {
+    "unixMs": 1764617642228,
+    "generationUUID": "48442d2c-f5bb-40ce-a5d7-10502f7ecbc8",
+    "type": "composer",
+    "textDescription": "So our tablet app repo is here  https://github.com/Work-Local-Inc/TabletOrderApp  right it even has the fuckign name of what we are fuckigbn making right? And then there's the online orderign dashboard repo that has the tablet device list where we spin the auth codes and that repo is here https://github.com/Work-Local-Inc/MenuAdminDash-replit.git  do you know what one your to make changes in are you positive you making changes to the correct one?"
+  },
+  {
+    "unixMs": 1764617805617,
+    "generationUUID": "bceb12d1-5258-4085-9558-079cbf9f28ea",
+    "type": "composer",
+    "textDescription": "so whats up now?"
+  },
+  {
+    "unixMs": 1764617859470,
+    "generationUUID": "d3401179-b5e1-4e57-a641-6d8d88f6ce5b",
+    "type": "composer",
+    "textDescription": "also when i mark orders as ready it is working but complete still gives error s"
+  },
+  {
+    "unixMs": 1764618253033,
+    "generationUUID": "919933a3-c751-4d52-8c33-d4a25212c3f2",
+    "type": "composer",
+    "textDescription": "lol no theres no point in cheating and updating from the database the purpose is to make a working app so we can give it to retaurant locatiosn all 195 of them so it needs to work lol jesus dude NO CHEATING! the update is not published in replit easy peasy ok no pivot no cheating i can do it "
+  },
+  {
+    "unixMs": 1764618284903,
+    "generationUUID": "c451eb3b-8e07-4bde-a897-6b8c16acd546",
+    "type": "composer",
+    "textDescription": "rop i just told you the change hjas been publish dit done why are you telling me to do ti"
+  },
+  {
+    "unixMs": 1764618362621,
+    "generationUUID": "53fb3ce2-748e-48c6-aa41-c99def5b5c63",
+    "type": "composer",
+    "textDescription": "nope same shit nop change so i hit reload the app and now i get a whack of errors a tone of them all of them are \\u2022 errors lemme know if oy need xact details"
+  },
+  {
+    "unixMs": 1764618597570,
+    "generationUUID": "d8fd68fd-b176-4dfa-89f7-2bf45270ffca",
+    "type": "composer",
+    "textDescription": "Could not connect to dev server?  i guess we should be connecting to production server lol would that help "
+  },
+  {
+    "unixMs": 1764619153029,
+    "generationUUID": "b267400e-1aff-45dc-a944-e195e0a53576",
+    "type": "composer",
+    "textDescription": "how is everythign working 1 second then we make 1 small update and 6 different major things are brokewn how does this happen so much?"
+  },
+  {
+    "unixMs": 1764619154153,
+    "generationUUID": "9cd63fed-633d-4b77-bedb-2ecec052dcff",
+    "type": "composer",
+    "textDescription": "just printed a new order... Got an error on tablet \"Printed but status update failed\" "
+  },
+  {
+    "unixMs": 1764619322218,
+    "generationUUID": "a3c9ac75-01a3-454a-8338-a1f22870b36f",
+    "type": "composer",
+    "textDescription": "https://replit.com/t/work-local-inc/repls/MenuAdminDashboard-1#app/api/domains/%5Bid%5D/status/route.ts \n\nimport { NextRequest, NextResponse } from 'next/server'\n\nimport { verifyAdminAuth } from '@/lib/auth/admin-check'\n\nimport { AuthError } from '@/lib/errors'\n\nimport { createAdminClient } from '@/lib/supabase/admin'\n\n\n\nexport async function GET(\n\n  request: NextRequest,\n\n  { params }: { params: { id: string } }\n\n) {\n\n  try {\n\n    await verifyAdminAuth(request)\n\n\n\n    const domainId = parseInt(params.id)\n\n    if (isNaN(domainId)) {\n\n      return NextResponse.json(\n\n        { error: 'Invalid domain ID' },\n\n        { status: 400 }\n\n      )\n\n    }\n\n\n\n    const supabase = createAdminClient() as any\n\n\n\n    // Get single domain verification status\n\n    const { data, error } = await supabase.rpc('get_domain_verification_status', {\n\n      p_domain_id: domainId\n\n    })\n\n\n\n    if (error) {\n\n      console.error('[Domain Status] Error:', error)\n\n      return NextResponse.json(\n\n        { error: error.message },\n\n        { status: 500 }\n\n      )\n\n    }\n\n\n\n    if (!data || data.length === 0) {\n\n      return NextResponse.json(\n\n        { error: 'Domain not found' },\n\n        { status: 404 }\n\n      )\n\n    }\n\n\n\n    return NextResponse.json(data[0])\n\n  } catch (error: any) {\n\n    if (error instanceof AuthError) {\n\n      return NextResponse.json({ error: error.message }, { status: error.statusCode })\n\n    }\n\n    console.error('[Domain Status] Unexpected error:', error)\n\n    return NextResponse.json(\n\n      { error: error.message },\n\n      { status: 500 }\n\n    )\n\n  }\n\n}\n\n"
+  },
+  {
+    "unixMs": 1764619422397,
+    "generationUUID": "d683dc87-40e9-40d3-99ec-63d78f25f540",
+    "type": "composer",
+    "textDescription": "  if (!restaurant) {\n\n      console.warn('[Device Login] Device not assigned to restaurant:', device.id)\n\n      return NextResponse.json(\n\n        { error: 'Device not assigned to a restaurant' },\n\n        { status: 403 }\n\n      )\n\n    }\n\n\n\n    // Check if device is active\n\n    if (!device.is_active) {\n\n      console.warn('[Device Login] Device is inactive:', device.id)\n\n      return NextResponse.json(\n\n        { error: 'Device has been deactivated' },\n\n        { status: 403 }\n\n      )\n\n    }\n\n\n\n    // Check if device has a key hash (some legacy devices might not)\n\n    if (!device.device_key_hash) {\n\n      console.error('[Device Login] Device has no key hash:', device.id)\n\n      return NextResponse.json(\n\n        { error: 'Device not properly configured. Please contact support.' },\n\n        { status: 403 }\n\n      )\n\n    }\n\n\n\n    // Verify device key\n\n    // Handle bytea encoding from PostgreSQL - convert hex-encoded string to actual string\n\n    let hashToVerify = device.device_key_hash\n\n    if (hashToVerify.startsWith('\\\\x')) {\n\n      // Convert hex-encoded bytea to string\n\n      const hexString = hashToVerify.slice(2) // Remove \\x prefix\n\n      hashToVerify = Buffer.from(hexString, 'hex').toString('utf8')\n\n      console.log('[Device Login] Converted bytea hash to string')\n\n    }\n\n\n\n    console.log('[Device Login] Verifying key for device:', device.id)\n\n    console.log('[Device Login] Key length:', device_key.length)\n\n    console.log('[Device Login] Hash exists:', !!hashToVerify)\n\n    console.log('[Device Login] Hash length:', hashToVerify?.length)\n\n    console.log('[Device Login] Hash is bcrypt format:', hashToVerify?.startsWith('$2'))\n\n\n\n    const isValidKey = await verifyDeviceKey(device_key, hashToVerify)\n\n    console.log('[Device Login] Key valid:', isValidKey)\n\n\n\n    if (!isValidKey) {\n\n      console.warn('[Device Login] Invalid key for device:', device.id)\n\n      return NextResponse.json(\n\n        { error: 'Invalid credentials', code: 'INVALID_KEY' },\n\n        { status: 401 }\n\n      )\n\n    }\n\n\n\n    // Create session\n\n    const session = await createDeviceSession(device.id)\n\n\n\n    // Update last boot time\n\n    await supabase\n\n      .from('devices')\n\n      .update({ last_boot_at: new Date().toISOString() })\n\n      .eq('id', device.id)\n\n\n\n    // Get device config (or defaults)\n\n    let config = getDefaultDeviceConfig()\n\n\n\n    const { data: deviceConfig } = await supabase\n\n      .from('device_configs')\n\n      .select('*')\n\n      .eq('device_id', device.id)\n\n      .single()\n\n\n\n    if (deviceConfig) {\n\n      config = {\n\n        poll_interval_ms: deviceConfig.poll_interval_ms,\n\n        auto_print: deviceConfig.auto_print,\n\n        sound_enabled: deviceConfig.sound_enabled,\n\n        notification_tone: deviceConfig.notification_tone,\n\n        print_customer_copy: deviceConfig.print_customer_copy,\n\n        print_kitchen_copy: deviceConfig.print_kitchen_copy,\n\n      }\n\n    }\n\n\n\n    console.log(`[Device Login] Device ${device.id} logged in for restaurant ${restaurant.id}`)\n\n\n\n    return NextResponse.json({\n\n      session_token: session.session_token,\n\n      expires_at: session.expires_at,\n\n      device: {\n\n        id: device.id,\n\n        uuid: device.uuid,\n\n        name: device.device_name,\n\n        restaurant_id: restaurant.id,\n\n        restaurant_name: restaurant.name,\n\n      },\n\n      config,\n\n    })\n\n  } catch (error: any) {\n\n    console.error('[Device Login] Error:', error)\n\n    return NextResponse.json(\n\n      { error: error.message || 'Login failed' },\n\n      { status: 500 }\n\n    )\n\n  }\n\n}\n\n"
+  },
+  {
+    "unixMs": 1764619500900,
+    "generationUUID": "df10f11a-bff6-4ec0-87eb-db82a5a90836",
+    "type": "composer",
+    "textDescription": "\n\n    // Validate status transition\n\n    const validTransitions: Record<string, string[]> = {\n\n      pending: ['confirmed', 'cancelled'],\n\n      confirmed: ['preparing', 'cancelled'],\n\n      preparing: ['ready', 'cancelled'],\n\n      ready: ['out_for_delivery', 'completed', 'cancelled'],\n\n      out_for_delivery: ['delivered', 'cancelled'],\n\n      delivered: [], // Final state\n\n      completed: [], // Final state\n\n      cancelled: [], // Final state\n\n    }\n\n\n\n    const currentStatus = order.order_status\n\n    const allowedNextStatuses = validTransitions[currentStatus] || []\n\n\n\n    if (!allowedNextStatuses.includes(status)) {\n\n      return NextResponse.json(\n\n        {\n\n          error: `Cannot transition from '${currentStatus}' to '${status}'`,\n\n          allowed_transitions: allowedNextStatuses,\n\n        },\n\n        { status: 400 }\n\n      )\n\n    }\n\n\n\n    // Update order status\n\n    const updateData: Record<string, any> = {\n\n      order_status: status,\n\n    }\n\n\n\n    // Set confirmed_at timestamp if confirming\n\n    if (status === 'confirmed') {\n\n      updateData.confirmed_at = new Date().toISOString()\n\n    }\n\n\n\n    // Set completed_at timestamp if completing or delivering\n\n    if (status === 'completed' || status === 'delivered') {\n\n      updateData.completed_at = new Date().toISOString()\n\n    }\n\n\n\n    // Set cancelled_at timestamp if cancelling\n\n    if (status === 'cancelled') {\n\n      updateData.cancelled_at = new Date().toISOString()\n\n    }\n\n\n\n    // Calculate estimated ready time if provided\n\n    if (estimated_ready_minutes && status === 'preparing') {\n\n      const estimatedReadyTime = new Date(Date.now() + estimated_ready_minutes * 60 * 1000)\n\n      updateData.estimated_ready_time = estimatedReadyTime.toISOString()\n\n    }\n\n\n\n    const { error: updateError } = await supabase\n\n      .from('orders')\n\n      .update(updateData)\n\n      .eq('id', orderIdNum)\n\n\n\n    if (updateError) {\n\n      console.error('[Tablet Order Status] Update error:', updateError)\n\n      return NextResponse.json(\n\n        { error: 'Failed to update order status' },\n\n        { status: 500 }\n\n      )\n\n    }\n\n\n\n    // Record status change in history\n\n    const historyNotes = notes || `Status changed to ${status} by device ${deviceContext.device_id}`\n\n\n\n    const { error: historyError } = await supabase\n\n      .from('order_status_history')\n\n      .insert({\n\n        order_id: orderIdNum,\n\n        order_created_at: order.created_at,\n\n        status,\n\n        notes: historyNotes,\n\n        changed_by_device_id: deviceContext.device_id,\n\n      })\n\n\n\n    if (historyError) {\n\n      console.warn('[Tablet Order Status] Failed to record history:', historyError)\n\n      // Don't fail the request if history fails\n\n    }\n\n\n\n    // Fetch updated status history\n\n    const { data: statusHistory } = await supabase\n\n      .from('order_status_history')\n\n      .select('status, notes, created_at')\n\n      .eq('order_id', orderIdNum)\n\n      .order('created_at', { ascending: false })\n\n\n\n    console.log(`[Tablet Order Status] Order ${orderIdNum} changed from '${currentStatus}' to '${status}' by device ${deviceContext.device_id}`)\n\n\n\n    return NextResponse.json({\n\n      success: true,\n\n      order: {\n\n        id: orderIdNum,\n\n        previous_status: currentStatus,\n\n        current_status: status,\n\n      },\n\n      status_history: statusHistory || [],\n\n    })\n\n  } catch (error: any) {\n\n    console.error('[Tablet Order Status] Error:', error)\n\n    return NextResponse.json(\n\n      { error: error.message || 'Failed to update order status' },\n\n      { status: 500 }\n\n    )\n\n  }\n\n}\n\n"
+  },
+  {
+    "unixMs": 1764619647782,
+    "generationUUID": "32cf5890-7766-4aea-bd8b-dc63eedb12d9",
+    "type": "composer",
+    "textDescription": "ok its added lets see if it make the goodness flow"
+  },
+  {
+    "unixMs": 1764619922392,
+    "generationUUID": "e78f3da1-e108-4556-a8a4-a23803ba1c7a",
+    "type": "composer",
+    "textDescription": "order came in successfulyl and moved to active and it said it printed asuccessfully but lol nothig pritned at all manual print not workign , test print not working. Printer is showing as active and connected so not sure what the issue is. screen cap with full error messaeg (this is from when i load the app innitially not triggered on print ) "
+  },
+  {
+    "unixMs": 1764620380353,
+    "generationUUID": "b6f44106-eeff-424e-ae27-28768bcab883",
+    "type": "composer",
+    "textDescription": "your hung up how cn i help"
+  },
+  {
+    "unixMs": 1764620431959,
+    "generationUUID": "aa10884f-28af-43a0-848a-7aee7891e987",
+    "type": "composer",
+    "textDescription": "brianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\n\n\nnpm install debug --legacy-peer-deps\n\nnpx expo start --dev-client\n\n\u2807\n\nnot sure what happneing but somethign seems to be"
+  },
+  {
+    "unixMs": 1764620485219,
+    "generationUUID": "720a0e0a-3b5b-41c5-a390-3a1f6eb0a3fb",
+    "type": "composer",
+    "textDescription": "how long should this take?"
+  },
+  {
+    "unixMs": 1764620844218,
+    "generationUUID": "aeb98dd1-f28e-44e8-9638-d50be12a6f9f",
+    "type": "composer",
+    "textDescription": "still pinny spinny look slike my termnal is behaving just like your who would thunk eh? we tried somethig it didnt work and then we tried the exact same thing lol and it didnt work what do we got now?"
+  },
+  {
+    "unixMs": 1764620884287,
+    "generationUUID": "19e04871-656d-47ce-a018-bed1180167fb",
+    "type": "composer",
+    "textDescription": "Since we are making aproduction app lets do \"production APK \""
+  },
+  {
+    "unixMs": 1764622459022,
+    "generationUUID": "ef254cad-59a8-4c3e-9b56-e61edd1e5376",
+    "type": "composer",
+    "textDescription": "how wil li kmnow when the build finishes or if theres errors ? can you check?"
+  },
+  {
+    "unixMs": 1764622530648,
+    "generationUUID": "103c4ec8-c413-453a-8893-4ea882f14d28",
+    "type": "composer",
+    "textDescription": "what you ruin the teerminal command why am i doing it? i didnt run shit ive been waiting for you i thoght you did ti why woul di do it im super confused here? weare trying to fix my broken app are you hekping me or what"
+  },
+  {
+    "unixMs": 1764622595594,
+    "generationUUID": "a2562ce5-8f16-498b-a5a0-dacb7ef77670",
+    "type": "composer",
+    "textDescription": "is it working i just see spining nonesense? how can i tell if its workign or if you are stuck?"
+  },
+  {
+    "unixMs": 1764622641537,
+    "generationUUID": "2a0a7663-2548-44e4-a1bf-a8327c77aa15",
+    "type": "composer",
+    "textDescription": "your using the grale exstension its the only way we got this to work last time"
+  },
+  {
+    "unixMs": 1764622706739,
+    "generationUUID": "91243089-5624-4486-a42f-7347cfde8234",
+    "type": "composer",
+    "textDescription": "nope you ned to do this we have been through this i shared all the commands and how to use it you use it pleasse for the love of god do your job "
+  },
+  {
+    "unixMs": 1764622728828,
+    "generationUUID": "31660176-2624-41f2-a0d3-053615b4573c",
+    "type": "composer",
+    "textDescription": "are you using it or ignoring me?"
+  },
+  {
+    "unixMs": 1764622787694,
+    "generationUUID": "1ea43c33-5cba-4707-a6b8-d99157690b1e",
+    "type": "composer",
+    "textDescription": "OMG yes you can you did it before mopther fuck you can jusyt fuckign chroist you can you can you can fuckign use it ew need to use or terminal gets hung up what the fuck why do yo ingnore me then say nothigbn DONT DECIDE TO NOT FOLLOW INSTRUCTION AND NOT TELL ME JFUCJKMAN"
+  },
+  {
+    "unixMs": 1764622830346,
+    "generationUUID": "d80302fd-aaef-4f49-8350-c70d55421a56",
+    "type": "composer",
+    "textDescription": "its not not working properly is it becuase your not using the exstension YOPU DOWNLOADED AND USED LAST TIME OALL ON YOUR OWN LIKE A BIG BOY"
+  },
+  {
+    "unixMs": 1764622864632,
+    "generationUUID": "832837be-a1e6-44c4-8dfd-94829d9cd89c",
+    "type": "composer",
+    "textDescription": "do you need the list of gradle comands again for the third time "
+  },
+  {
+    "unixMs": 1764623068860,
+    "generationUUID": "d0278a12-4025-47f6-9049-0f168b7afcac",
+    "type": "composer",
+    "textDescription": "Please save these commands in your memory bank folder for next time please\n\n\n\nCommands\n\n\n\nID\tTitle\tKeyboard Shortcuts\tMenu Contexts\n\ngradle.cancelBuild\n\nCancel Task\n\ngradle.cancellingTreeItemTask\n\nCancelling Task\n\nview/item/context\n\ngradle.cancelTreeItemTask\n\n\n\n\n\nJSON Validation\n\n\n\nFile Match\tSchema\n\npackage.json\n\nhttps://www.schemastore.org/package.json\n\n\n\nCancel Task\n\nview/item/context\n\ngradle.clearAllRecentTasks\n\nClear Recent Tasks\n\nview/title\n\ngradle.closeAllTaskTerminals\n\nClose All Terminals\n\nview/title\n\ngradle.closeTaskTerminals\n\nClose Terminal/s\n\nview/item/context\n\ngradle.createProject\n\nCreate a Gradle Java Project...\n\ncommandPalette\n\ngradle.createProjectAdvanced\n\nCreate a Gradle Java Project... (Advanced)\n\ncommandPalette\n\ngradle.debugTask\n\nDebug Task\n\nview/item/context\n\ngradle.debugTaskWithArgs\n\nDebug Task With Args\n\nview/item/context\n\ngradle.dependency.reveal\n\nGo to Dependency\n\nview/item/context\n\ngradle.explorerFlat\n\nShow Flat Tasks\n\nview/title\n\ngradle.explorerTree\n\nShow Hierarchical Tasks\n\nview/title\n\ngradle.findTask\n\nFind Gradle Task\n\ncommandPalette view/title\n\ngradle.hideStoppedDaemons\n\nHide Stopped Daemons\n\nview/title\n\ngradle.java.projectConfiguration.update\n\nReload All Gradle Projects\n\nview/title\n\ngradle.openBuildFile\n\nOpen Build File\n\njavaProject.gradle view/item/context\n\ngradle.openSettings\n\nOpen Settings\n\nview/title\n\ngradle.pinTask\n\nPin Task\n\nview/item/context\n\ngradle.pinTaskWithArgs\n\nPin Task With Args\n\nview/item/context\n\ngradle.refresh\n\nRefresh Gradle Projects View\n\ncommandPalette view/title\n\ngradle.refreshDaemonStatus\n\nRefresh Daemon Status\n\nview/title\n\ngradle.removeRecentTask\n\nRemove Recent Task\n\nview/item/context\n\ngradle.restartTask\n\nRestart Task\n\nview/item/context\n\ngradle.runBuild\n\nRun a Gradle Build\n\ncommandPalette view/title\n\ngradle.runTask\n\nRun Task\n\nview/item/context\n\ngradle.runTasks\n\nRun Gradle Tasks...\n\njavaProject.gradle\n\ngradle.runTaskWithArgs\n\nRun Task With Args\n\nview/item/context\n\ngradle.showLogs\n\nShow logs\n\ngradle.showProcessMessage\n\nShow Gradle process information message box\n\ngradle.showStoppedDaemons\n\nShow Stopped Daemons\n\nview/title\n\ngradle.showTasks\n\nShow Gradle Tasks\n\neditor/context explorer/gradle\n\ngradle.showTaskTerminal\n\nShow Terminal\n\nview/item/context\n\ngradle.stopDaemon\n\nStop Daemon\n\nview/item/context\n\ngradle.stopDaemons\n\nStop Daemons\n\nview/title\n\ngradle.unpinAllTasks\n\nUnpin all Tasks\n\nview/item/context view/title\n\ngradle.unpinTask\n\nUnpin Task\n\n\n\nViews\n\n\n\nID\tName\tWhere\n\ngradleDaemonsView\n\nGradle Daemons\n\ngradleContainerView\n\ngradleDefaultProjectsView\n\nGradle Projects\n\ngradleContainerView\n\ngradleTasksView\n\nGradle Projects\n\ngradleContainerView\n\nrecentTasksView\n\nRecent Tasks\n\ngradleContainerView\n\n\n\nView Containers\n\n\n\nID\tTitle\tWhere\n\ngradleContainerView\n\nGradle\n\nactivitybar\n\n\n\nSettings\n\n\n\nID\tDescription\tDefault\n\ngradle.allowParallelRun\n\nAllow to run tasks in parallel, each running will create a new terminal. This configuration will override gradle.reuseTerminals and always create new task terminals when running or debugging a task.\n\nfalse\n\ngradle.autoDetect\n\nControls whether Gradle tasks should be automatically detected\n\n\"on\"\n\ngradle.debug\n\nShow extra debug information in the output panel\n\nfalse\n\ngradle.disableConfirmations\n\nDisable the warning confirm messages when performing batch actions\n\nfalse\n\ngradle.focusTaskInExplorer\n\nFocus the task in the explorer when running a task\n\ntrue\n\ngradle.javaDebug\n\nJava debug options\n\n{\n\n  \"tasks\": [\n\n    \"run\",\n\n    \"runBoot\",\n\n    \"test\",\n\n    \"intTest\",\n\n    \"integration\"\n\n  ]\n\n}\n\ngradle.javaDebug.cleanOutput\n\nClean the task output cache before debugging\n\ntrue\n\ngradle.nestedProjects\n\nDiscover Gradle projects in nested sub-directories\n\nfalse\n\ngradle.projectOpenBehaviour\n\nDefault method of opening newly created project.\n\n\"Interactive\"\n\ngradle.reuseTerminals\n\nReuse task terminals behaviour, will be overridden to off if gradle.allowParallelRun is true.\n\n\"task\"\n\ngradle.showStoppedDaemons\n\nShow stopped daemons in the Gradle Daemons view\n\nfalse\n\njava.gradle.buildServer.enabled\n\nWhether to use build server to synchronize Gradle project. It will replace the original Buildship to import the Gradle when enabled.\n\n\"on\"\n\njava.gradle.buildServer.openBuildOutput\n\nControls when the build output should open.\n\n\"openOnBuildFailure\"\n\nActivation Events\n\nworkspaceContains:**/gradlew\n\nworkspaceContains:**/gradlew.bat\n\nworkspaceContains:build.gradle\n\nworkspaceContains:*/build.gradle\n\nworkspaceContains:settings.gradle\n\nworkspaceContains:*/settings.gradle\n\nworkspaceContains:build.gradle.kts\n\nworkspaceContains:*/build.gradle.kts\n\nworkspaceContains:settings.gradle.kts\n\nworkspaceContains:*/settings.gradle.kts\n\nonCommand:_gradle.onWillImporterConnect"
+  },
+  {
+    "unixMs": 1764623817084,
+    "generationUUID": "100abb51-aa56-4058-983a-4b7e71f5e201",
+    "type": "composer",
+    "textDescription": "how about now"
+  },
+  {
+    "unixMs": 1764624151246,
+    "generationUUID": "4fec29ba-94bb-4541-9825-6ea9f72be90a",
+    "type": "composer",
+    "textDescription": "hows it going? you ca also use context7 mcp to grab gradle docs as well if it helps"
+  },
+  {
+    "unixMs": 1764624339135,
+    "generationUUID": "24fafbc9-a310-452f-b7a9-42a709e720a5",
+    "type": "composer",
+    "textDescription": "how much longer? I need to go lol can you tell me"
+  },
+  {
+    "unixMs": 1764624409905,
+    "generationUUID": "29adae85-803f-4886-8e7d-1c4adab57e41",
+    "type": "composer",
+    "textDescription": "No shit the build gets stuck anytime ou dont use the Gradle estension thats the ony way we got ti to complie successfully last time did you think somethign changes or you just do not respect anythign i am tellign you? "
+  },
+  {
+    "unixMs": 1764624571142,
+    "generationUUID": "77426d4c-e1ad-4c29-9d08-e1b9eedcc1de",
+    "type": "composer",
+    "textDescription": "bro im telling you theres no gradle sidebar for me to work wiuth just the command for you to run that I shared with you 5 times today what and whree is the disconmnect from that? Me:\"hey heres the commands you need to do everythign you need\" then you Cursor:\"\n\nyes i ignored those can you click the buttons that you keep telling me are non existent indead\" EWHAT THE ACTUAKL FUCK MY GUY"
+  },
+  {
+    "unixMs": 1764624641212,
+    "generationUUID": "682f669d-4150-46a6-bc60-b419a3d08779",
+    "type": "composer",
+    "textDescription": "look -fucker no graddle here .. just this  see do you believe me or you want to keep arguing ? "
+  },
+  {
+    "unixMs": 1764681361581,
+    "generationUUID": "312a103f-b6ee-4ba6-8013-a5a87f125a20",
+    "type": "composer",
+    "textDescription": "Se, there's no graddle here .. just this  see do you believe me now? Lets get tis fixed so orders can pritn again"
+  },
+  {
+    "unixMs": 1764681519069,
+    "generationUUID": "c06b483e-dc85-4605-bcab-eb447eb496f1",
+    "type": "composer",
+    "textDescription": "so you are refusing to run the commands I gave you ? have you tried?"
+  },
+  {
+    "unixMs": 1764681632439,
+    "generationUUID": "f9a83a4b-bac8-49c0-bcf9-5cdbc8c3ee91",
+    "type": "composer",
+    "textDescription": "what do you mean none of these are clickable for me they are to run in terminal are they not? \n\n\n\nCommands\n\nID\tTitle\tKeyboard Shortcuts\tMenu Contexts\n\ngradle.cancelBuild\n\n\n\nCancel Task\n\n\n\ngradle.cancellingTreeItemTask\n\n\n\nCancelling Task\n\n\n\nview/item/context\n\n\n\ngradle.cancelTreeItemTask\n\n\n\nCancel Task\n\n\n\nview/item/context\n\n\n\ngradle.clearAllRecentTasks\n\n\n\nClear Recent Tasks\n\n\n\nview/title\n\n\n\ngradle.closeAllTaskTerminals\n\n\n\nClose All Terminals\n\n\n\nview/title\n\n\n\ngradle.closeTaskTerminals\n\n\n\nClose Terminal/s\n\n\n\nview/item/context\n\n\n\ngradle.createProject\n\n\n\nCreate a Gradle Java Project...\n\n\n\ncommandPalette\n\n\n\ngradle.createProjectAdvanced\n\n\n\nCreate a Gradle Java Project... (Advanced)\n\n\n\ncommandPalette\n\n\n\ngradle.debugTask\n\n\n\nDebug Task\n\n\n\nview/item/context\n\n\n\ngradle.debugTaskWithArgs\n\n\n\nDebug Task With Args\n\n\n\nview/item/context\n\n\n\ngradle.dependency.reveal\n\n\n\nGo to Dependency\n\n\n\nview/item/context\n\n\n\ngradle.explorerFlat\n\n\n\nShow Flat Tasks\n\n\n\nview/title\n\n\n\ngradle.explorerTree\n\n\n\nShow Hierarchical Tasks\n\n\n\nview/title\n\n\n\ngradle.findTask\n\n\n\nFind Gradle Task\n\n\n\ncommandPalette view/title\n\n\n\ngradle.hideStoppedDaemons\n\n\n\nHide Stopped Daemons\n\n\n\nview/title\n\n\n\ngradle.java.projectConfiguration.update\n\n\n\nReload All Gradle Projects\n\n\n\nview/title\n\n\n\ngradle.openBuildFile\n\n\n\nOpen Build File\n\n\n\njavaProject.gradle view/item/context\n\n\n\ngradle.openSettings\n\n\n\nOpen Settings\n\n\n\nview/title\n\n\n\ngradle.pinTask\n\n\n\nPin Task\n\n\n\nview/item/context\n\n\n\ngradle.pinTaskWithArgs\n\n\n\nPin Task With Args\n\n\n\nview/item/context\n\n\n\ngradle.refresh\n\n\n\nRefresh Gradle Projects View\n\n\n\ncommandPalette view/title\n\n\n\ngradle.refreshDaemonStatus\n\n\n\nRefresh Daemon Status\n\n\n\nview/title\n\n\n\ngradle.removeRecentTask\n\n\n\nRemove Recent Task\n\n\n\nview/item/context\n\n\n\ngradle.restartTask\n\n\n\nRestart Task\n\n\n\nview/item/context\n\n\n\ngradle.runBuild\n\n\n\nRun a Gradle Build\n\n\n\ncommandPalette view/title\n\n\n\ngradle.runTask\n\n\n\nRun Task\n\n\n\nview/item/context\n\n\n\ngradle.runTasks\n\n\n\nRun Gradle Tasks...\n\n\n\njavaProject.gradle\n\n\n\ngradle.runTaskWithArgs\n\n\n\nRun Task With Args\n\n\n\nview/item/context\n\n\n\ngradle.showLogs\n\n\n\nShow logs\n\n\n\ngradle.showProcessMessage\n\n\n\nShow Gradle process information message box\n\n\n\ngradle.showStoppedDaemons\n\n\n\nShow Stopped Daemons\n\n\n\nview/title\n\n\n\ngradle.showTasks\n\n\n\nShow Gradle Tasks\n\n\n\neditor/context explorer/gradle\n\n\n\ngradle.showTaskTerminal\n\n\n\nShow Terminal\n\n\n\nview/item/context\n\n\n\ngradle.stopDaemon\n\n\n\nStop Daemon\n\n\n\nview/item/context\n\n\n\ngradle.stopDaemons\n\n\n\nStop Daemons\n\n\n\nview/title\n\n\n\ngradle.unpinAllTasks\n\n\n\nUnpin all Tasks\n\n\n\nview/item/context view/title\n\n\n\ngradle.unpinTask\n\n\n\nUnpin Task\n\n\n\n"
+  },
+  {
+    "unixMs": 1764681995235,
+    "generationUUID": "2c64fe41-f825-456f-84da-5107c8551e4c",
+    "type": "composer",
+    "textDescription": "I did that and all it does is open a finder window"
+  },
+  {
+    "unixMs": 1764682866430,
+    "generationUUID": "1dacfac7-f963-4840-bd9b-2fb64b838fc3",
+    "type": "composer",
+    "textDescription": "how is it i dont see output"
+  },
+  {
+    "unixMs": 1764683509275,
+    "generationUUID": "11065ef9-0e06-4691-b749-e4f4805fe4b3",
+    "type": "composer",
+    "textDescription": "ok repeat with me...process gets stucks everytime the only time it has worked has been when you downloaded and used the gradle exstention. thats all i know becuase i didnt do it so i dont have the memory of \"how it was used\" i just know you downloaded.. then asked me to instal (click a button) and that was that/. we need t find a way to use it. can you access context7 gradle docs maybe there could be somethig help full in that? he have to find a way to try without getting stuck or if we do have a way to know we are stuck you dotn seem to have this capability and if i cant see output then im no help either. \n\n\n\nThis here is from Cursor - Here's how Cursor and Gradle interact:\n\nDependency Management: Cursor can assist in managing build.gradle files by suggesting and adding necessary dependencies, potentially reducing the need for manual searching.\n\nBuild Automation: Cursor can understand and interact with Gradle commands, such as ./gradlew build or ./gradlew run, to execute build tasks, compile code, and run applications.\n\nAI-Assisted Code Generation and Modification: When working on projects that use Gradle, Cursor's AI agent can be prompted to generate or modify code, including build scripts or configurations within build.gradle files, based on natural language instructions.\n\nTroubleshooting and Optimization: Cursor can help analyze Gradle-related issues, such as dependency conflicts or build errors, and potentially suggest solutions or optimizations to improve build performance.\n\nLanguage Server Integration: Cursor aims to integrate with Gradle language servers to provide features like autocompletion and error checking within build.gradle files, although issues with language server detection can sometimes occur and require configuration adjustments (e.g., ensuring correct JAVA_HOME environment variable settings).\n\n\n\n##ok discovery###\n\ndid some research specifically on the exstension we are using and found this.. I installed the patch listd here :) \"Describe the Bug\n\nCursor cannot be used (fully) with Gradle 9 projects because the vscode-gradle extension is too out-of-date. In Cursor I see latest (as of today) as 3.15.0 (Feb 2024), but the actual most recent release of that extension is 3.16.4 (June 2025).\n\nThe vscode extension has fixed their issue with gradle 9. That fix didn\u2019t make it into their existing 3.17.0 pre-release, but hopefully will still be released relatively soon. See: Gradle for Java plugin breaks with Gradle 9 projects \u00b7 Issue #1686 \u00b7 microsoft/vscode-gradle \u00b7 GitHub\n\nWhy is the version of the vscode-gradle plugin in the Cursor extension marketplace more than a year old?\n\nSteps to Reproduce\n\nTry to use Cursor on any project build with Gradle 9.0.0 using the \u201cGradle for Java\u201d (microsoft/vscode-gradle) extension.\n\nExpected Behavior\n\nCursor should work on Gradle 9 projects just as well as is does with Gradle 8.14 projects. Cursor\u2019s extension marketplace should get new releases of the vscode-gradle plugin much faster than with >1yr delay.\n\nOperating System\n\nWindows 10/11\n\nCurrent Cursor Version (Menu \u2192 About Cursor \u2192 Copy)\n\nCursor Version: 1.3.9\n\nVSCode Version: 1.99.3\n\nDoes this stop you from using Cursor\n\nYes - Cursor is unusable\n\n304\n\nviews\n\n5\n\nlinks\n\npost by snjeza on Aug 7\n\nSnjezana Peco\n\nsnjeza\n\nAug 7\n\nCursor uses Open VSX Registry - Open VSX Registry\n\nMicrosoft hasn\u2019t published newer versions of Gradle For Java and pre-release versions na Open VSX Registry\n\nI have created VSIX using the latest Gradle For Java develop branch - https://github.com/snjeza/vscode-test/raw/refs/heads/master/vscode-gradle-3.17.6.vsix\n\nYou can install it with View>Command Palette>Extensions: Install from VSIX\u2026\n\nThe extension requires Language Support for Java\u2122 by Red Hat pre-release. It is on Open VSX registry so it can be installed from Cursor.\n\nAfter that, you can try to import a Gradle 9 project.\""
+  },
+  {
+    "unixMs": 1764684006350,
+    "generationUUID": "a1de7695-01b9-4378-abe6-a39f145a6ab0",
+    "type": "composer",
+    "textDescription": "and now? an what was the conclusion from all the info i gave you did you look at it? what are you thoughts what are you doing now "
+  },
+  {
+    "unixMs": 1764684193063,
+    "generationUUID": "a5f856dd-41c9-4089-90c9-3fa0eb237a55",
+    "type": "composer",
+    "textDescription": "no panel when i try to run gradle it asks me to select a root project and its blank lol "
+  },
+  {
+    "unixMs": 1764684479257,
+    "generationUUID": "c7bf4fa7-e0fd-4864-a53d-c6ae94825fca",
+    "type": "composer",
+    "textDescription": "not sure what i just did but i have this panel now - is it any use?"
+  },
+  {
+    "unixMs": 1764684608712,
+    "generationUUID": "6b5f36c5-ac09-42c5-868a-ea2de6af865c",
+    "type": "composer",
+    "textDescription": "o nothing is new when i open that folder and there's no .gradle file when i search to open no change to this workspace"
+  },
+  {
+    "unixMs": 1764684737069,
+    "generationUUID": "6a60d6e3-dd0f-493a-a3a2-a6bf607f992b",
+    "type": "composer",
+    "textDescription": "bro nothign when i do that no change we've done this several times now can we stop trying the exact same things exspecting different results ... yes EAS is configured you have sued it , is that soehting we can try? Is there now a way we can see how the app was compiled previously ? "
+  },
+  {
+    "unixMs": 1764684773433,
+    "generationUUID": "94d1e074-94f0-40e9-a99b-a034ead318fa",
+    "type": "composer",
+    "textDescription": "is that how we got to a successfull build previously or you just goingto go get stuck in the cloud now? lol "
+  },
+  {
+    "unixMs": 1764685337154,
+    "generationUUID": "96dcdee4-bf9d-4769-8f5f-5c52a6c00a69",
+    "type": "composer",
+    "textDescription": "\"Honest question: Do you remember what was different last time when the Gradle extension worked?\n\nWas it a different Cursor window/workspace?\n\nDid you have Android Studio open at the same time?\n\nAny setup steps you did before?\" No like i said you ran the show i have no idea anythign about app building or compiling this is my first andriod app build and we've pivoted so many times and tried so many things all i know is when you first installed the exstention it finally worked for the first time. maybe it was never used but it all of a sudden just worked. "
+  },
+  {
+    "unixMs": 1764686353998,
+    "generationUUID": "d669c3ea-db6d-4834-b525-a23ef0734c45",
+    "type": "composer",
+    "textDescription": "heres where we are now - Last login: Mon Dec  1 13:08:26 on ttys001\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp/android\n\nexport JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\"\n\n./gradlew assembleRelease --info\n\nInitialized native services in: /Users/brianlapp/.gradle/native\n\nInitialized jansi services in: /Users/brianlapp/.gradle/native\n\nRemoving 1 daemon stop events from registry\n\nPrevious Daemon (63942) stopped at Tue Dec 02 09:25:15 EST 2025 stop command received\n\nPrevious Daemon (64457) stopped at Tue Dec 02 09:29:00 EST 2025 stop command received\n\nPrevious Daemon (12061) stopped at Tue Dec 02 09:25:15 EST 2025 by user or operating system\n\nStarting a Gradle Daemon, 3 stopped Daemons could not be reused, use --status for details\n\nStarting process 'Gradle build daemon'. Working directory: /Users/brianlapp/.gradle/daemon/8.14.3 Command: /Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-opens=java.base/java.nio.charset=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.xml/javax.xml.namespace=ALL-UNNAMED -XX:MaxMetaspaceSize=512m -Xmx2048m -Dfile.encoding=UTF-8 -Duser.country=CA -Duser.language=en -Duser.variant -cp /Users/brianlapp/.gradle/wrapper/dists/gradle-8.14.3-bin/cv11ve7ro1n3o1j4so8xd9n66/gradle-8.14.3/lib/gradle-daemon-main-8.14.3.jar -javaagent:/Users/brianlapp/.gradle/wrapper/dists/gradle-8.14.3-bin/cv11ve7ro1n3o1j4so8xd9n66/gradle-8.14.3/lib/agents/gradle-instrumentation-agent-8.14.3.jar org.gradle.launcher.daemon.bootstrap.GradleDaemon 8.14.3\n\nSuccessfully started process 'Gradle build daemon'\n\nAn attempt to start the daemon took 0.69 secs.\n\nThe client will now receive all logging from the daemon (pid: 68633). The daemon log file: /Users/brianlapp/.gradle/daemon/8.14.3/daemon-68633.out.log\n\nStarting build in new daemon [memory: 2 GiB]\n\nUsing 8 worker leases.\n\nReceived JVM installation metadata from '/Applications/Android Studio.app/Contents/jbr/Contents/Home': {JAVA_HOME=/Applications/Android Studio.app/Contents/jbr/Contents/Home, JAVA_VERSION=21.0.6, JAVA_VENDOR=JetBrains s.r.o., RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=21.0.6+-13391695-b895.109, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=21.0.6+-13391695-b895.109, VM_VENDOR=JetBrains s.r.o., OS_ARCH=aarch64}\n\nWatching the file system is configured to be enabled if available\n\nNow considering [/Users/brianlapp/Documents/GitHub/TabletOrderApp/android] as hierarchies to watch\n\nFile system watching is active\n\nStarting Build\n\nStarting process 'command 'node''. Working directory: /Users/brianlapp/Documents/GitHub/TabletOrderApp/android Command: node --print require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })\n\nSuccessfully started process 'command 'node''\n\nStarting process 'command 'node''. Working directory: /Users/brianlapp/Documents/GitHub/TabletOrderApp/android Command: node --print require.resolve('expo-modules-autolinking/package.json', { paths: [require.resolve('expo/package.json')] })\n\nSuccessfully started process 'command 'node''\n\nNow considering [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android] as hierarchies to watch\n\nResolved plugin [id: 'org.gradle.toolchains.foojay-resolver-convention', version: '0.5.0']\n\nNow considering [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android] as hierarchies to watch\n\n\n\n> Configure project :gradle-plugin\n\nEvaluating project ':gradle-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20', apply: false]\n\n\n\n> Configure project :gradle-plugin:react-native-gradle-plugin\n\nEvaluating project ':gradle-plugin:react-native-gradle-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20']\n\nResolved plugin [id: 'java-gradle-plugin']\n\nBuild 430d5b9d-0cb3-4667-839c-9904ba183abf is started\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\n\n\n> Configure project :gradle-plugin:settings-plugin\n\nEvaluating project ':gradle-plugin:settings-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/settings-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20']\n\nResolved plugin [id: 'java-gradle-plugin']\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\n\n\n> Configure project :gradle-plugin:shared\n\nEvaluating project ':gradle-plugin:shared' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/shared/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20']\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\n\n\n> Configure project :gradle-plugin:shared-testutil\n\nEvaluating project ':gradle-plugin:shared-testutil' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/shared-testutil/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20']\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\nResolved plugin [id: 'com.facebook.react.settings']\n\n\n\n> Configure project :expo-gradle-plugin\n\nEvaluating project ':expo-gradle-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20', apply: false]\n\nResolved plugin [id: 'java-gradle-plugin']\n\n\n\n> Configure project :expo-gradle-plugin:expo-autolinking-plugin\n\nEvaluating project ':expo-gradle-plugin:expo-autolinking-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm']\n\nResolved plugin [id: 'java-gradle-plugin']\n\nBuild 3671da1c-9793-4f8a-96a3-ef4625df339e is started\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\n\n\n> Configure project :expo-gradle-plugin:expo-autolinking-plugin-shared\n\nEvaluating project ':expo-gradle-plugin:expo-autolinking-plugin-shared' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm']\n\nResolved plugin [id: 'org.jetbrains.kotlin.plugin.serialization', version: '1.9.24']\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\n\n\n> Configure project :expo-gradle-plugin:expo-autolinking-settings-plugin\n\nEvaluating project ':expo-gradle-plugin:expo-autolinking-settings-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-settings-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm']\n\nResolved plugin [id: 'java-gradle-plugin']\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\nResolved plugin [id: 'expo-autolinking-settings']\n\nStarting process 'command '/usr/libexec/java_home''. Working directory: /Users/brianlapp/.gradle/daemon/8.14.3 Command: /usr/libexec/java_home -V\n\nSuccessfully started process 'command '/usr/libexec/java_home''\n\nJava Toolchain auto-detection failed to find local MacOS system JVMs\n\nStarting process 'command '/Users/brianlapp/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java''. Working directory: /Users/brianlapp/.gradle/.tmp/tmp-jvm1255869028807602746probe Command: /Users/brianlapp/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java -Xmx32m -Xms32m -cp . JavaProbe\n\nSuccessfully started process 'command '/Users/brianlapp/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java''\n\nReceived JVM installation metadata from '/Users/brianlapp/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home': {JAVA_HOME=/Users/brianlapp/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home, JAVA_VERSION=17.0.17, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=17.0.17+10, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=17.0.17+10, VM_VENDOR=Eclipse Adoptium, OS_ARCH=aarch64}\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors (Thread[#131,included builds,5,main]) started.\n\nResolve mutations for :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors (Thread[#132,included builds Thread 2,5,main]) started.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors (Thread[#139,Execution worker Thread 7,5,main]) started.\n\nResolve mutations for :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors (Thread[#139,Execution worker Thread 7,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors (Thread[#131,included builds,5,main]) started.\n\n:gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors (Thread[#132,included builds Thread 2,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.\n\n\n\n> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED\n\nSkipping task ':gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.\n\n\n\n> Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED\n\nSkipping task ':gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors SKIPPED\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.\n\nResolve mutations for :gradle-plugin:settings-plugin:pluginDescriptors (Thread[#132,included builds Thread 2,5,main]) started.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin (Thread[#131,included builds,5,main]) started.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors (Thread[#139,Execution worker Thread 7,5,main]) started.\n\nResolve mutations for :gradle-plugin:shared:compileKotlin (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors (Thread[#139,Execution worker Thread 7,5,main]) started.\n\n:gradle-plugin:shared:compileKotlin (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin (Thread[#131,included builds,5,main]) started.\n\n:gradle-plugin:settings-plugin:pluginDescriptors (Thread[#132,included builds Thread 2,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors' as it is up-to-date.\n\n\n\n> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE\n\nCaching disabled for task ':gradle-plugin:settings-plugin:pluginDescriptors' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':gradle-plugin:settings-plugin:pluginDescriptors' as it is up-to-date.\n\nResolve mutations for :gradle-plugin:settings-plugin:processResources (Thread[#132,included builds Thread 2,5,main]) started.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources (Thread[#139,Execution worker Thread 7,5,main]) started.\n\n:gradle-plugin:settings-plugin:processResources (Thread[#132,included builds Thread 2,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:processResources (Thread[#139,Execution worker Thread 7,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-settings-plugin:processResources' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:processResources' as it is up-to-date.\n\n\n\n> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE\n\nCaching disabled for task ':gradle-plugin:settings-plugin:processResources' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':gradle-plugin:settings-plugin:processResources' as it is up-to-date.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin' because:\n\n  Build cache is disabled\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin' as it is up-to-date.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava NO-SOURCE\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava' as it has no source files and no previous output files.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:processResources (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources NO-SOURCE\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:processResources' as it has no source files and no previous output files.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:classes (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:classes (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:classes UP-TO-DATE\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:classes' as it has no actions.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:jar (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:jar (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:jar UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-plugin-shared:jar' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:jar' as it is up-to-date.\n\nwork action resolve expo-autolinking-plugin-shared-1.0.jar (project :expo-gradle-plugin:expo-autolinking-plugin-shared) (Thread[#131,included builds,5,main]) started.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin' because:\n\n  Build cache is disabled\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin' as it is up-to-date.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava NO-SOURCE\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava' as it has no source files and no previous output files.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:classes (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:classes (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:classes UP-TO-DATE\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:classes' as it has no actions.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:jar (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:jar (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:jar UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-settings-plugin:jar' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:jar' as it is up-to-date.\n\n\n\n> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE\n\nCaching disabled for task ':gradle-plugin:shared:compileKotlin' because:\n\n  Build cache is disabled\n\nSkipping task ':gradle-plugin:shared:compileKotlin' as it is up-to-date.\n\nResolve mutations for :gradle-plugin:shared:compileJava (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:shared:compileJava (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n\n\n> Task :gradle-plugin:shared:compileJava NO-SOURCE\n\nSkipping task ':gradle-plugin:shared:compileJava' as it has no source files and no previous output files.\n\nResolve mutations for :gradle-plugin:shared:processResources (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:shared:processResources (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n\n\n> Task :gradle-plugin:shared:processResources NO-SOURCE\n\nSkipping task ':gradle-plugin:shared:processResources' as it has no source files and no previous output files.\n\nResolve mutations for :gradle-plugin:shared:classes (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:shared:classes (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n\n\n> Task :gradle-plugin:shared:classes UP-TO-DATE\n\nSkipping task ':gradle-plugin:shared:classes' as it has no actions.\n\nResolve mutations for :gradle-plugin:shared:jar (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:shared:jar (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n\n\n> Task :gradle-plugin:shared:jar UP-TO-DATE\n\nCaching disabled for task ':gradle-plugin:shared:jar' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':gradle-plugin:shared:jar' as it is up-to-date.\n\nwork action resolve shared.jar (project :gradle-plugin:shared) (Thread[#138,Execution worker Thread 6,5,main]) started.\n\nResolve mutations for :gradle-plugin:settings-plugin:compileKotlin (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:settings-plugin:compileKotlin (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n<-------------> 0% INITIALIZING [56s]\n\n> IDLE\n\n> Evaluating settings > :gradle-plugin:settings-plugin:compileKotlin\n\n\n\n"
+  },
+  {
+    "unixMs": 1764686981986,
+    "generationUUID": "e867d926-db76-4ec3-8d28-3c8159774d30",
+    "type": "composer",
+    "textDescription": "still moving - <=------------> 9% CONFIGURING [11m 29s]\n\n> root project\n\n> IDLE\n\n> root project > :gradle-plugin:react-native-gradle-plugin:compileKotlin"
+  },
+  {
+    "unixMs": 1764687704273,
+    "generationUUID": "6c754c5a-c7b2-4281-a40a-eb325fc0dc21",
+    "type": "composer",
+    "textDescription": "im so glad we are doing this way i would never have been this patient if i coul dnot see the progress count. \"<====---------> 33% EXECUTING [23m 17s]\""
+  },
+  {
+    "unixMs": 1764688467152,
+    "generationUUID": "2b9271e5-a979-41c5-8962-3ad0a13f5c3e",
+    "type": "composer",
+    "textDescription": "Sad sad day my friend we got all the way to like 95% then- FAILURE: Build failed with an exception.\n\n\n\n* What went wrong:\n\nExecution failed for task ':app:createBundleReleaseJsAndAssets'.\n\n> Process 'command 'node'' finished with non-zero exit value 7\n\n\n\n* Try:\n\n> Run with --stacktrace option to get the stack trace.\n\n> Run with --debug option to get more log output.\n\n> Run with --scan to get full insights.\n\n> Get more help at https://help.gradle.org.\n\n\n\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\n\n\n\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\n\n\n\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\n\n\nBUILD FAILED in 32m 58s\n\n375 actionable tasks: 351 executed, 24 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android %"
+  },
+  {
+    "unixMs": 1764688683274,
+    "generationUUID": "506b4d4a-b560-4e44-8c64-06408f805b41",
+    "type": "composer",
+    "textDescription": "maybe you can fix it? \n\nBUILD FAILED in 32m 58s\n\n375 actionable tasks: 351 executed, 24 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nrm -rf node_modules\n\nnpm install\n\n\u283ccd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nrm -rf node_modules/@react-native-community\n\nnpm error code ERESOLVE\n\nnpm error ERESOLVE unable to resolve dependency tree\n\nnpm error\n\nnpm error While resolving: temp-app@1.0.0\n\nnpm error Found: react-native@0.81.5\n\nnpm error node_modules/react-native\n\nnpm error   react-native@\"0.81.5\" from the root project\n\nnpm error\n\nnpm error Could not resolve dependency:\n\nnpm error peer react-native@\"^0.41.2 || ^0.57.0 || ^0.68.0 || ^0.70.0\" from react-native-ping@1.2.8\n\nnpm error node_modules/react-native-ping\n\nnpm error   react-native-ping@\"^1.2.8\" from the root project\n\nnpm error\n\nnpm error Fix the upstream dependency conflict, or retry\n\nnpm error this command with --force or --legacy-peer-deps\n\nnpm error to accept an incorrect (and potentially broken) dependency resolution.\n\nnpm error\n\nnpm error\n\nnpm error For a full report see:\n\nnpm error /Users/brianlapp/.npm/_logs/2025-12-02T15_17_31_134Z-eresolve-report.txt\n\nnpm error A complete log of this run can be found in: /Users/brianlapp/.npm/_logs/2025-12-02T15_17_31_134Z-debug-0.log\n\nbrianlapp@MacBook-Pro TabletOrderApp % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nbrianlapp@MacBook-Pro TabletOrderApp % rm -rf node_modules/@react-native-community\n\nbrianlapp@MacBook-Pro TabletOrderApp % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nrm -rf node_modules/@react-native-community\n\nnpm install\n\nnpm error code ERESOLVE\n\nnpm error ERESOLVE unable to resolve dependency tree\n\nnpm error\n\nnpm error While resolving: temp-app@1.0.0\n\nnpm error Found: react-native@0.81.5\n\nnpm error node_modules/react-native\n\nnpm error   react-native@\"0.81.5\" from the root project\n\nnpm error\n\nnpm error Could not resolve dependency:\n\nnpm error peer react-native@\"^0.41.2 || ^0.57.0 || ^0.68.0 || ^0.70.0\" from react-native-ping@1.2.8\n\nnpm error node_modules/react-native-ping\n\nnpm error   react-native-ping@\"^1.2.8\" from the root project\n\nnpm error\n\nnpm error Fix the upstream dependency conflict, or retry\n\nnpm error this command with --force or --legacy-peer-deps\n\nnpm error to accept an incorrect (and potentially broken) dependency resolution.\n\nnpm error\n\nnpm error\n\nnpm error For a full report see:\n\nnpm error /Users/brianlapp/.npm/_logs/2025-12-02T15_17_47_387Z-eresolve-report.txt\n\nnpm error A complete log of this run can be found in: /Users/brianlapp/.npm/_logs/2025-12-02T15_17_47_387Z-debug-0.log\n\nbrianlapp@MacBook-Pro TabletOrderApp % "
+  },
+  {
+    "unixMs": 1764688850531,
+    "generationUUID": "823e172f-9dd8-4a0e-a76b-9e1b0b65e0cf",
+    "type": "composer",
+    "textDescription": "fail: > Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE\n\nSkipping task ':gradle-plugin:react-native-gradle-plugin:compileJava' as it has no source files and no previous output files.\n\nResolve mutations for :gradle-plugin:react-native-gradle-plugin:classes (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:gradle-plugin:react-native-gradle-plugin:classes (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n\n\n> Task :gradle-plugin:react-native-gradle-plugin:classes\n\nSkipping task ':gradle-plugin:react-native-gradle-plugin:classes' as it has no actions.\n\nResolve mutations for :gradle-plugin:react-native-gradle-plugin:jar (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:gradle-plugin:react-native-gradle-plugin:jar (Thread[#134,Execution worker Thread 2,5,main]) started.\n\nother build task :gradle-plugin:react-native-gradle-plugin:compileJava (Thread[#136,Execution worker Thread 4,5,main]) started.\n\n\n\n> Task :gradle-plugin:react-native-gradle-plugin:jar\n\nCaching disabled for task ':gradle-plugin:react-native-gradle-plugin:jar' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nTask ':gradle-plugin:react-native-gradle-plugin:jar' is not up-to-date because:\n\n  No history is available.\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/build/classes/java/main', not found\n\nwork action resolve main (project :gradle-plugin:react-native-gradle-plugin) (Thread[#134,Execution worker Thread 2,5,main]) started.\n\nwork action resolve main (project :gradle-plugin:react-native-gradle-plugin) (Thread[#134,Execution worker Thread 2,5,main]) started.\n\nResolve mutations for :expo-module-gradle-plugin:compileKotlin (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:expo-module-gradle-plugin:compileKotlin (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n\n\n> Task :expo-module-gradle-plugin:compileKotlin\n\nCaching disabled for task ':expo-module-gradle-plugin:compileKotlin' because:\n\n  Build cache is disabled\n\nTask ':expo-module-gradle-plugin:compileKotlin' is not up-to-date because:\n\n  No history is available.\n\nThe input changes require a full rebuild for incremental task ':expo-module-gradle-plugin:compileKotlin'.\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/java', not found\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/java', not found\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/java', not found\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/java', not found\n\nKotlin source files: /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/AutolinkingIntegration.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ExtraPropertiesExtension.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/Version.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/gradle/ExpoModuleExtension.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/gradle/ExpoGradleHelperExtension.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ExpoModulesGradlePlugin.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/MavenPublicationExtension.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/AndroidLibraryExtension.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ProjectConfiguration.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/Warnings.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt\n\nJava source files: \n\nScript source files: \n\nScript file extensions: \n\nUsing Kotlin/JVM incremental compilation\n\n[KOTLIN] Kotlin compilation 'jdkHome' argument: /Applications/Android Studio.app/Contents/jbr/Contents/Home\n\nOptions for KOTLIN DAEMON: IncrementalCompilationOptions(super=CompilationOptions(compilerMode=INCREMENTAL_COMPILER, targetPlatform=JVM, reportCategories=[0, 3], reportSeverity=2, requestedCompilationResults=[0], kotlinScriptExtensions=[]), sourceChanges=org.jetbrains.kotlin.buildtools.api.SourcesChanges$Unknown@1faeaa12, classpathChanges=NotAvailableForNonIncrementalRun, workingDir=/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable, multiModuleICSettings=MultiModuleICSettings(buildHistoryFile=/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/local-state/build-history.bin, useModuleDetection=false), usePreciseJavaTracking=true, icFeatures=IncrementalCompilationFeatures(withAbiSnapshot=false, preciseCompilationResultsBackup=true, keepIncrementalCompilationCachesInMemory=true, enableUnsafeIncrementalCompilationForMultiplatform=false, enableMonotonousIncrementalCompileSetExpansion=true), outputFiles=[/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/local-state])\n\nw: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/AndroidLibraryExtension.kt:9:24 'var targetSdk: Int?' is deprecated. Will be removed from library DSL in v9.0. Use testOptions.targetSdk or/and lint.targetSdk instead.\n\nFinished executing kotlin compiler using DAEMON strategy\n\nResolve mutations for :expo-module-gradle-plugin:compileJava (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:expo-module-gradle-plugin:compileJava (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n\n\n> Task :expo-module-gradle-plugin:compileJava NO-SOURCE\n\nSkipping task ':expo-module-gradle-plugin:compileJava' as it has no source files and no previous output files.\n\nResolve mutations for :expo-module-gradle-plugin:classes (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:expo-module-gradle-plugin:classes (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n\n\n> Task :expo-module-gradle-plugin:classes\n\nSkipping task ':expo-module-gradle-plugin:classes' as it has no actions.\n\nResolve mutations for :expo-module-gradle-plugin:jar (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:expo-module-gradle-plugin:jar (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n\n\n> Task :expo-module-gradle-plugin:jar\n\nCaching disabled for task ':expo-module-gradle-plugin:jar' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nTask ':expo-module-gradle-plugin:jar' is not up-to-date because:\n\n  No history is available.\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/java/main', not found\n\n\n\n> Configure project :\n\n[ExpoRootProject] Using the following versions:\n\n  - buildTools:  36.0.0\n\n  - minSdk:      24\n\n  - compileSdk:  36\n\n  - targetSdk:   36\n\n  - ndk:         27.1.12297006\n\n  - kotlin:      2.1.20\n\n  - ksp:         2.1.20-2.0.1\n\n\n\n> Configure project :app\n\nEvaluating project ':app' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/app/build.gradle'.\n\nUsing default execution profile\n\nBuild b8b921a8-b0b1-4947-bbaf-08b90fbd9521 is started\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nBuild 8d2b3e52-df20-4cc2-ab89-7675eb5ca1ad is closed\n\nBuild 753635ef-b0be-4328-85bc-845d946bca04 is closed\n\nBuild 1276dee6-424e-4d0f-8887-ad96cd94b8de is closed\n\nBuild b8b921a8-b0b1-4947-bbaf-08b90fbd9521 is closed\n\n\n\n[Incubating] Problems report is available at: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/android/build/reports/problems/problems-report.html\n\n\n\nFAILURE: Build failed with an exception.\n\n\n\n* Where:\n\nBuild file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/app/build.gradle' line: 177\n\n\n\n* What went wrong:\n\nA problem occurred evaluating project ':app'.\n\n> Could not get unknown property 'hermesEnabled' for object of type org.gradle.api.internal.artifacts.dsl.dependencies.DefaultDependencyHandler.\n\n\n\n* Try:\n\n> Run with --stacktrace option to get the stack trace.\n\n> Run with --debug option to get more log output.\n\n> Run with --scan to get full insights.\n\n> Get more help at https://help.gradle.org.\n\n\n\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\n\n\n\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\n\n\n\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\n\n\nBUILD FAILED in 18s\n\n24 actionable tasks: 24 executed\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin]\n\nbrianlapp@MacBook-Pro android % \n\n\n\n"
+  },
+  {
+    "unixMs": 1764689187216,
+    "generationUUID": "25312acd-9b12-4611-895f-af94108f6b72",
+    "type": "composer",
+    "textDescription": "i did the thing but dont see anything happening here? "
+  },
+  {
+    "unixMs": 1764689386407,
+    "generationUUID": "cfdeda05-349e-4ca1-8d30-1c887792c397",
+    "type": "composer",
+    "textDescription": "stuck here Last login: Tue Dec  2 09:37:55 on ttys018\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp/android\n\n./gradlew clean\n\n./gradlew assembleRelease --info\n\nException in thread \"main\" java.lang.RuntimeException: Error when loading properties file=/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradle.properties\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:3)\n\n\tat org.gradle.wrapper.GradleWrapperMain.main(SourceFile:34)\n\nCaused by: java.io.IOException: Operation canceled\n\n\tat java.base/java.io.FileInputStream.readBytes(Native Method)\n\n\tat java.base/java.io.FileInputStream.read(Unknown Source)\n\n\tat java.base/java.util.Properties$LineReader.readLine(Unknown Source)\n\n\tat java.base/java.util.Properties.load0(Unknown Source)\n\n\tat java.base/java.util.Properties.load(Unknown Source)\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:1)\n\n\t... 1 more\n\n\n\n\n\n"
+  },
+  {
+    "unixMs": 1764689501587,
+    "generationUUID": "2d7a80e2-3f9e-40e9-842d-eb08ad201f51",
+    "type": "composer",
+    "textDescription": "can you audit for anythign else that might need to be fixed so we can stop wasting compiling time ???? find issues before hand maybe? this is wasting again hours from my day is it normally this difficult to compile an app we are about 7hours in if you could yesetdrays troubles?"
+  },
+  {
+    "unixMs": 1764689546298,
+    "generationUUID": "6301fd5a-0d87-43f1-8899-c0345f03c6a0",
+    "type": "composer",
+    "textDescription": "how long does this normally take i asked? pleaee dont ignore my questiosn i asked 2 simple questiosn in 1 simpel scentence "
+  },
+  {
+    "unixMs": 1764690186199,
+    "generationUUID": "5076c48c-7479-48e5-904c-418ef3f5c008",
+    "type": "composer",
+    "textDescription": "I have errors here - Last login: Tue Dec  2 09:37:55 on ttys018\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp/android\n\n./gradlew clean\n\n./gradlew assembleRelease --info\n\nException in thread \"main\" java.lang.RuntimeException: Error when loading properties file=/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradle.properties\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:3)\n\n\tat org.gradle.wrapper.GradleWrapperMain.main(SourceFile:34)\n\nCaused by: java.io.IOException: Operation canceled\n\n\tat java.base/java.io.FileInputStream.readBytes(Native Method)\n\n\tat java.base/java.io.FileInputStream.read(Unknown Source)\n\n\tat java.base/java.util.Properties$LineReader.readLine(Unknown Source)\n\n\tat java.base/java.util.Properties.load0(Unknown Source)\n\n\tat java.base/java.util.Properties.load(Unknown Source)\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:1)\n\n\t... 1 more\n\nException in thread \"main\" java.lang.RuntimeException: Error when loading properties file=/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradle.properties\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:3)\n\n\tat org.gradle.wrapper.GradleWrapperMain.main(SourceFile:34)\n\nCaused by: java.io.IOException: Operation canceled\n\n\tat java.base/java.io.FileInputStream.readBytes(Native Method)\n\n\tat java.base/java.io.FileInputStream.read(Unknown Source)\n\n\tat java.base/java.util.Properties$LineReader.readLine(Unknown Source)\n\n\tat java.base/java.util.Properties.load0(Unknown Source)\n\n\tat java.base/java.util.Properties.load(Unknown Source)\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:1)\n\n\t... 1 more\n\nbrianlapp@MacBook-Pro android % \n\nfrom terminla and then more erros in cursor \"Failed to save 'gradle.properties': Unable to write file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradle.properties' (Unknown (FileSystemError): Error: ECANCELED: operation canceled, open '/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradle.properties')\"\n\n\n\nand now you need me to run more terminal commands? "
+  },
+  {
+    "unixMs": 1764690483287,
+    "generationUUID": "274626d9-9243-4e11-a6ee-e240a3920aff",
+    "type": "composer",
+    "textDescription": "\n\nBUILD FAILED in 2m 47s\n\n159 actionable tasks: 131 executed, 28 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android % \n\n"
+  },
+  {
+    "unixMs": 1764690582769,
+    "generationUUID": "5ed839a8-c51f-4ab2-a5ee-5ed9a44fcdd9",
+    "type": "composer",
+    "textDescription": "[Incubating] Problems report is available at: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/android/build/reports/problems/problems-report.html\n\n\n\nFAILURE: Build failed with an exception.\n\n\n\n* What went wrong:\n\nExecution failed for task ':app:createBundleReleaseJsAndAssets'.\n\n> Process 'command 'node'' finished with non-zero exit value 1\n\n\n\n* Try:\n\n> Run with --stacktrace option to get the stack trace.\n\n> Run with --debug option to get more log output.\n\n> Run with --scan to get full insights.\n\n> Get more help at https://help.gradle.org.\n\n\n\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\n\n\n\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\n\n\n\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\n\n\nBUILD FAILED in 2m 47s\n\n159 actionable tasks: 131 executed, 28 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android % \n\n\n\n\n\n\n\n"
+  },
+  {
+    "unixMs": 1764690799052,
+    "generationUUID": "9a2b292f-1e34-411e-93e9-dfc8282fe3af",
+    "type": "composer",
+    "textDescription": "BRO!@ commonhelp me out here - You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\n\n\n\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\n\n\nBUILD FAILED in 2m 47s\n\n159 actionable tasks: 131 executed, 28 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp && npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output /tmp/test.bundle 2>&1\n\n=================================================================================================\n\nFrom React Native 0.73, your project's Metro config should extend '@react-native/metro-config'\n\nor it will fail to build. Please copy the template at:\n\nhttps://github.com/react-native-community/template/blob/main/template/metro.config.js\n\nThis warning will be removed in future (https://github.com/facebook/metro/issues/1018).\n\n=================================================================================================\n\n\n\n                        \u2592\u2592\u2593\u2593\u2593\u2593\u2592\u2592\n\n                     \u2592\u2593\u2593\u2593\u2592\u2592\u2591\u2591\u2592\u2592\u2593\u2593\u2593\u2592\n\n                  \u2592\u2593\u2593\u2593\u2593\u2591\u2591\u2591\u2592\u2592\u2592\u2592\u2591\u2591\u2591\u2593\u2593\u2593\u2593\u2592\n\n                 \u2593\u2593\u2592\u2592\u2592\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2592\u2592\u2592\u2593\u2593\n\n                 \u2593\u2593\u2591\u2591\u2591\u2591\u2591\u2592\u2593\u2593\u2593\u2593\u2593\u2593\u2592\u2591\u2591\u2591\u2591\u2591\u2593\u2593\n\n                 \u2593\u2593\u2591\u2591\u2593\u2593\u2592\u2591\u2591\u2591\u2592\u2592\u2591\u2591\u2591\u2592\u2593\u2592\u2591\u2591\u2593\u2593\n\n                 \u2593\u2593\u2591\u2591\u2593\u2593\u2593\u2593\u2593\u2592\u2592\u2592\u2592\u2593\u2593\u2593\u2593\u2592\u2591\u2591\u2593\u2593\n\n                 \u2593\u2593\u2591\u2591\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2592\u2591\u2591\u2593\u2593\n\n                 \u2593\u2593\u2592\u2591\u2591\u2592\u2592\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2592\u2591\u2591\u2591\u2592\u2593\u2593\n\n                  \u2592\u2593\u2593\u2593\u2592\u2591\u2591\u2591\u2592\u2593\u2593\u2592\u2591\u2591\u2591\u2592\u2593\u2593\u2593\u2592\n\n                     \u2592\u2593\u2593\u2593\u2592\u2591\u2591\u2591\u2591\u2592\u2593\u2593\u2593\u2592\n\n                        \u2592\u2592\u2593\u2593\u2593\u2593\u2592\u2592\n\n\n\n\n\n                Welcome to Metro v0.83.3\n\n              Fast - Scalable - Integrated\n\n\n\n\n\nerror The resource `/Users/brianlapp/Documents/GitHub/TabletOrderApp/index.js` was not found.\n\nError: The resource `/Users/brianlapp/Documents/GitHub/TabletOrderApp/index.js` was not found.\n\n    at /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/metro/src/IncrementalBundler.js:291:24\n\n    at gotStat (node:fs:2931:21)\n\n    at FSReqCallback.oncomplete (node:fs:195:21)\n\nbrianlapp@MacBook-Pro TabletOrderApp % \n\n"
+  },
+  {
+    "unixMs": 1764690823819,
+    "generationUUID": "8860bd60-aeec-46a5-9af3-44fb17769f1c",
+    "type": "composer",
+    "textDescription": "how could yo not see this in the audot you just did ? did you even do one? what the fuck "
+  },
+  {
+    "unixMs": 1764690847560,
+    "generationUUID": "95d63b5d-f39c-4694-be1b-811361e17b0c",
+    "type": "composer",
+    "textDescription": "WHY DID YOU NOT TELL ME YOU DIDNT DO THE AUDIT\n\n?!@?!?!?!?!?!?!?!?!"
+  },
+  {
+    "unixMs": 1764690916025,
+    "generationUUID": "f8abf3e9-86eb-4ae4-99bd-c238f5b589f1",
+    "type": "composer",
+    "textDescription": "what ? \"The index.js file is now created.\n\nRun the build again in your terminal:' arew you fucking kidding me right now? GO DO THE AUDIT and dont come back until its dome if you have issues tell and we will find a work around. do the audit and stop wasting my day here"
+  },
+  {
+    "unixMs": 1764691032026,
+    "generationUUID": "a4da955c-2af5-4d42-b4d4-b3f63b560888",
+    "type": "composer",
+    "textDescription": "why are we repeatedly seeing emtpy files here? we had this workign did we not? "
+  },
+  {
+    "unixMs": 1764691071115,
+    "generationUUID": "bde5473c-f144-4233-ba90-612c5286dcb9",
+    "type": "composer",
+    "textDescription": "bro im in the git folder righ tnow what the fuck are you on about?"
+  },
+  {
+    "unixMs": 1764691097777,
+    "generationUUID": "14716d3c-efe0-45c4-a63e-e45133ab23ce",
+    "type": "composer",
+    "textDescription": "https://github.com/Work-Local-Inc/TabletOrderApp "
+  },
+  {
+    "unixMs": 1764691101619,
+    "generationUUID": "631a829b-4f03-4c04-a902-ab3c41af9c8e",
+    "type": "composer",
+    "textDescription": "re fucking base then"
+  },
+  {
+    "unixMs": 1764692682788,
+    "generationUUID": "3ab1e652-b2a9-480d-b789-7fb34eacd9fa",
+    "type": "composer",
+    "textDescription": "have we fixed these issues, its the lastest build error ? but i may have ran it before you implimented the last updates - FAILURE: Build failed with an exception.\n\n\n\n* What went wrong:\n\nExecution failed for task ':app:createBundleReleaseJsAndAssets'.\n\n> Cannot access input property 'sources' of task ':app:createBundleReleaseJsAndAssets'. Accessing unreadable inputs or outputs is not supported. Declare the task as untracked by using Task.doNotTrackState(). For more information, please refer to https://docs.gradle.org/8.14.3/userguide/incremental_build.html#sec:disable-state-tracking in the Gradle documentation.\n\n   > Failed to create MD5 hash for file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/metro.config.js'\n\n\n\n* Try:\n\n> Run with --stacktrace option to get the stack trace.\n\n> Run with --debug option to get more log output.\n\n> Run with --scan to get full insights.\n\n> Get more help at https://help.gradle.org.\n\n\n\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\n\n\n\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\n\n\n\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\n\n\nBUILD FAILED in 26m 28s\n\n"
+  },
+  {
+    "unixMs": 1764692702262,
+    "generationUUID": "bf836e5a-a339-4cc9-b850-fb00b74ed13c",
+    "type": "composer",
+    "textDescription": "also seeing these still in cursor "
+  },
+  {
+    "unixMs": 1764694368619,
+    "generationUUID": "4a39c3c8-e39e-4b5c-9dc6-b58e0e485f99",
+    "type": "composer",
+    "textDescription": "holy craptasticj brosive! looky here -> BUILD SUCCESSFUL in 7m 47s\n\n437 actionable tasks: 258 executed, 179 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android % \n\n"
+  },
+  {
+    "unixMs": 1764694444035,
+    "generationUUID": "0c4a51bd-58b3-4379-8223-c6fceb0e1933",
+    "type": "composer",
+    "textDescription": "Innnncredible!!!.....Now we need to resolve the issue where orders dotn print and also rightnow order come in they say they printed (but dont) and are marked as active we can only mark as active after a successfull print but righ tnow we are giving false sucess so we need to resolve that"
+  },
+  {
+    "unixMs": 1764694776094,
+    "generationUUID": "e37e4778-439b-4663-9ed3-2ef28fe83e70",
+    "type": "composer",
+    "textDescription": "hats going on here? you havnt been able to do git stuff withotu gettign stuck for some time whats the issue?"
+  }
+]

@@ -1,0 +1,1174 @@
+[
+  {
+    "text": "Gradle is now installed",
+    "commandType": 4
+  },
+  {
+    "text": "Got it. If the builder agent jumps in, key things to keep them on-track:\n\n\n\nBuild env: use both ANDROID_HOME and ANDROID_SDK_ROOT set to ~/Library/Android/sdk (even though local.properties exists) and run npx expo run:android --no-interactive with the tablet connected.\n\nnewArch: keep newArchEnabled=false in android/gradle.properties to avoid the async-storage codegen/CMake failures.\n\nExpo Android modules: already patched for compileSdk/targetSdk 36; don\u2019t revert those.\n\nLegacy printer: removed; rely on react-native-thermal-receipt-printer-image-qr for the Zywell BT printer.\n\nIf they need to re-run, use:\n\ncd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nJAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\" \\\n\nPATH=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin:$PATH\" \\\n\nANDROID_HOME=\"$HOME/Library/Android/sdk\" \\\n\nANDROID_SDK_ROOT=\"$HOME/Library/Android/sdk\" \\\n\nEXPO_PUBLIC_API_BASE_URL=\"https://39d6a4b9-a0f2-4544-a607-a9203b1fa6a8-00-1qkpr2vwm16p5.riker.replit.dev\" \\\n\nnpx expo run:android --no-interactive | tee build.log",
+    "commandType": 4
+  },
+  {
+    "text": "app i launched but its blank whiye screen",
+    "commandType": 4
+  },
+  {
+    "text": "holy crap yes! im in and i see all the past order from this week in que! now we need a way to print them this is meant to print oders but righ tnow it seems like its tryign tpo be an order manager it has(new order | in progress | ready) but thats not the flow the flow would be new order comes in the order then prints and only after it prints for the staff and hung on aboard will in be in progress but now its out of the app so the in progres and ready are useless can we simplify? new order com ein an auto print woul; dbe great if pritning fails then they can go into a que to be printed?",
+    "commandType": 4
+  },
+  {
+    "text": "amazing thats way better yes! good job. i try to print and it says go to setings anconenct printer. ok cool. but i go to setings and theres no setting sto allow me to pull a list of printers and choose one to connect to ",
+    "commandType": 4
+  },
+  {
+    "text": "I see the button but it throws an error: Need andriod permissions BLUETTOTH CONNECT permission for atribution source uid = 10293,...",
+    "commandType": 4
+  },
+  {
+    "text": "fuck yeah the orders are printing now! ",
+    "commandType": 4
+  },
+  {
+    "text": "FUCK YEAH BROthER YOU DID IT!!!!!!!!!!!!!!!!!!!!!!!!! amzing ... one thing the oders are printing right fron the very edge of the left side and then theres about an inch of black space on the right side.. is the margin somethign we can adjust?",
+    "commandType": 4
+  },
+  {
+    "text": "oh another thing lol I just notced whenever we restart the app all the oders go back into que seven if i have alrady pritned them we need to make that not happen",
+    "commandType": 4
+  },
+  {
+    "text": "should we add somethign so it also remembers the printer so i dotn have to reconnect each reset",
+    "commandType": 4
+  },
+  {
+    "text": "OPH and I missed what you said about the margins :) ",
+    "commandType": 4
+  },
+  {
+    "text": "it just look smore narrow now it has not been moved to the right at all it can be wider and moved to the right or forcecentered?",
+    "commandType": 4
+  },
+  {
+    "text": "oh crap i got an error. Attemp to invoke interface method void com.pinmi.react.printer.adapt facebook react brideg callback some freaign error ",
+    "commandType": 4
+  },
+  {
+    "text": "back to loading blank screen again",
+    "commandType": 4
+  },
+  {
+    "text": "Same error i beleieve - ",
+    "commandType": 4
+  },
+  {
+    "text": "This is incredible! I had to leave work and go home the day ended. But Id love to keep building this out its so good. Can I open this in ANdriod studio and run it virtually on my machine? ",
+    "commandType": 4
+  },
+  {
+    "text": "like this? ",
+    "commandType": 4
+  },
+  {
+    "text": "\n\n\u203a Metro waiting on exp://192.168.229.138:8082\n\n\u203a Scan the QR code above with Expo Go (Android) or the Camera app (iOS)\n\n\n\n\u203a Web is waiting on http://localhost:8082\n\n\n\n\u203a Using Expo Go\n\n\u203a Press s \u2502 switch to development build\n\n\n\n\u203a Press a \u2502 open Android\n\n\u203a Press i \u2502 open iOS simulator\n\n\u203a Press w \u2502 open web\n\n\n\n\u203a Press j \u2502 open debugger\n\n\u203a Press r \u2502 reload app\n\n\u203a Press m \u2502 toggle menu\n\n\u203a shift+m \u2502 more tools\n\n\u203a Press o \u2502 open project code in your editor\n\n\n\n\u203a Press ? \u2502 show all commands\n\n\n\nLogs for your project will appear below. Press Ctrl+C to exit.\n\n\u203a Opening on Android...\n\nCommandError: No Android connected device found, and no emulators could be started automatically.\n\nConnect a device or create an emulator (https://docs.expo.dev/workflow/android-studio-emulator).\n\nThen follow the instructions here to enable USB debugging:\n\nhttps://developer.android.com/studio/run/device.html#developer-device-options. If you are using Genymotion go to Settings -> ADB, select \"Use custom Android SDK tools\", and point it at your Android SDK directory.\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "\u203a Opening on Android...\n\n\u203a Opening exp://127.0.0.1:8082 on Pixel_Tablet\n\nEmptyJsonFileError: Cannot parse an empty JSON string\n\n\u2514\u2500 File: /Users/brianlapp/Documents/GitHub/TabletOrderApp/app.json",
+    "commandType": 4
+  },
+  {
+    "text": "is it ready now",
+    "commandType": 4
+  },
+  {
+    "text": "Last login: Fri Nov 28 17:36:48 on ttys001\n\nbrianlapp@MacBook-Pro ~ % brianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nzsh: command not found: brianlapp@MacBook-Pro\n\nbrianlapp@MacBook-Pro ~ % \n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "nothign happening Last login: Fri Nov 28 17:36:48 on ttys001\n\nbrianlapp@MacBook-Pro ~ % brianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nzsh: command not found: brianlapp@MacBook-Pro\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nnpx expo start",
+    "commandType": 4
+  },
+  {
+    "text": "ok did it do anything? nothign happened in terminal",
+    "commandType": 4
+  },
+  {
+    "text": "BRO! - st login: Fri Nov 28 17:36:48 on ttys001\n\nbrianlapp@MacBook-Pro ~ % brianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nzsh: command not found: brianlapp@MacBook-Pro\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nnpx expo start\n\n  [Restored Nov 28, 2025 at 5:51:50\u202fPM]\n\nLast login: Fri Nov 28 17:50:02 on ttys001\n\nRestored session: Fri 28 Nov 2025 17:51:05 EST\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nnpx expo start\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "##CODEX AGENT AUDIT REPORT##\n\nHere are the key risks and fixes I see in the current \u201cworking\u201d build:\n\n\n\nNew Architecture still enabled (android/gradle.properties: newArchEnabled=true). This was the root cause of the async-storage CMake/codegen failures earlier. If the Gradle plugin workaround is removed or you clean the project, builds can break again.\n\nFix: set newArchEnabled=false in android/gradle.properties and keep it there.\n\n\n\nAndroid SDK path keeps breaking builds. Even though android/local.properties has sdk.dir=/Users/brianlapp/Library/Android/sdk, Gradle has failed with \u201cSDK location not found.\u201d The only reliable fix is exporting ANDROID_HOME and ANDROID_SDK_ROOT in your build command/CI:\n\n\n\nANDROID_HOME=~/Library/Android/sdk\n\nANDROID_SDK_ROOT=~/Library/Android/sdk\n\nKeep using --no-interactive to avoid plugin prompts.\n\n\n\nPatches live in node_modules and will be lost on npm install. We patched Expo Android modules (barcode-scanner/image-loader) and settings.gradle to build with SDK 36. Those edits sit in node_modules and android/settings.gradle; a clean install or expo prebuild will revert them.\n\nFix: capture these changes with patch-package or commit the patched android/node_modules files to your repo so they survive reinstalls.\n\n\n\nPrinter dependency mismatch risk. react-native-thermal-receipt-printer-image-qr pulls react-native-ping with a peer range up to RN 0.70; you\u2019re on RN 0.81. It builds now, but be aware this is outside the library\u2019s stated support. If you see runtime issues, consider a maintained ESC/POS library or pinning to a vetted fork.\n\n\n\nBase URL hardcoded. src/api/client.ts falls back to https://39d6a4b9-a0f2-4544-a607-a9203b1fa6a8-00-1qkpr2vwm16p5.riker.replit.dev unless EXPO_PUBLIC_API_BASE_URL is set. Make sure your build pipeline sets this env var per environment so you don\u2019t ship a build pointing to the wrong backend.\n\n\n\nSupabase service-role warning. src/lib/supabase.ts still references the old URL and a removed key with a warning. Since you\u2019re using REST now, leave it unused and ensure the old service role key is revoked in Supabase.\n\n\n\nAPK size/ABI targets. reactNativeArchitectures includes all ABIs (arm/x86). For your shipped tablet builds, limit to armeabi-v7a,arm64-v8a to reduce size and build time.\n\n\n\nIf you want, I can: (1) flip newArchEnabled=false, (2) add patch-package entries for the Expo module fixes/settings.gradle so they persist, and (3) tighten the build script with the required SDK env vars.",
+    "commandType": 4
+  },
+  {
+    "text": "its running in andriod studio! i get an error though ",
+    "commandType": 4
+  },
+  {
+    "text": "whats happening?\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "I dunno i still see the same error thi isnt fun anymore lol im on personal time seems likes etting up the emulator is giat pain in the ass and its not goign even be usefull for me since i cant test print anyway. What I really want to work on is making these look more like orders than reciepts as these are printed for the kitchen to make food. we should have customer name and food to be make in large type and maybe a secondary print fo rthe recipet so we show case the order better with an order prit and a recipt print ? does that make sense could we make a plan foir that instread of yelloing at emulators",
+    "commandType": 4
+  },
+  {
+    "text": "Fuck yeah i do!!!! that sounds exactly what I want do we make a plan md file for this and work off it then archive the file after (can make that the last task haha) ",
+    "commandType": 4
+  },
+  {
+    "text": "Amazing we could do an order layout like this (ignoring the left hand sidebar) what do you think? should we plan fo rthat or makes sure reciepts print first? its friday and i cant test until monday",
+    "commandType": 4
+  },
+  {
+    "text": "YES!!!!!!! \ud83d\ude4c ",
+    "commandType": 4
+  },
+  {
+    "text": "Since our orders auto print we would also auto place them into the active que (if auto print is enable, thats default state) ",
+    "commandType": 4
+  },
+  {
+    "text": "the screen caps use \"Active\" instead of \"in progress\" i think it has a more general meaning. Like in progress soeone might assume its being made where active could aslo mean we saw it and its ont he board in our own que",
+    "commandType": 4
+  },
+  {
+    "text": "You know I do ! I might even t want to get the emulator going now lol this is exciting",
+    "commandType": 4
+  },
+  {
+    "text": "want me to shut adriod studio down and open again?",
+    "commandType": 4
+  },
+  {
+    "text": "whats happening",
+    "commandType": 4
+  },
+  {
+    "text": "want me to shu tit down? is it becuase im mamually starting the emulator? so maybe its showing as busy?",
+    "commandType": 4
+  },
+  {
+    "text": "that gives me an error until i mnaully open it : \n\nLogs for your project will appear below. Press Ctrl+C to exit.\n\n\u203a Opening on Android...\n\nCommandError: No Android connected device found, and no emulators could be started automatically.\n\nConnect a device or create an emulator (https://docs.expo.dev/workflow/android-studio-emulator).\n\nThen follow the instructions here to enable USB debugging:\n\nhttps://developer.android.com/studio/run/device.html#developer-device-options. If you are using Genymotion go to Settings -> ADB, select \"Use custom Android SDK tools\", and point it at your Android SDK directory.\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "you launched a tablet, wooooot!!!  but its white screen",
+    "commandType": 4
+  },
+  {
+    "text": "started building but hung at 77%",
+    "commandType": 4
+  },
+  {
+    "text": "its downloading Expo Go now?",
+    "commandType": 4
+  },
+  {
+    "text": "look slike it hung up at 72 this time, ",
+    "commandType": 4
+  },
+  {
+    "text": "thi sis termonal -  Press o \u2502 open project code in your editor\n\n\n\n\u203a Press ? \u2502 show all commands\n\n\n\nLogs for your project will appear below. Press Ctrl+C to exit.\n\n\u203a Opening on Android...\n\n\u203a Opening exp://127.0.0.1:8081 on Pixel_Tablet\n\nDownloading the Expo Go app [========================================] 100% 0.0\n\n\n\n\u203a Press ? \u2502 show all commands\n\nAndroid ./index.ts \u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2591\u2591\u2591\u2591\u2591\u2591\u2591 60.5% (110/266)\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "Its climbing / 147/319",
+    "commandType": 4
+  },
+  {
+    "text": "",
+    "commandType": 4
+  },
+  {
+    "text": "Pretty sure this is still the complex buid i never cancelled it ",
+    "commandType": 4
+  },
+  {
+    "text": "haha truth thought you might be able to know by the package size",
+    "commandType": 4
+  },
+  {
+    "text": "yeah 85% now",
+    "commandType": 4
+  },
+  {
+    "text": "96.4% (1038/1057)",
+    "commandType": 4
+  },
+  {
+    "text": "Android Bundled 1451981ms index.ts (1072 modules)\n\n ERROR  \u26a0\ufe0f DEPRECATED: Do not use lib/supabase.ts - use api/client.ts instead!\n\n ERROR  \u26a0\ufe0f DEPRECATED: Do not use supabaseClient.ts - use client.ts instead!\n\n LOG  \ud83d\udcc2 Loading stored session from AsyncStorage...\n\n LOG  [PrintService] Bluetooth printer library loaded\n\n LOG  \ud83d\udcc2 Stored deviceId: null restaurantInfo: null\n\n WARN  \ud83d\udea8 React Native's New Architecture is always enabled in Expo Go, but it is explicitly disabled in your project's app config. This may lead to unexpected behavior when creating a production or development build. Remove \"newArchEnabled\": false from your app.json.\n\nLearn more: https://docs.expo.dev/guides/new-architecture/\n\nAndroid Bundled 26342ms node_modules/expo-av/build/index.js (646 modules)",
+    "commandType": 4
+  },
+  {
+    "text": "",
+    "commandType": 4
+  },
+  {
+    "text": "crap it doesn't like our device prolly becuase theis one hasntbeen authorised and these creds are for another tabelet? or something else?",
+    "commandType": 4
+  },
+  {
+    "text": "still getting same error any way you can side load my creds for this test?",
+    "commandType": 4
+  },
+  {
+    "text": "same error with those creds",
+    "commandType": 4
+  },
+  {
+    "text": "are we loading the new UI since it worked? ",
+    "commandType": 4
+  },
+  {
+    "text": "supabase logs -  LOG  Attempting login with UUID: 2e4dcef4-400e-41a5-b551-f060a70edfb5\n\n LOG  \ud83d\udd10 Attempting Supabase login with UUID: 2e4dcef4-400e-41a5-b551-f060a70edfb5\n\n ERROR  Device lookup error: {\"hint\": \"Double check your Supabase `anon` or `service_role` API key.\", \"message\": \"Invalid API key\"}\n\n LOG  Login result: {\"success\":false,\"error\":\"Device not found. Please check your Device UUID.\"}\n\n LOG  Attempting login with UUID: 2e4dcef4-400e-41a5-b551-f060a70edfb5\n\n LOG  \ud83d\udd10 Attempting Supabase login with UUID: 2e4dcef4-400e-41a5-b551-f060a70edfb5\n\n ERROR  Device lookup error: {\"hint\": \"Double check your Supabase `anon` or `service_role` API key.\", \"message\": \"Invalid API key\"}\n\n LOG  Login result: {\"success\":false,\"error\":\"Device not found. Please check your Device UUID.\"}\n\n LOG  Attempting login with UUID: 2e4dcef4-400e-41a5-b551-f060a70edfb5\n\n LOG  \ud83d\udd10 Attempting Supabase login with UUID: 2e4dcef4-400e-41a5-b551-f060a70edfb5\n\n ERROR  Device lookup error: {\"hint\": \"Double check your Supabase `anon` or `service_role` API key.\", \"message\": \"Invalid API key\"}\n\n LOG  Login result: {\"success\":false,\"error\":\"Device not found. Please check your Device UUID.\"}\n\n LOG  Attempting login with UUID: 006fe8aa-eec7-465c-bb8d-9180d3a2c910\n\n LOG  \ud83d\udd10 Attempting Supabase login with UUID: 006fe8aa-eec7-465c-bb8d-9180d3a2c910\n\n ERROR  Device lookup error: {\"hint\": \"Double check your Supabase `anon` or `service_role` API key.\", \"message\": \"Invalid API key\"}\n\n LOG  Login result: {\"success\":false,\"error\":\"Device not found. Please check your Device UUID.\"}\n\n LOG  Notification sound not available (add notification.mp3 to assets)\n\n\u203a Reloading apps\n\nAndroid Bundled 69ms index.ts (1 module)\n\n LOG  [PrintService] Bluetooth printer library loaded\n\nAndroid Bundled 68ms node_modules/expo-av/build/index.js (1 module)\n\n WARN  [expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.\n\n LOG  Notification sound not available (add notification.mp3 to assets)",
+    "commandType": 4
+  },
+  {
+    "text": "IM IN!!!!",
+    "commandType": 4
+  },
+  {
+    "text": "this is soooo goood! you did it!!!! you genious!!!! should we add our logo? https://menu.ca/images/logo.png  and dsrk / light mode in settings?",
+    "commandType": 4
+  },
+  {
+    "text": "this is soooo goood! you did it!!!! you genious!!!! should we add our logo? https://menu.ca/images/logo.png  and a dsrk / light mode in settings?",
+    "commandType": 4
+  },
+  {
+    "text": "this is soooo goood! you did it!!!! you genious!!!! should we add our logo?   and a dsrk / light mode in settings?",
+    "commandType": 4
+  },
+  {
+    "text": "Bro its friday night and my children have sleep over friends running around screaming an messign up my pad. Your keeping me sain with this project, givin gme purpose in life besides arguing with smaller versions of myself. Creating magic and joy! hahahahahahahahahahahahah yetsss fning goooooooo!!!!!!!!!",
+    "commandType": 4
+  },
+  {
+    "text": "we have dark mode it is dark mode we need light mode hahah",
+    "commandType": 4
+  },
+  {
+    "text": "also can we make the (order recipe col) the more (like screen cap example) narrow side or at least 50/50 on our app the left side is mor narrow than the right if that makes sence. ",
+    "commandType": 4
+  },
+  {
+    "text": "i close terminal how to load this fucker again",
+    "commandType": 4
+  },
+  {
+    "text": "wow loaded so insainley fast but i got this error ",
+    "commandType": 4
+  },
+  {
+    "text": "blank screen need to restart it",
+    "commandType": 4
+  },
+  {
+    "text": "if i press dismoiss it just show this screen ",
+    "commandType": 4
+  },
+  {
+    "text": "lol that does shit and pressing a loads the error screen and dismisisng brings me to this screen see the loop no login beucase of errror ",
+    "commandType": 4
+  },
+  {
+    "text": "what why did you remove the theme thats what we weere workign on I have no other purpose right now lol ",
+    "commandType": 4
+  },
+  {
+    "text": "no change breh! ",
+    "commandType": 4
+  },
+  {
+    "text": "nope",
+    "commandType": 4
+  },
+  {
+    "text": "",
+    "commandType": 4
+  },
+  {
+    "text": "wait i can get Expo Go docs if it heklps?",
+    "commandType": 4
+  },
+  {
+    "text": "\u203a Press i \u2502 open iOS simulator\n\n\u203a Press w \u2502 open web\n\n\n\n\u203a Press j \u2502 open debugger\n\n\u203a Press r \u2502 reload app\n\n\u203a Press m \u2502 toggle menu\n\n\u203a shift+m \u2502 more tools\n\n\u203a Press o \u2502 open project code in your editor\n\n\n\n\u203a Press ? \u2502 show all commands\n\n\n\nLogs for your project will appear below. Press Ctrl+C to exit.\n\n\u203a Opening on Android...\n\n\u203a Opening exp://192.168.229.138:8081 on Pixel_Tablet\n\n\u203a Press ? \u2502 show all commands\n\n\u203a Reloading apps\n\nAndroid Bundled 6700ms index.ts (997 modules)\n\n LOG  [PrintService] Bluetooth printer library loaded\n\nAndroid Bundled 447ms node_modules/expo-av/build/index.js (541 modules)\n\nAndroid Bundled 64ms index.ts (1 module)\n\n LOG  [PrintService] Bluetooth printer library loaded\n\n LOG  [TabletAPI] Sending heartbeat: 1.0.0\n\nAndroid Bundled 46ms node_modules/expo-av/build/index.js (1 module)\n\n ERROR  [TypeError: Cannot read property 'defaultPrintType' of undefined]\n\n WARN  [expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.\n\n LOG  Notification sound not available (add notification.mp3 to assets)\n\n\u203a Reloading apps\n\nAndroid Bundled 72ms index.ts (1 module)\n\n LOG  [PrintService] Bluetooth printer library loaded\n\nAndroid Bundled 44ms node_modules/expo-av/build/index.js (1 module)\n\n LOG  [TabletAPI] Sending heartbeat: 1.0.0\n\n ERROR  [TypeError: Cannot read property 'defaultPrintType' of undefined]\n\n WARN  [expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.\n\n LOG  Notification sound not available (add notification.mp3 to assets)\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "Bahahahahahahahah omg dude no nonono hahahahahah oh shit... yhou added the logo and the changed the col width on the OLD simple UI not the new one! dawg lol common man how did you make this mistake. archive that old UI lol our new one is the tits! ",
+    "commandType": 4
+  },
+  {
+    "text": "bah back to this puppy! ",
+    "commandType": 4
+  },
+  {
+    "text": "SAME FREAKIGN ERROR",
+    "commandType": 4
+  },
+  {
+    "text": "NO NO NO NO DELETE THE SIMPLE UI WE HAD THE NEW ONE WORKIGN THAtS THE ONE WE ARE WORKIGN ON I DONT GIVE A FLYING FUCK ABOUT THE SIMPLE UI BRO!!!!!!! WE ARE BUILDING THE NEW UI IT WAS WORKING AND WE ARE continuing the build! im not suing the app right now I dotn have a need to JUST GET IT WORKING we are building for the sake of perfection common, dude stop reverting to the simple UI we knowwe can from from location A to the tablet to the printer now we ar emakign the app actually usefull you implimented every thing it EWAS WORKING all you did was add a logo and a new color theme. it shoudl not be so broken that you need to trash it!!! fuck \n\n\n\nHeres the latest audit report if it helps you:\n\nHere\u2019s a detailed audit of the current Square-style build across UI, behavior, and build system (no changes made):\n\n\n\nOverall\n\n\n\nApp is feature-complete: REST client with token refresh, Zustand store with merge/sort/offline queue, full Square-like orders UI (list + detail pane), printing service, settings, heartbeat/network hooks.\n\nPrimary fragility is in the Android build setup (new architecture flag, module patches persistence, SDK envs). Secondary gaps are UX polish (printer connect/test, sound asset, QR wiring) and env/config hygiene.\n\nBuild/Config\n\n\n\nnew architecture: android/gradle.properties still has newArchEnabled=true. Earlier failures came from this. Unless the Gradle plugin you\u2019re using enforces a workaround, a clean build/CI may break. Safer to set newArchEnabled=false unless you need Fabric/TurboModules.\n\nSDK paths: Even with android/local.properties, AGP has failed with \u201cSDK not found\u201d. Keep ANDROID_HOME and ANDROID_SDK_ROOT set to /Users/brianlapp/Library/Android/sdk in build scripts/CI.\n\nPatches persistence: Expo Android modules (barcode-scanner/image-loader) and settings.gradle were patched to work with AGP 8 / SDK 36. If these are only in node_modules, a fresh install/prebuild will revert them. Use patch-package or commit patched files to avoid regressions.\n\nABI targets: reactNativeArchitectures includes x86/x86_64. For tablet deployment, limit to armeabi-v7a,arm64-v8a to shrink APKs and speed builds.\n\nAPI base URL: src/api/client.ts falls back to https://39d6a4b9-a0f2-4544-a607-a9203b1fa6a8-00-1qkpr2vwm16p5.riker.replit.dev unless EXPO_PUBLIC_API_BASE_URL is set. Ensure build pipelines set this per environment.\n\nSupabase: src/lib/supabase.ts is deprecated; key removed. Confirm the old service-role key is revoked in Supabase.\n\nUI/UX (Square-like layout)\n\n\n\nOrders screen: Two-pane layout with filters, list, detail; header shows restaurant, printer, online status; printer warning CTA is good.\n\nComponents (OrderListItem, OrderDetailPanel, OrderFilters, StatusBadge) are well-styled and informative.\n\nMissing/weak spots:\n\nQR scan: Ensure the Login QR button is wired to expo-barcode-scanner with permission flow; if not needed, hide it.\n\nPrinter UX: Settings still needs discover/connect/test UI wired to printService (currently only status + warning). Add scan/connect/test actions and reflect printerConnected/printerName from store.\n\nNotifications: useOrderNotifications vibrates; sound toggle depends on a missing mp3 and expo-av. Either bundle a sound asset or hide the sound option.\n\nTest creds: Login defaults to TEST_UUID/TEST_KEY under DEV; verify they\u2019re not bundled in prod.\n\nTheme: ThemeProvider is present, but styles are mostly hardcoded dark palette; if light/dark switching matters, align styles to theme.\n\nPrinting\n\n\n\nprintService.ts is robust: ESC/POS formatting, kitchen/receipt/both, printed-state tracking in Orders screen. Library (react-native-thermal-receipt-printer-image-qr) depends on react-native-ping targeting RN \u22640.70; you\u2019re on 0.81. It builds now; monitor runtime on devices. If issues appear, consider a maintained ESC/POS alternative.\n\nData/State/API\n\n\n\nREST client solid: Axios with interceptors, token refresh, env override for BASE_URL.\n\nStore solid: Merge/sort, offline queue, polling, settings persisted. Printed-state is tracked via AsyncStorage.\n\nPerformance/Stability\n\n\n\nPolling every 5s is fine; could add adaptive backoff when idle/offline.\n\nAPK size/build time can be improved by limiting ABIs.\n\nNew architecture off = more predictable builds.\n\nSecurity\n\n\n\nSupabase service-role key removed; ensure revoked.\n\nAvoid shipping test creds; ensure env is set for backend.\n\nRecommendations (actionable)\n\n\n\nFor stable builds: set newArchEnabled=false; enforce ANDROID_HOME/ANDROID_SDK_ROOT; persist module patches (patch-package or commit) for Expo Android modules/settings.gradle; limit ABIs to arm only.\n\nUX polish: Wire printer discover/connect/test in Settings to printService; verify QR scanning wiring or hide the button; bundle a notification sound or hide the toggle.\n\nConfig: Ensure EXPO_PUBLIC_API_BASE_URL is set in all builds; remove/gate test creds for prod.\n\nMonitor printer library compatibility on real devices; if unstable, switch to a maintained ESC/POS lib.\n\nThis is a strong build overall; main risks are build reproducibility and a few UX gaps around printer connection/notifications.",
+    "commandType": 4
+  },
+  {
+    "text": "your stuck",
+    "commandType": 4
+  },
+  {
+    "text": "I dont think anything is happening ",
+    "commandType": 4
+  },
+  {
+    "text": "nope!\n\n\n\nLast login: Fri Nov 28 20:18:36 on ttys000\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nnpx expo run:android\n\n\n\n^C\n\n^C\n\nnpx expo start\n\na\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "noting is happening again :( ",
+    "commandType": 4
+  },
+  {
+    "text": "well it at least says starting this time ",
+    "commandType": 4
+  },
+  {
+    "text": "still.......nothing",
+    "commandType": 4
+  },
+  {
+    "text": "Last login: Fri Nov 28 21:25:11 on ttys000\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp && npx expo start --clear\n\npkill -9 node\n\npkill -9 expo\n\ncd /Users/brianlapp/Documents/GitHub/TabletOrderApp && npx expo start\n\nStarting project at /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nzsh: killed     npx expo start --clear\n\nbrianlapp@MacBook-Pro TabletOrderApp % pkill -9 node\n\nbrianlapp@MacBook-Pro TabletOrderApp % pkill -9 expo\n\nbrianlapp@MacBook-Pro TabletOrderApp % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp && npx expo start\n\nStarting project at /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nzsh: killed     npx expo start\n\nbrianlapp@MacBook-Pro TabletOrderApp % \n\nbrianlapp@MacBook-Pro TabletOrderApp % cd /Users/brianlapp/Documents/GitHub/TabletOrder\n\ncd: no such file or directory: /Users/brianlapp/Documents/GitHub/TabletOrder\n\nbrianlapp@MacBook-Pro TabletOrderApp % \n\n\n\n\n\n\n\n\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "did we break the app beyond repair?",
+    "commandType": 4
+  },
+  {
+    "text": "you run it! lol",
+    "commandType": 4
+  },
+  {
+    "text": "still here 15mins later - Last login: Fri Nov 28 21:35:40 on ttys000\n\nbrianlapp@MacBook-Pro ~ % export PATH=\"/opt/homebrew/opt/node@20/bin:$PATH\"\n\nbrianlapp@MacBook-Pro ~ % node -v\n\nv20.19.6\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp && npx expo start\n\nStarting project at /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\n            \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "i should close thw curewnt emultore ",
+    "commandType": 4
+  },
+  {
+    "text": "ok its onday now imback at work thinking we should skip the emulator and work directly with the tablet over wifi again? will tha solve our issues? ",
+    "commandType": 4
+  },
+  {
+    "text": "pretty sure i have that installed we worked this way for 2 days before we switched to th eemlulator",
+    "commandType": 4
+  },
+  {
+    "text": "ok it says loading from \"192.168.0.149:8081\" but it been about 1min and no update do i wait longer",
+    "commandType": 4
+  },
+  {
+    "text": "can you not run those in terminal? i c an if you cant but want to check first",
+    "commandType": 4
+  },
+  {
+    "text": "it loaded but not fully its stuck on whote screen with spining green circle and a yellow warning that says check warnings",
+    "commandType": 4
+  },
+  {
+    "text": "the app didnt load enough to get me to the dismiss or reload part im trying share to reload but its still at the same green spinning circle no prgress",
+    "commandType": 4
+  },
+  {
+    "text": "no no swap. simple UI why? what will that do for us?to",
+    "commandType": 4
+  },
+  {
+    "text": "im constantly telling you not to use the simple UI we knwo it works but its now what we want. its not the UI we want unoles swaopping will help us fix the issue with the proper UI the nI see no reason to ever swap to simpel ui why do you mmake that desicion without adking ",
+    "commandType": 4
+  },
+  {
+    "text": "ok expo go failed to load \"incaught error: java.io.IOException: Failed to download remote update\" ",
+    "commandType": 4
+  },
+  {
+    "text": "same im here again watching the green circel spin forever no change, we have a spinning green circle on white page",
+    "commandType": 4
+  },
+  {
+    "text": "ok i just quit all app on my tablet frsh start",
+    "commandType": 4
+  },
+  {
+    "text": "amazing im logged im I see the new ui incredible. but i do not see any new order com ein or previous order histrory I dotn think w are properly connected? maybe? can you inspect?",
+    "commandType": 4
+  },
+  {
+    "text": "sscanning for printers in the app setting aslso no longer functional button does nothing ",
+    "commandType": 4
+  },
+  {
+    "text": "you dotn see logs becuase i dotn believe the buttoj is doing anythign. I press it nothing happens",
+    "commandType": 4
+  },
+  {
+    "text": "i told you a few messages ago it worked and i can see the new UI .. that meant the app loaded and i successfully loged in. what can i do now whant me to re-load?",
+    "commandType": 4
+  },
+  {
+    "text": "how else would I knwo that zero new orders came in and zero previous orders where visible if i didntlog in? are you ok ?",
+    "commandType": 4
+  },
+  {
+    "text": "ok reloaded still no orders new or old and printer butoon still does nothing",
+    "commandType": 4
+  },
+  {
+    "text": "wow i get a message please allow scanning for bluetooth printers. go to settings s apps -> kitchen printer -> Permissions _> Nearby Devices _> Allow",
+    "commandType": 4
+  },
+  {
+    "text": "nope thats not an option I clicked view all permssions for the expanded list and see nothign like that or printer options. we've also printed from out app before and have it installed as an app on the tablet called \"restaurant Order Tablet\" just an FYI",
+    "commandType": 4
+  },
+  {
+    "text": "allowed nerarby devices but are we even updating this app or what?",
+    "commandType": 4
+  },
+  {
+    "text": "the app i have open with new ui is through ExpoGo",
+    "commandType": 4
+  },
+  {
+    "text": "OMG bro where the fuck are you today .. please show up we did that first we did both teh app we did every fuckign ap pi saw that could be p[art of this fucking gong show and then i mentioned how we are updating an app on expo go and we have a stand alone app so make sure you building the proper one why do we have 2 version pay attentio to ewhat going on here ok? you not doing soemthing corectly this is now a ME thing we already printed from this app sucess full from the tablet to the printer many times friday to fuckign app has pewrmisions ",
+    "commandType": 4
+  },
+  {
+    "text": "ojk you do nothigh then tell me to reload i say its not working we go back and forth and you do nothing then tell me to reload , reloading has not been pwroing why would it work this time whats different what did you do?",
+    "commandType": 4
+  },
+  {
+    "text": "ok so we are not workign with the stand alone app then? what was the point of that we were workign direct with that on friday now we are working through a different version on Expogo correct? ",
+    "commandType": 4
+  },
+  {
+    "text": "why are we using 2 to begin with im so confused we had an incredible looking amai...ok never mind lets move forward.. before you just assume and switch can you do an audit or we have another agent do an audot on the 2 versiosn and see whats goign to give the least amoutn oif issues for us instead iof assuming? ",
+    "commandType": 4
+  },
+  {
+    "text": "ok \"Restaurant Order Tablet\" loaded to login screen i clicked connect button and im stuck on spinning green circle . i shook and hit reload and same issue with spinning green circle",
+    "commandType": 4
+  },
+  {
+    "text": "yep got the correct creds now.  im in the app its open but its the old simpel UI we need to update to the new UI ",
+    "commandType": 4
+  },
+  {
+    "text": "its also saying failed to fetch orders and has no previous order printing history ",
+    "commandType": 4
+  },
+  {
+    "text": "what do you mean checked if it backed up we were just using it on expogo!!!!!!!",
+    "commandType": 4
+  },
+  {
+    "text": "what is you major malfunction today why do you have zero context of what we are doing every few minutes???",
+    "commandType": 4
+  },
+  {
+    "text": "NO IT DIDNT GET REVERTED THE OTHER APP WAS ALWAYS USING THE OLD UI AND WE SWITCH ED TO THE NEW UI AFTER WE STARTED USING ANDRIOD STUDIO AND THATS WHY EXPOGO!!!!!!!~",
+    "commandType": 4
+  },
+  {
+    "text": "First app was vonnected to tablet friday and old UI then I went home to work and had no tablet so we started andriod studio and switched to expogo",
+    "commandType": 4
+  },
+  {
+    "text": "i didnt noticed we switched becuase i didnt have the tablet to see we were workign on a different app ",
+    "commandType": 4
+  },
+  {
+    "text": "we are connected to the tablet via wifi and thast how its always been used no other way no USB connection i. do not have a cable that allows data transfer",
+    "commandType": 4
+  },
+  {
+    "text": "OH MY FUCKING GOD OF COURSE ITS ENABLED THIS IS FUCKIGN HOW WE FUCKING USED THE FUCKIGN APP ON FRIDAY FOR FUCK SAKES NOTHIGN HAS CHANGES ALL I DID WAS DRIVE HOME WITHOTU THE FUCKIGBN TABLET THEN RETRIUN A FEW DAYS LARTER NO FUCKIGN STETTING HAVE BEEN CHAGES ",
+    "commandType": 4
+  },
+  {
+    "text": "why cant you get this thorugh your head right now why are yo so fuckign loat you have been in charge this entirte time all these decisions where your idea what the fuck man where have you gone ",
+    "commandType": 4
+  },
+  {
+    "text": "we litterqally just had the square UI loaded like 30mins ago you did not loose it you just need to format it from ExpoGo to whatever direct load uses thats all its not difficult same app didfferent load style",
+    "commandType": 4
+  },
+  {
+    "text": "Can you please do an evelutation and get your brain on straight before you rush into coding from assumtions and broken dreams?",
+    "commandType": 4
+  },
+  {
+    "text": "You task take the new UI that was build in ExpoGo and recreate it for direct load so we can test an actual bluetooth print",
+    "commandType": 4
+  },
+  {
+    "text": "there were not loast i can launch expogo app right now and see them why are you saying they are lost what the fuck",
+    "commandType": 4
+  },
+  {
+    "text": "ive said this 100 fucking times expo go = new UI and the other one is the simple UI",
+    "commandType": 4
+  },
+  {
+    "text": "DO YOU UNDERSTAND FIUNALLy PLEASEE TELL ME YOU FUCKING UNDERSTAND WHAT YOU DID\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "also to add to this ... today monday morning you once again edited and modified the square UI and loaded it on my tablet through square go . issues where no printer selection and orders where not being fetched other than that the app look incredible. so you now understand you mission? can we take you knwoedge bfore we forget again and create an immaculatley detailed update plan to get the new UIO (wich WE HAVE) live and rocking please so we can move forward",
+    "commandType": 4
+  },
+  {
+    "text": "\"What's the IP:PORT from Wireless Debugging on your tablet so I can connect ADB and rebuild?\" I dont knwo you set this up this was your IDea when I could not get a cable yopu know how to do all of this you have acces an dpermiosions ",
+    "commandType": 4
+  },
+  {
+    "text": "please create plan ",
+    "commandType": 4
+  },
+  {
+    "text": "thats correect expogo is now the old UI as well. can you not find the files we made in the file folder from friday or this mornign when we were editing the square UI files?",
+    "commandType": 4
+  },
+  {
+    "text": "are you telling me the old simple UI the one I told you 3-4x friday night never to touch again never to revert to never to be used. you delete our new square UI and placed the old simple one you where told never to touch again you used that one instead and delted the good one is that what your telling me now? ",
+    "commandType": 4
+  },
+  {
+    "text": " I dont know can you? How can I ever trust you agian.. I was just this moring at 930am exactly 1 hours agao you wher elast warned to never use that old simple UI and the first thing you do is delete the new code in favour of the old UI?  Im just so dumbfounded on how this could have ever happened ",
+    "commandType": 4
+  },
+  {
+    "text": "how are you supposed to remake it you deleted it it womnt be correct, I worked 4 hour on this layout friday on my own personal time and you fucking deleted it?????????? hoave you chcked all the Nov28th files the build plan build logs ect I bet you can find what you need if you try I refuse to believe its just gone thats an LLM assumptions without du diligence",
+    "commandType": 4
+  },
+  {
+    "text": "you didnt find shit, thats a plan not the workign files. and its so clearly visible in the folder i have hard time believing you ever even tried searching for the real files if you just founbd that plan?",
+    "commandType": 4
+  },
+  {
+    "text": "fuck me, looks like we are going to have to. remeber to add lite / dark mode to the plan an include our brand logo with proper spacing , boy am i dissapoitned your goign to have to get this back exactly like we had if not better please ",
+    "commandType": 4
+  },
+  {
+    "text": "im a full day behind now becuase of this the entire point was to get ahead for monday . what about these files? or the andriod flder here ",
+    "commandType": 4
+  },
+  {
+    "text": "Can you query restaurant delivery area and restaurant service config and return the differences and similarieties? ",
+    "commandType": 4
+  },
+  {
+    "text": "what did you useto connect to the supase project?",
+    "commandType": 4
+  },
+  {
+    "text": "theres 2 apps on expogo what one to open? ",
+    "commandType": 4
+  },
+  {
+    "text": "ok im connected but the ui does not look as nice as before, fuck.. its not seeing new order or old orders and no printer connect settings working. Here's the screens again from square and rememebr since our defualt is to auto print when i an order come sin and prints it goes right into the active que right?",
+    "commandType": 4
+  },
+  {
+    "text": "\"Expo Go can't print - we already established this. We need to rebuild the standalone app.' YES BUT FOR SOME FUCKIGN REASON YOU REBUILT THIS IS FUCKING EXPO GO AGAIN!!!!!!!!!!!!!!! JESUS CHriust whyare we using expo if it cant print our FUCKIGN MISSION IS TO PRIONT!@!@!@!!!!!!!!!!!!!!! BROI!!!!!! why did we plan so much and go over and oiver and oiver I kept saying stop using expo and to use stand alone fuck man",
+    "commandType": 4
+  },
+  {
+    "text": "FUCK YOU THAT ALREADY DONE WE BUID THIS WAYT ALL FRIDAY YOYU FUCK STOP MAKING REPEAT THIS\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "i can not believe you assured me so many times tha you understood then went and built the app on. platform that makes it unusable to us why diod this happen?????? ",
+    "commandType": 4
+  },
+  {
+    "text": "well walk me thorugh it lets see how we can fuck up my life more this time",
+    "commandType": 4
+  },
+  {
+    "text": "192.168.0.152:33259",
+    "commandType": 4
+  },
+  {
+    "text": "what is happening you not even in the correct repo now im fuckign fuming",
+    "commandType": 4
+  },
+  {
+    "text": "what are you doign ",
+    "commandType": 4
+  },
+  {
+    "text": "bro you were just in the wrong git repo i called you out on it and asked what your are doing and your ignoiring me what ARE YOU FUCKIGBN DOING in the menu replit reo!!!!!",
+    "commandType": 4
+  },
+  {
+    "text": "you can now connect via USB you say?",
+    "commandType": 4
+  },
+  {
+    "text": "So what are you doing im asking for the 4th time??",
+    "commandType": 4
+  },
+  {
+    "text": "You know we have the gradle exstention to use correct?",
+    "commandType": 4
+  },
+  {
+    "text": "\"What Gradle extension do you have? Can you run the build from there? That would be faster than me timing out on.\" holy shit where the fuck has you mind went>? YOU i repeart YOU found and downloaded and activted the exstention and you ask me about it... I have no clue you use it you have been in charge! or every build aspect I request features and design you do the build.. its called \"Gradle for Java\" lemme know if you can use it. like RUN it",
+    "commandType": 4
+  },
+  {
+    "text": "you need to use the exstention its the only wayt you were able to stop goin in timeout circles on friday this was our saving grace YOU NED TO USE IT NOT KEEP TRYING SHIT THAT DOEN NOT WOERK",
+    "commandType": 4
+  },
+  {
+    "text": "OLDER APK that sprobably the good UI from the 28th that you deleted",
+    "commandType": 4
+  },
+  {
+    "text": "I told you to search ALL FILES AND FIND THE GOOD UI DID YO NOT LOOK AT THAT FILE?",
+    "commandType": 4
+  },
+  {
+    "text": "i ask you to do stuff and you ingnoire me like im some little bitch WHY>??!?!?!?!?!",
+    "commandType": 4
+  },
+  {
+    "text": "nope new UI was made after 6pm on friday",
+    "commandType": 4
+  },
+  {
+    "text": "yes install them i dont fucking know how gradle works like i fuckign said you fucking downloaded it and installed it and used it withouto me so ifugre it out like you did before do a web search you know the nae stop being so fuckign useless today Gradle for Java\n\nVisual Studio Marketplace Installs Build & Publish GitHub bug issues\n\n\n\nThis VS Code extension provides a visual interface for your Gradle build. You can use this interface to view Gradle Tasks and Project dependencies, or run Gradle Tasks as VS Code Task. The extension also offers better Gradle file (e.g. build.gradle) authoring experience including syntax highlighting, error reporting and auto completion. The extension works nicely alongside other Java extensions in the Extension Pack for Java.\n\n\n\nRequirements\n\nVS Code >= 1.76.0\n\nJava from 8 to 21\n\nProject Discovery\n\nThis extension supports both root and nested Gradle projects. A Gradle project is identified by having Gradle Wrapper scripts (gradlew or gradlew.bat) or Gradle build files (build.gradle or settings.gradle and their Kotlin versions) at the root of a directory. (Nested Gradle project discovery is not enabled by default, set \"gradle.nestedProjects\": true to enable it.)\n\n\n\nFeature Overview\n\nOnce the extension is activated you will see a new Gradle icon in the activity bar. Clicking on this icon will reveal some tree views in the sidebar.\n\n\n\nProtip: you can move drag & drop any of these tree views into the main explorer view for easier access. This is especially useful for pinned tasks.\n\n\n\nYou can also run any Gradle task as a VS Code task. Access the Gradle VS Code tasks by running Run Task from the command palette.\n\n\n\nList projects and tasks\n\nList project dependencies\n\nRun tasks\n\nControl task terminal behaviour\n\nDebug tasks\n\nPin tasks\n\nList recent tasks\n\nList & kill Gradle daemons\n\nSyntax highlighting for Gradle files\n\nDocument outline for Gradle files\n\nError reporting for Gradle files\n\nAuto completion for Gradle files\n\nFull features list\n\nExtension Settings\n\nThis extension contributes the following settings:\n\n\n\ngradle.autoDetect: Automatically detect Gradle tasks (\"on\" or \"off\")\n\ngradle.focusTaskInExplorer: Focus the task in the explorer when running a task (boolean)\n\ngradle.nestedProjects: Process nested projects (boolean or an array of directories)\n\ngradle.reuseTerminals: Reuse task terminals (\"task\" [default], \"all\", or \"off\")\n\ngradle.javaDebug.cleanOutput: Clean the task output cache before debugging (boolean)\n\ngradle.debug: Show extra debug info in the output panel (boolean)\n\ngradle.disableConfirmations: Disable the warning confirm messages when performing batch actions (eg clear tasks, stop daemons etc) (boolean)\n\ngradle.allowParallelRun: Allow to run tasks in parallel, each running will create a new terminal. This configuration will override gradle.reuseTerminals and always create new task terminals when running or debugging a task.\n\ngradle.projectOpenBehaviour: Specify the default method of opening newly created project (\"Interactive\", \"Open\" or \"Add to Workspace\")\n\njava.gradle.buildServer.enabled: Whether to use build server to synchronize Gradle project (\"on\" or \"off\")\n\njava.gradle.buildServer.openBuildOutput: Controls when the build output should open (\"neverOpen\", \"openOnBuildStart\" or \"openOnBuildFailure\")\n\nGradle & Java Settings\n\nSet Gradle & Java options with standard environment variables or standard Gradle settings (eg via gradle.properties or task configuration).\n\n\n\nExample Environment Variables\n\nJAVA_HOME\n\nGRADLE_USER_HOME\n\nNote, the VS Code settings take precedence over the environment variables.\n\n\n\nUse an environment manager like direnv to set project specific environment variables\n\n\n\nCompatibility with the Java language support extension\n\nJava-Specific Settings\n\nThis extension supports the following settings which are contributed by the Java language support extension:\n\n\n\njava.home: (deprecated Please use java.jdt.ls.java.home as given below) Absolute path to JDK home folder used to launch the Gradle daemons\n\n\n\njava.jdt.ls.java.home: Absolute path to JDK home folder as per the latest VS code, used to launch the Gradle daemons\n\n\n\njava.import.gradle.java.home: Absolute path to JDK home folder used to launch the Gradle daemons (if set, this value takes precedence over java.home)\n\n\n\njava.import.gradle.user.home: Setting for GRADLE_USER_HOME\n\n\n\njava.import.gradle.jvmArguments: JVM arguments to pass to Gradle\n\n\n\nNote: There should be a space between two arguments\n\n\n\njava.import.gradle.wrapper.enabled: Enable/disable the Gradle wrapper\n\n\n\njava.import.gradle.version: Gradle version, used if the Gradle wrapper is missing or disabled\n\n\n\njava.import.gradle.home: Use Gradle from the specified local installation directory or GRADLE_HOME if the Gradle wrapper is missing or disabled and no 'java.import.gradle.version' is specified.\n\n\n\nClass References\n\nThere are cases where Gradle tasks will generate Java classes. To ensure these Java classes are indexed correctly by the Java language server, you need to ensure the paths are added to the .classpath, and this is typically achieved using Gradle sourceSets.\n\n\n\nOnce you've configured your sourceSets correctly, follow these steps:\n\n\n\nGenerate your classes by running the relevant Gradle Task\n\nForce the Language Server to index the generated classes by right-clicking on build.gradle and selecting Update project configuration.\n\nAt this point the Gradle sourceSet paths will be added to the .classpath and the Language Server will automatically update references when those classes change.\n\n\n\nExtension API\n\nThis extension provides an API which can be used by 3rd-party vscode extensions.\n\n\n\n\ud83d\udc49 Extension API\n\n\n\nTroubleshooting\n\nView logs by selecting \"Gradle Tasks\" in the output panel\n\nSet the \"gradle.debug\" setting to \"true\" to view debug logs in the output panel\n\nTask output will be shown in the Terminal panel\n\nTask output is truncated\n\n\"No connection to the gradle server. Try restarting the server\"\n\nIssues with environment vars\n\n\"Orphaned\" Java processes after quitting VS Code\n\nIncompatibility with other extensions\n\nSupport\n\n\ud83d\udc49 Submit a bug report\n\n\ud83d\udc49 Submit a feature request\n\n\ud83d\udc49 Submit any feedback\n\nData/Telemetry\n\nVS Code collects usage data and sends it to Microsoft to help improve our products and services. Read our privacy statement to learn more. If you don\u2019t wish to send usage data to Microsoft, you can set the telemetry.enableTelemetry setting to false. Learn more in our FAQ.\n\n\n\nContributing\n\nRefer to CONTRIBUTING.md for instructions on how to run the project.\n\n\n\n\ud83d\udc49 Architecture Overview\n\n\n\nCredits\n\nThis project was originally started by @badsyntax and is now currently maintained by Microsoft. Huge thanks to @badsyntax who started it all and made this Gradle extension available.\n\n\n\nOriginally forked from Cazzar/vscode-gradle\n\nInspired by the built-in npm extension\n\nThanks to @hanct for providing feature suggestions and BETA testing\n\nThanks to @dcermak for providing inspiration to write some unit tests\n\nThanks to all who have submitted bug reports and feedback\n\nRelated Extensions\n\nCheck out vscode-spotless-gradle which formats your source files using Spotless & Gradle.\n\n\n\nRelease Notes\n\nSee CHANGELOG.md.\n\n\n\nLicense\n\nSee LICENSE.md.",
+    "commandType": 4
+  },
+  {
+    "text": "nope you need to do it i keep telling you ",
+    "commandType": 4
+  },
+  {
+    "text": "Runtime Status\n\n\n\nActivation\n\nActivated by onLanguage:gradle event: 0ms\n\nActivation Events\n\n\n\nworkspaceContains:**/gradlew\n\nworkspaceContains:**/gradlew.bat\n\nworkspaceContains:build.gradle\n\nworkspaceContains:*/build.gradle\n\nworkspaceContains:settings.gradle\n\nworkspaceContains:*/settings.gradle\n\nworkspaceContains:build.gradle.kts\n\nworkspaceContains:*/build.gradle.kts\n\nworkspaceContains:settings.gradle.kts\n\nworkspaceContains:*/settings.gradle.kts\n\nonCommand:_gradle.onWillImporterConnect\n\nCommands\n\n\n\nID\tTitle\tKeyboard Shortcuts\tMenu Contexts\n\ngradle.cancelBuild\n\nCancel Task\n\ngradle.cancellingTreeItemTask\n\nCancelling Task\n\nview/item/context\n\ngradle.cancelTreeItemTask\n\nCancel Task\n\nview/item/context\n\ngradle.clearAllRecentTasks\n\nClear Recent Tasks\n\nview/title\n\ngradle.closeAllTaskTerminals\n\nClose All Terminals\n\nview/title\n\ngradle.closeTaskTerminals\n\nClose Terminal/s\n\nview/item/context\n\ngradle.createProject\n\nCreate a Gradle Java Project...\n\ncommandPalette\n\ngradle.createProjectAdvanced\n\nCreate a Gradle Java Project... (Advanced)\n\ncommandPalette\n\ngradle.debugTask\n\nDebug Task\n\nview/item/context\n\ngradle.debugTaskWithArgs\n\nDebug Task With Args\n\nview/item/context\n\n\n\nSON Validation\n\n\n\nFile Match\tSchema\n\npackage.json\n\nhttps://www.schemastore.org/package.json\n\nViews\n\nID\tName\tWhere\n\ngradleDaemonsView\n\n\n\nGradle Daemons\n\n\n\ngradleContainerView\n\n\n\ngradleDefaultProjectsView\n\n\n\nGradle Projects\n\n\n\ngradleContainerView\n\n\n\ngradleTasksView\n\n\n\nGradle Projects\n\n\n\ngradleContainerView\n\n\n\nrecentTasksView\n\n\n\nRecent Tasks\n\n\n\ngradleContainerView\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "nice, ok app build , the printer is now connected. Light mode half works it changes 50% of the componens to white. We are on our way to getting back to where we were at. one thing there's no new or old orders showing at all. \n\n\n\nlayout change. the logo plus restaurant name plus printer connect pill can we make these on a single horizontal line and not stack them as therenp room tp stack here but we have loads of horizontal relistate ",
+    "commandType": 4
+  },
+  {
+    "text": "can we confirm that im supposed to be getting orders from Econo PIzza? My tablet says its connected to econno pizza but the device sectionon the menu dashboard says im offline ",
+    "commandType": 4
+  },
+  {
+    "text": "yup success!  just printed 20 orders. we should make it so real tim eorders auto print but archived orders or orders that didnt com ein live maybe they dont auyto print. also you just pritned like 20 order then made an update and all 20 orders auto printed again. we  need to archive printed orders not resend them im goingto run out of pare and ink lol and do we have both the front of hourse vs back of house print views. loke the recipie view and the kitchen order view?",
+    "commandType": 4
+  },
+  {
+    "text": "also our bottom row of nav butotns are being covered by the samsun tablet bottom menu we need to fix that how does the nav work on the screen caps i gave you ours doesn match as cloesely as i would like in design layout how come? do you need scren caps again?",
+    "commandType": 4
+  },
+  {
+    "text": "screen caps again obviously we dont need the options from the left habnd side bar - ",
+    "commandType": 4
+  },
+  {
+    "text": "yeah bottom buttons move up properly",
+    "commandType": 4
+  },
+  {
+    "text": "nice. now lets take the \"items\" col and remove it and replce it with col title \"printed\" and it can have green check mark or red circle to dipslay if it was printed or not printed. Then can you make the left side panel 2/3 swcreen and right sidepanle1/3 screen?",
+    "commandType": 4
+  },
+  {
+    "text": "ok not sure how to ask for this but tis split feels like 3/4 left side an 1/4 right side pn the panels can we do like 2/3 and 1/3 ? so the left side is 1 notch smaller and the right side 1 notch larger?",
+    "commandType": 4
+  },
+  {
+    "text": "ok yeah yeah lets just for fun try 55/45 but i think i like it this way. its looking so nice ok check out the screen cap just want to clean uop the top , its not our fault but samsung native screen option clutter our app especially top fet side what can we do hre for someseperation and to make our app look cleaner ",
+    "commandType": 4
+  },
+  {
+    "text": "im in light mode and see no changes lets make sure lite mode is updated as well. next layout request i dont like the use of space in our screen cap here I think we can take the first row that just contians (Orders and the refresh icon) We can just remove \"rde3rs\" or change \"all\" to \"ord3eers\" and have the refresh icon at the end of that row. So to clarify remove top row and add refresh icon to end of second row. Update verbiage on \"all\" to \"orders\" if that makes sense?",
+    "commandType": 4
+  },
+  {
+    "text": "Yeah that looks WAY cleaner! also notice here when an Order loads in this right hand panel it overlaps everythig so you can get tall as view as possible as thast how recipets go (tall and narow) i like that use of space and when an oder isnt loaded in the right side the panel is not visible adding maximum visibilty to the left side. can we do that ? or is it too difficult? ",
+    "commandType": 4
+  },
+  {
+    "text": "amazing for our brand logo can we put it in a countainer with 5px inner padding and rounded corners 6px corner rounding or equivelent (white contianer for both dark and light thmees plese)",
+    "commandType": 4
+  },
+  {
+    "text": "oh god why is it square when the logo is rectangle? lol please make it also rectangle ",
+    "commandType": 4
+  },
+  {
+    "text": "nice now cehck the screen cap i was refering to this earlier how our brand logo and the samsung info overlap and look crowded check it out its very apparent ehre we need to put some seperation here and then we just need to clear that warning message and i can demo this to me co workiers WOO!!!! almost back to where we were at friday night lol",
+    "commandType": 4
+  },
+  {
+    "text": "YES YES YES!!!! my man!!! on elast thing.. our nav row (Orders, new, active, ready, com[pleted) there's more padding above the nav text than below can we remove some from the toip and add some to the bottom so its even please?",
+    "commandType": 4
+  },
+  {
+    "text": "nice below has perfect padding now but can you redice some from aobve the nav text check out the screen cap where i dreew a highlighter mark see if we can reduce that paddign or margin som e:) ",
+    "commandType": 4
+  },
+  {
+    "text": "can you do it again looks not much smaller here :) ",
+    "commandType": 4
+  },
+  {
+    "text": "no no revert that you just reduced the wrong locations",
+    "commandType": 4
+  },
+  {
+    "text": "you reduced the row with the logo in it that was fine it was the row below ",
+    "commandType": 4
+  },
+  {
+    "text": "yes perfect! maybe even too perfect lol im sory can we add just a tiny amount of space back",
+    "commandType": 4
+  },
+  {
+    "text": "impecable my good friend! immpecable NOW we need to make sure this is backed up on git so we cant delete it again now that it back to friday night perfection",
+    "commandType": 4
+  },
+  {
+    "text": "oh wait one more design update our right side panel does not open to overlap the app like our square example cehck the 2 screencaps ",
+    "commandType": 4
+  },
+  {
+    "text": "wheres the repo do you have a url?",
+    "commandType": 4
+  },
+  {
+    "text": "oh sbnap! https://github.com/Work-Local-Inc/TabletOrderApp ",
+    "commandType": 4
+  },
+  {
+    "text": "oh one feature we should add to settings is settigm the defuakt print type for auto prints? So kitchet or customer reciet or both shuld be a setting we can set in settings yeah?",
+    "commandType": 4
+  },
+  {
+    "text": "whats up with git we hung?",
+    "commandType": 4
+  },
+  {
+    "text": "ok just showed this to my developer and he had a great point. Right now we have (Orders, New, Active, Ready, Complete) He says Order is redundant. And he makes a good points. Oir flow is order comes in then it auto prints after its printed in goes in \"active\" active que automatically and it the printer isnt online then it goes into \"new\" que so he is correct \"orders\" is redundant. And we also need to make sure anythign thats printed gies into active que .. right now we have New(15) active(0) ",
+    "commandType": 4
+  },
+  {
+    "text": "ok, I should not have 15 new orders though they (all 15) have been printed so lets mark those as active, yeah? I have comfirmed they printed. also our first column (customer) is super wiode cehck screen cap it pushes all other info far to the right can we make customer auto size to the length of the name so it only ever takes as much room as needed? ",
+    "commandType": 4
+  },
+  {
+    "text": "nice ok few things here.\n\n\n\n1. The col info no longer aligns with the col header titles lol we need them to align. \n\n2. The right side panel does not go to the top of screen it should it sclose can we make it proper please\n\n3. I have html for the kitchen view recipiet i simplified it some and home to make the food items larger\n\n\n\nTotally. Here\u2019s a clean **Takeout/Delivery KOT template** with:\n\n\n\n* **No table/server/guests**\n\n* **Customer name**\n\n* **Time only at top**\n\n* **Optional \u201cScheduled For\u201d block (only when future order)**\n\n\n\n---\n\n\n\n## KOT Template (Thermal 58/80mm friendly)\n\n\n\n```\n\n=============================\n\n        KITCHEN ORDER\n\n=============================\n\nOrder #: {{order_number}}\n\nType: {{order_type}}          (TAKEOUT / DELIVERY)\n\nCustomer: {{customer_name}}\n\nTime: {{order_time}}\n\n\n\n{{#if scheduled_time}}\n\n-----------------------------\n\nSCHEDULED FOR:\n\n{{scheduled_time}}\n\n{{/if}}\n\n\n\n-----------------------------\n\nITEM                     QTY\n\n-----------------------------\n\n{{#each items}}\n\n{{qty}}x {{name}}\n\n{{#if mods}}\n\n  {{#each mods}}\n\n  - {{this}}\n\n  {{/each}}\n\n{{/if}}\n\n{{/each}}\n\n\n\n-----------------------------\n\n{{#if allergies}}\n\nALLERGY ALERT:\n\n{{allergies}}\n\n-----------------------------\n\n{{/if}}\n\n\n\n{{#if notes}}\n\nNOTES:\n\n{{notes}}\n\n-----------------------------\n\n{{/if}}\n\n\n\nPACK / CHECK:\n\n{{#each pack_items}}\n\n[ ] {{this}}\n\n{{/each}}\n\n\n\n=============================\n\n```\n\n\n\n---\n\n\n\n## Example Output (regular ASAP order)\n\n\n\n```\n\n=============================\n\n        KITCHEN ORDER\n\n=============================\n\nOrder #: 99018\n\nType: TAKEOUT\n\nCustomer: Brian\n\nTime: 6:50 PM\n\n\n\n-----------------------------\n\nITEM                     QTY\n\n-----------------------------\n\n1x Pad Thai (Chicken)\n\n  - Mild\n\n2x Spring Rolls\n\n1x Mango Sticky Rice\n\n\n\n-----------------------------\n\nPACK / CHECK:\n\n[ ] Forks/Chopsticks\n\n[ ] Napkins\n\n[ ] Sauce cups x2\n\n=============================\n\n```\n\n\n\n---\n\n\n\n## Example Output (scheduled future order)\n\n\n\n```\n\n=============================\n\n        KITCHEN ORDER\n\n=============================\n\nOrder #: 99102\n\nType: DELIVERY\n\nCustomer: Sarah K\n\nTime: 2:10 PM\n\n\n\n-----------------------------\n\nSCHEDULED FOR:\n\nDec 02, 2025 @ 6:00 PM\n\n-----------------------------\n\n\n\n-----------------------------\n\nITEM                     QTY\n\n-----------------------------\n\n2x Butter Chicken\n\n  - Extra spicy\n\n1x Garlic Naan\n\n=============================\n\n```\n\n\n\n---\n\n\n\n### Notes for implementation\n\n\n\n* `{{#if scheduled_time}} ... {{/if}}` is pseudo-Handlebars / Mustache.\n\n* If your system doesn\u2019t support templating, just:\n\n\n\n  * print the **Scheduled For** block only when `scheduled_time != null`.\n\n* Works on 58mm or 80mm; just keep line length ~32 chars for 58mm, ~48 chars for 80mm.\n\n\n\nIf you want, tell me your printer width (58 vs 80) and POS/stack, and I\u2019ll tighten the exact character spacing so it prints perfectly centered with no wrapping.\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "cool can we add more spacing to the left sid cols please now they just looks smushed to the left side , maybe start making them all 20% wider?.. the right side panel is perfect now great job on that",
+    "commandType": 4
+  },
+  {
+    "text": "nice! yeah thats super perfect. and the most recent order should display open in the right side by default yeah? does that make sence? oh wait I still see 15 New orders qued these have all printed so they are ACTIVE they shoul dnot be in New after they print are we missing the flag to tell us they have printed or somethign ? why are these orders still not active",
+    "commandType": 4
+  },
+  {
+    "text": "what pending - preparing - completed makes sence it maps amost directly to what we have. New(has not printed or been aknowledged so pending) Active(Order has been aknowledged is in que to be made or is being made = preparing) Ready (order has completed its kitcehn preparation and is read for the customer to pick up or the delivery driver to take it) Completed (order is in clints hands) ",
+    "commandType": 4
+  },
+  {
+    "text": "fuck 15 orders just printed again not sure how that happend and they are all still in fucking NEW still nothing in active. And active means they have pritned so it should not be the same flag as ready?? new then prints = active ...active is a printed order all these fuckign orders have been oritned 4 times now they fucking damn well need to be be marked as so and not fuckignj re printed im almost out of paper lol we dotn want 15 fuckign orders printing please mark themse as active man imbegging you if hte back end says its one we can chaneg the back end we buid this we decide how it works what s the major iossue here????",
+    "commandType": 4
+  },
+  {
+    "text": "we dont need to disable auto print i want order to porint auto matically what neds to be disabled is AUTO reprinting we need to flag orders as printed so they do NOT REPRINT got it???? ",
+    "commandType": 4
+  },
+  {
+    "text": "order prints it marked as ative and it does not reprint unless manually told to do so ok?",
+    "commandType": 4
+  },
+  {
+    "text": "can we update the AI AGENTS START here documentation in our project folder. SO the next ai agent knows what we've done here whats workign well what the sticking poitns where and what the success metric is .. i want to restart cursor and i dotn want any project context being lost or delted lol also all my order still are flagged as new and not active im maully setting them to active now ok",
+    "commandType": 4
+  },
+  {
+    "text": "ok not working i mark orders as picked up and they still sit as (New) and do not get updated to complete the app is not working",
+    "commandType": 4
+  },
+  {
+    "text": "active ready and comple views are all blank and now you just printed all the fuckign mother fucking orders again you fuckign fuck and now im out of fuckign paper and ink what the fuck bro",
+    "commandType": 4
+  },
+  {
+    "text": "stop disableing AUOT PRINT AND FIUC THER PROBLEM\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "what the fuck does it matter if youy disable auto print now im out of fuckign paper and ink you fuck just fix the fuckin =ISSUHE WHY BNHOT FIX THE _FUCKIBNG ISSUE IM BEGGING YOU TO FIX NOT DISBALE THE FUCKIGN WORKIGN APP WHAT THE FUCK FIX THE PROBLEM ",
+    "commandType": 4
+  },
+  {
+    "text": "BRO!!!!",
+    "commandType": 4
+  },
+  {
+    "text": "Talk to me",
+    "commandType": 4
+  },
+  {
+    "text": "what are we doing to make sure an order auto prints fiorst and foremost then its marked as active??? what are we doing to fix this issue???? why are these no fuckign active orders when they keep fuckign printing",
+    "commandType": 4
+  },
+  {
+    "text": "I FUYCING KNOW THIS WER BOTH KNOW THIS YOU HAVE EXPLAINED THIS 5 times now to me \"The Problem:\n\nprintedOrderIds is loaded from storage ASYNCHRONOUSLY, but the auto-print code runs BEFORE it's loaded. So every time the app loads, the printed IDs set is EMPTY, and the app thinks ALL orders are new \u2192 prints everything.\n\nThe Fix Needed:\n\nUse React state to track when printedOrderIds is loaded, so the component WAITS before running any auto-print logic.\" BUT YO FASIL I REPEAT FAIL TO FIX IT please stop and take a step back then create an immaculatley dretailed plabn to fix the issue before jumping and rushing to code THINK FIRST ",
+    "commandType": 4
+  },
+  {
+    "text": "I dont knwo im not sure what the fuck it means.. in english will this fix the problem ? Ye sor now ? are we not using the database for this? would that not help what the fuck doe scompoinent side mean jusus christ you know whjat needs to happen why can you just not do it",
+    "commandType": 4
+  },
+  {
+    "text": "so all tjis back and forth and yelling and crying and smashing things in the oiffice ciould have all been avoiuded if you just shared the \"honest truth\" from the begining? mother fucker use the supabase connection MCP and use the database for the love of god all this is set out for uyou like a red carpet you just need to be honest with me ALWAYS from the get go. ",
+    "commandType": 4
+  },
+  {
+    "text": "i see you updating them bbut they are reverting are you using supbase mcp?\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "ok so we decided supabase would be best for this and I told you to use mcp then you started working and you not doing whta we talked about why? this is the same shit all over again your choosing to pivot not talk to tme and we fail and I get mad , I tried to print the stupid message pops up about 20 times. Staus update failed could not update order pending. Error: Cannot transition from \"pemnding to preparing\" (we want it to be ACRTIVE anyway fuck  my life) ",
+    "commandType": 4
+  },
+  {
+    "text": " Im not seeing anythign to pull in replit are you sure you pushed changes to git? or you just saying you did? Any why are you ignoring supabsae mcp when you said it would be the better route im so confused with you and your choices here. Can we please do this properly \n\n\n\n {\n\n  \"mcpServers\": {\n\n    \"supabase\": {\n\n      \"command\": \"npx\",\n\n      \"args\": [\"-y\", \"@supabase/mcp-server@latest\"],\n\n      \"env\": {\n\n        \"SUPABASE_URL\": \"https://nthpbtdjhhnwfxqsxbvy.supabase.co\",\n\n        \"SUPABASE_SERVICE_ROLE_KEY\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50aHBidGRqaGhud2Z4cXN4YnZ5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NTI3MzQ4NCwiZXhwIjoyMDcwODQ5NDg0fQ.THhg9RhwfeN2B9V1SZdef0iJIeBntwd2w67p_J0ch1g\"\n\n      }\n\n    }\n\n  }\n\n}",
+    "commandType": 4
+  },
+  {
+    "text": "I do not need to restart lol you need to configure so theres no error fuck dude why you lyign spo mjuch today this si not to be difficult we have a food printing app that wont mark an order active after pritning is embarasaing",
+    "commandType": 4
+  },
+  {
+    "text": "nice all orders marked as active now when i try to mark them as ready or completed I get an error that it cannot update teh status did we add that to database as well or whats the deal with these we just going one issue at a time when we kmno wthe big picture?",
+    "commandType": 4
+  },
+  {
+    "text": "nopthing you doing is goin to git BTW? you shouod know this how do you noit kmnow this last commit ws 3 hours ago bro!!!",
+    "commandType": 4
+  },
+  {
+    "text": "wait why are you so quick to pivot to a new direction instead of just simply fixing the issue if you not connected to git then we connect you to git we dont just re code the entire app what is the logic in that i dont eunderstand your choiuces today would you do that to a client instead of just gettign repo access? please enlighten me?",
+    "commandType": 4
+  },
+  {
+    "text": "maybe you could even try talkign to me instead of rushjing back to make chamges that make no sense ",
+    "commandType": 4
+  },
+  {
+    "text": "So our tablet app repo is here  https://github.com/Work-Local-Inc/TabletOrderApp  right it even has the fuckign name of what we are fuckigbn making right? And then there's the online orderign dashboard repo that has the tablet device list where we spin the auth codes and that repo is here https://github.com/Work-Local-Inc/MenuAdminDash-replit.git  do you know what one your to make changes in are you positive you making changes to the correct one?",
+    "commandType": 4
+  },
+  {
+    "text": "so whats up now?",
+    "commandType": 4
+  },
+  {
+    "text": "also when i mark orders as ready it is working but complete still gives error s",
+    "commandType": 4
+  },
+  {
+    "text": "lol no theres no point in cheating and updating from the database the purpose is to make a working app so we can give it to retaurant locatiosn all 195 of them so it needs to work lol jesus dude NO CHEATING! the update is not published in replit easy peasy ok no pivot no cheating i can do it ",
+    "commandType": 4
+  },
+  {
+    "text": "rop i just told you the change hjas been publish dit done why are you telling me to do ti",
+    "commandType": 4
+  },
+  {
+    "text": "nope same shit nop change so i hit reload the app and now i get a whack of errors a tone of them all of them are \\u2022 errors lemme know if oy need xact details",
+    "commandType": 4
+  },
+  {
+    "text": "Could not connect to dev server?  i guess we should be connecting to production server lol would that help ",
+    "commandType": 4
+  },
+  {
+    "text": "how is everythign working 1 second then we make 1 small update and 6 different major things are brokewn how does this happen so much?",
+    "commandType": 4
+  },
+  {
+    "text": "just printed a new order... Got an error on tablet \"Printed but status update failed\" ",
+    "commandType": 4
+  },
+  {
+    "text": "https://replit.com/t/work-local-inc/repls/MenuAdminDashboard-1#app/api/domains/%5Bid%5D/status/route.ts \n\nimport { NextRequest, NextResponse } from 'next/server'\n\nimport { verifyAdminAuth } from '@/lib/auth/admin-check'\n\nimport { AuthError } from '@/lib/errors'\n\nimport { createAdminClient } from '@/lib/supabase/admin'\n\n\n\nexport async function GET(\n\n  request: NextRequest,\n\n  { params }: { params: { id: string } }\n\n) {\n\n  try {\n\n    await verifyAdminAuth(request)\n\n\n\n    const domainId = parseInt(params.id)\n\n    if (isNaN(domainId)) {\n\n      return NextResponse.json(\n\n        { error: 'Invalid domain ID' },\n\n        { status: 400 }\n\n      )\n\n    }\n\n\n\n    const supabase = createAdminClient() as any\n\n\n\n    // Get single domain verification status\n\n    const { data, error } = await supabase.rpc('get_domain_verification_status', {\n\n      p_domain_id: domainId\n\n    })\n\n\n\n    if (error) {\n\n      console.error('[Domain Status] Error:', error)\n\n      return NextResponse.json(\n\n        { error: error.message },\n\n        { status: 500 }\n\n      )\n\n    }\n\n\n\n    if (!data || data.length === 0) {\n\n      return NextResponse.json(\n\n        { error: 'Domain not found' },\n\n        { status: 404 }\n\n      )\n\n    }\n\n\n\n    return NextResponse.json(data[0])\n\n  } catch (error: any) {\n\n    if (error instanceof AuthError) {\n\n      return NextResponse.json({ error: error.message }, { status: error.statusCode })\n\n    }\n\n    console.error('[Domain Status] Unexpected error:', error)\n\n    return NextResponse.json(\n\n      { error: error.message },\n\n      { status: 500 }\n\n    )\n\n  }\n\n}\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "  if (!restaurant) {\n\n      console.warn('[Device Login] Device not assigned to restaurant:', device.id)\n\n      return NextResponse.json(\n\n        { error: 'Device not assigned to a restaurant' },\n\n        { status: 403 }\n\n      )\n\n    }\n\n\n\n    // Check if device is active\n\n    if (!device.is_active) {\n\n      console.warn('[Device Login] Device is inactive:', device.id)\n\n      return NextResponse.json(\n\n        { error: 'Device has been deactivated' },\n\n        { status: 403 }\n\n      )\n\n    }\n\n\n\n    // Check if device has a key hash (some legacy devices might not)\n\n    if (!device.device_key_hash) {\n\n      console.error('[Device Login] Device has no key hash:', device.id)\n\n      return NextResponse.json(\n\n        { error: 'Device not properly configured. Please contact support.' },\n\n        { status: 403 }\n\n      )\n\n    }\n\n\n\n    // Verify device key\n\n    // Handle bytea encoding from PostgreSQL - convert hex-encoded string to actual string\n\n    let hashToVerify = device.device_key_hash\n\n    if (hashToVerify.startsWith('\\\\x')) {\n\n      // Convert hex-encoded bytea to string\n\n      const hexString = hashToVerify.slice(2) // Remove \\x prefix\n\n      hashToVerify = Buffer.from(hexString, 'hex').toString('utf8')\n\n      console.log('[Device Login] Converted bytea hash to string')\n\n    }\n\n\n\n    console.log('[Device Login] Verifying key for device:', device.id)\n\n    console.log('[Device Login] Key length:', device_key.length)\n\n    console.log('[Device Login] Hash exists:', !!hashToVerify)\n\n    console.log('[Device Login] Hash length:', hashToVerify?.length)\n\n    console.log('[Device Login] Hash is bcrypt format:', hashToVerify?.startsWith('$2'))\n\n\n\n    const isValidKey = await verifyDeviceKey(device_key, hashToVerify)\n\n    console.log('[Device Login] Key valid:', isValidKey)\n\n\n\n    if (!isValidKey) {\n\n      console.warn('[Device Login] Invalid key for device:', device.id)\n\n      return NextResponse.json(\n\n        { error: 'Invalid credentials', code: 'INVALID_KEY' },\n\n        { status: 401 }\n\n      )\n\n    }\n\n\n\n    // Create session\n\n    const session = await createDeviceSession(device.id)\n\n\n\n    // Update last boot time\n\n    await supabase\n\n      .from('devices')\n\n      .update({ last_boot_at: new Date().toISOString() })\n\n      .eq('id', device.id)\n\n\n\n    // Get device config (or defaults)\n\n    let config = getDefaultDeviceConfig()\n\n\n\n    const { data: deviceConfig } = await supabase\n\n      .from('device_configs')\n\n      .select('*')\n\n      .eq('device_id', device.id)\n\n      .single()\n\n\n\n    if (deviceConfig) {\n\n      config = {\n\n        poll_interval_ms: deviceConfig.poll_interval_ms,\n\n        auto_print: deviceConfig.auto_print,\n\n        sound_enabled: deviceConfig.sound_enabled,\n\n        notification_tone: deviceConfig.notification_tone,\n\n        print_customer_copy: deviceConfig.print_customer_copy,\n\n        print_kitchen_copy: deviceConfig.print_kitchen_copy,\n\n      }\n\n    }\n\n\n\n    console.log(`[Device Login] Device ${device.id} logged in for restaurant ${restaurant.id}`)\n\n\n\n    return NextResponse.json({\n\n      session_token: session.session_token,\n\n      expires_at: session.expires_at,\n\n      device: {\n\n        id: device.id,\n\n        uuid: device.uuid,\n\n        name: device.device_name,\n\n        restaurant_id: restaurant.id,\n\n        restaurant_name: restaurant.name,\n\n      },\n\n      config,\n\n    })\n\n  } catch (error: any) {\n\n    console.error('[Device Login] Error:', error)\n\n    return NextResponse.json(\n\n      { error: error.message || 'Login failed' },\n\n      { status: 500 }\n\n    )\n\n  }\n\n}\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "\n\n    // Validate status transition\n\n    const validTransitions: Record<string, string[]> = {\n\n      pending: ['confirmed', 'cancelled'],\n\n      confirmed: ['preparing', 'cancelled'],\n\n      preparing: ['ready', 'cancelled'],\n\n      ready: ['out_for_delivery', 'completed', 'cancelled'],\n\n      out_for_delivery: ['delivered', 'cancelled'],\n\n      delivered: [], // Final state\n\n      completed: [], // Final state\n\n      cancelled: [], // Final state\n\n    }\n\n\n\n    const currentStatus = order.order_status\n\n    const allowedNextStatuses = validTransitions[currentStatus] || []\n\n\n\n    if (!allowedNextStatuses.includes(status)) {\n\n      return NextResponse.json(\n\n        {\n\n          error: `Cannot transition from '${currentStatus}' to '${status}'`,\n\n          allowed_transitions: allowedNextStatuses,\n\n        },\n\n        { status: 400 }\n\n      )\n\n    }\n\n\n\n    // Update order status\n\n    const updateData: Record<string, any> = {\n\n      order_status: status,\n\n    }\n\n\n\n    // Set confirmed_at timestamp if confirming\n\n    if (status === 'confirmed') {\n\n      updateData.confirmed_at = new Date().toISOString()\n\n    }\n\n\n\n    // Set completed_at timestamp if completing or delivering\n\n    if (status === 'completed' || status === 'delivered') {\n\n      updateData.completed_at = new Date().toISOString()\n\n    }\n\n\n\n    // Set cancelled_at timestamp if cancelling\n\n    if (status === 'cancelled') {\n\n      updateData.cancelled_at = new Date().toISOString()\n\n    }\n\n\n\n    // Calculate estimated ready time if provided\n\n    if (estimated_ready_minutes && status === 'preparing') {\n\n      const estimatedReadyTime = new Date(Date.now() + estimated_ready_minutes * 60 * 1000)\n\n      updateData.estimated_ready_time = estimatedReadyTime.toISOString()\n\n    }\n\n\n\n    const { error: updateError } = await supabase\n\n      .from('orders')\n\n      .update(updateData)\n\n      .eq('id', orderIdNum)\n\n\n\n    if (updateError) {\n\n      console.error('[Tablet Order Status] Update error:', updateError)\n\n      return NextResponse.json(\n\n        { error: 'Failed to update order status' },\n\n        { status: 500 }\n\n      )\n\n    }\n\n\n\n    // Record status change in history\n\n    const historyNotes = notes || `Status changed to ${status} by device ${deviceContext.device_id}`\n\n\n\n    const { error: historyError } = await supabase\n\n      .from('order_status_history')\n\n      .insert({\n\n        order_id: orderIdNum,\n\n        order_created_at: order.created_at,\n\n        status,\n\n        notes: historyNotes,\n\n        changed_by_device_id: deviceContext.device_id,\n\n      })\n\n\n\n    if (historyError) {\n\n      console.warn('[Tablet Order Status] Failed to record history:', historyError)\n\n      // Don't fail the request if history fails\n\n    }\n\n\n\n    // Fetch updated status history\n\n    const { data: statusHistory } = await supabase\n\n      .from('order_status_history')\n\n      .select('status, notes, created_at')\n\n      .eq('order_id', orderIdNum)\n\n      .order('created_at', { ascending: false })\n\n\n\n    console.log(`[Tablet Order Status] Order ${orderIdNum} changed from '${currentStatus}' to '${status}' by device ${deviceContext.device_id}`)\n\n\n\n    return NextResponse.json({\n\n      success: true,\n\n      order: {\n\n        id: orderIdNum,\n\n        previous_status: currentStatus,\n\n        current_status: status,\n\n      },\n\n      status_history: statusHistory || [],\n\n    })\n\n  } catch (error: any) {\n\n    console.error('[Tablet Order Status] Error:', error)\n\n    return NextResponse.json(\n\n      { error: error.message || 'Failed to update order status' },\n\n      { status: 500 }\n\n    )\n\n  }\n\n}\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "ok its added lets see if it make the goodness flow",
+    "commandType": 4
+  },
+  {
+    "text": "order came in successfulyl and moved to active and it said it printed asuccessfully but lol nothig pritned at all manual print not workign , test print not working. Printer is showing as active and connected so not sure what the issue is. screen cap with full error messaeg (this is from when i load the app innitially not triggered on print ) ",
+    "commandType": 4
+  },
+  {
+    "text": "your hung up how cn i help",
+    "commandType": 4
+  },
+  {
+    "text": "brianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\n\n\nnpm install debug --legacy-peer-deps\n\nnpx expo start --dev-client\n\n\u2807\n\nnot sure what happneing but somethign seems to be",
+    "commandType": 4
+  },
+  {
+    "text": "how long should this take?",
+    "commandType": 4
+  },
+  {
+    "text": "still pinny spinny look slike my termnal is behaving just like your who would thunk eh? we tried somethig it didnt work and then we tried the exact same thing lol and it didnt work what do we got now?",
+    "commandType": 4
+  },
+  {
+    "text": "Since we are making aproduction app lets do \"production APK \"",
+    "commandType": 4
+  },
+  {
+    "text": "how wil li kmnow when the build finishes or if theres errors ? can you check?",
+    "commandType": 4
+  },
+  {
+    "text": "what you ruin the teerminal command why am i doing it? i didnt run shit ive been waiting for you i thoght you did ti why woul di do it im super confused here? weare trying to fix my broken app are you hekping me or what",
+    "commandType": 4
+  },
+  {
+    "text": "is it working i just see spining nonesense? how can i tell if its workign or if you are stuck?",
+    "commandType": 4
+  },
+  {
+    "text": "your using the grale exstension its the only way we got this to work last time",
+    "commandType": 4
+  },
+  {
+    "text": "nope you ned to do this we have been through this i shared all the commands and how to use it you use it pleasse for the love of god do your job ",
+    "commandType": 4
+  },
+  {
+    "text": "are you using it or ignoring me?",
+    "commandType": 4
+  },
+  {
+    "text": "OMG yes you can you did it before mopther fuck you can jusyt fuckign chroist you can you can you can fuckign use it ew need to use or terminal gets hung up what the fuck why do yo ingnore me then say nothigbn DONT DECIDE TO NOT FOLLOW INSTRUCTION AND NOT TELL ME JFUCJKMAN",
+    "commandType": 4
+  },
+  {
+    "text": "its not not working properly is it becuase your not using the exstension YOPU DOWNLOADED AND USED LAST TIME OALL ON YOUR OWN LIKE A BIG BOY",
+    "commandType": 4
+  },
+  {
+    "text": "do you need the list of gradle comands again for the third time ",
+    "commandType": 4
+  },
+  {
+    "text": "Please save these commands in your memory bank folder for next time please\n\n\n\nCommands\n\n\n\nID\tTitle\tKeyboard Shortcuts\tMenu Contexts\n\ngradle.cancelBuild\n\nCancel Task\n\ngradle.cancellingTreeItemTask\n\nCancelling Task\n\nview/item/context\n\ngradle.cancelTreeItemTask\n\n\n\n\n\nJSON Validation\n\n\n\nFile Match\tSchema\n\npackage.json\n\nhttps://www.schemastore.org/package.json\n\n\n\nCancel Task\n\nview/item/context\n\ngradle.clearAllRecentTasks\n\nClear Recent Tasks\n\nview/title\n\ngradle.closeAllTaskTerminals\n\nClose All Terminals\n\nview/title\n\ngradle.closeTaskTerminals\n\nClose Terminal/s\n\nview/item/context\n\ngradle.createProject\n\nCreate a Gradle Java Project...\n\ncommandPalette\n\ngradle.createProjectAdvanced\n\nCreate a Gradle Java Project... (Advanced)\n\ncommandPalette\n\ngradle.debugTask\n\nDebug Task\n\nview/item/context\n\ngradle.debugTaskWithArgs\n\nDebug Task With Args\n\nview/item/context\n\ngradle.dependency.reveal\n\nGo to Dependency\n\nview/item/context\n\ngradle.explorerFlat\n\nShow Flat Tasks\n\nview/title\n\ngradle.explorerTree\n\nShow Hierarchical Tasks\n\nview/title\n\ngradle.findTask\n\nFind Gradle Task\n\ncommandPalette view/title\n\ngradle.hideStoppedDaemons\n\nHide Stopped Daemons\n\nview/title\n\ngradle.java.projectConfiguration.update\n\nReload All Gradle Projects\n\nview/title\n\ngradle.openBuildFile\n\nOpen Build File\n\njavaProject.gradle view/item/context\n\ngradle.openSettings\n\nOpen Settings\n\nview/title\n\ngradle.pinTask\n\nPin Task\n\nview/item/context\n\ngradle.pinTaskWithArgs\n\nPin Task With Args\n\nview/item/context\n\ngradle.refresh\n\nRefresh Gradle Projects View\n\ncommandPalette view/title\n\ngradle.refreshDaemonStatus\n\nRefresh Daemon Status\n\nview/title\n\ngradle.removeRecentTask\n\nRemove Recent Task\n\nview/item/context\n\ngradle.restartTask\n\nRestart Task\n\nview/item/context\n\ngradle.runBuild\n\nRun a Gradle Build\n\ncommandPalette view/title\n\ngradle.runTask\n\nRun Task\n\nview/item/context\n\ngradle.runTasks\n\nRun Gradle Tasks...\n\njavaProject.gradle\n\ngradle.runTaskWithArgs\n\nRun Task With Args\n\nview/item/context\n\ngradle.showLogs\n\nShow logs\n\ngradle.showProcessMessage\n\nShow Gradle process information message box\n\ngradle.showStoppedDaemons\n\nShow Stopped Daemons\n\nview/title\n\ngradle.showTasks\n\nShow Gradle Tasks\n\neditor/context explorer/gradle\n\ngradle.showTaskTerminal\n\nShow Terminal\n\nview/item/context\n\ngradle.stopDaemon\n\nStop Daemon\n\nview/item/context\n\ngradle.stopDaemons\n\nStop Daemons\n\nview/title\n\ngradle.unpinAllTasks\n\nUnpin all Tasks\n\nview/item/context view/title\n\ngradle.unpinTask\n\nUnpin Task\n\n\n\nViews\n\n\n\nID\tName\tWhere\n\ngradleDaemonsView\n\nGradle Daemons\n\ngradleContainerView\n\ngradleDefaultProjectsView\n\nGradle Projects\n\ngradleContainerView\n\ngradleTasksView\n\nGradle Projects\n\ngradleContainerView\n\nrecentTasksView\n\nRecent Tasks\n\ngradleContainerView\n\n\n\nView Containers\n\n\n\nID\tTitle\tWhere\n\ngradleContainerView\n\nGradle\n\nactivitybar\n\n\n\nSettings\n\n\n\nID\tDescription\tDefault\n\ngradle.allowParallelRun\n\nAllow to run tasks in parallel, each running will create a new terminal. This configuration will override gradle.reuseTerminals and always create new task terminals when running or debugging a task.\n\nfalse\n\ngradle.autoDetect\n\nControls whether Gradle tasks should be automatically detected\n\n\"on\"\n\ngradle.debug\n\nShow extra debug information in the output panel\n\nfalse\n\ngradle.disableConfirmations\n\nDisable the warning confirm messages when performing batch actions\n\nfalse\n\ngradle.focusTaskInExplorer\n\nFocus the task in the explorer when running a task\n\ntrue\n\ngradle.javaDebug\n\nJava debug options\n\n{\n\n  \"tasks\": [\n\n    \"run\",\n\n    \"runBoot\",\n\n    \"test\",\n\n    \"intTest\",\n\n    \"integration\"\n\n  ]\n\n}\n\ngradle.javaDebug.cleanOutput\n\nClean the task output cache before debugging\n\ntrue\n\ngradle.nestedProjects\n\nDiscover Gradle projects in nested sub-directories\n\nfalse\n\ngradle.projectOpenBehaviour\n\nDefault method of opening newly created project.\n\n\"Interactive\"\n\ngradle.reuseTerminals\n\nReuse task terminals behaviour, will be overridden to off if gradle.allowParallelRun is true.\n\n\"task\"\n\ngradle.showStoppedDaemons\n\nShow stopped daemons in the Gradle Daemons view\n\nfalse\n\njava.gradle.buildServer.enabled\n\nWhether to use build server to synchronize Gradle project. It will replace the original Buildship to import the Gradle when enabled.\n\n\"on\"\n\njava.gradle.buildServer.openBuildOutput\n\nControls when the build output should open.\n\n\"openOnBuildFailure\"\n\nActivation Events\n\nworkspaceContains:**/gradlew\n\nworkspaceContains:**/gradlew.bat\n\nworkspaceContains:build.gradle\n\nworkspaceContains:*/build.gradle\n\nworkspaceContains:settings.gradle\n\nworkspaceContains:*/settings.gradle\n\nworkspaceContains:build.gradle.kts\n\nworkspaceContains:*/build.gradle.kts\n\nworkspaceContains:settings.gradle.kts\n\nworkspaceContains:*/settings.gradle.kts\n\nonCommand:_gradle.onWillImporterConnect",
+    "commandType": 4
+  },
+  {
+    "text": "how about now",
+    "commandType": 4
+  },
+  {
+    "text": "hows it going? you ca also use context7 mcp to grab gradle docs as well if it helps",
+    "commandType": 4
+  },
+  {
+    "text": "how much longer? I need to go lol can you tell me",
+    "commandType": 4
+  },
+  {
+    "text": "No shit the build gets stuck anytime ou dont use the Gradle estension thats the ony way we got ti to complie successfully last time did you think somethign changes or you just do not respect anythign i am tellign you? ",
+    "commandType": 4
+  },
+  {
+    "text": "bro im telling you theres no gradle sidebar for me to work wiuth just the command for you to run that I shared with you 5 times today what and whree is the disconmnect from that? Me:\"hey heres the commands you need to do everythign you need\" then you Cursor:\"\n\nyes i ignored those can you click the buttons that you keep telling me are non existent indead\" EWHAT THE ACTUAKL FUCK MY GUY",
+    "commandType": 4
+  },
+  {
+    "text": "look -fucker no graddle here .. just this  see do you believe me or you want to keep arguing ? ",
+    "commandType": 4
+  },
+  {
+    "text": "Se, there's no graddle here .. just this  see do you believe me now? Lets get tis fixed so orders can pritn again",
+    "commandType": 4
+  },
+  {
+    "text": "so you are refusing to run the commands I gave you ? have you tried?",
+    "commandType": 4
+  },
+  {
+    "text": "what do you mean none of these are clickable for me they are to run in terminal are they not? \n\n\n\nCommands\n\nID\tTitle\tKeyboard Shortcuts\tMenu Contexts\n\ngradle.cancelBuild\n\n\n\nCancel Task\n\n\n\ngradle.cancellingTreeItemTask\n\n\n\nCancelling Task\n\n\n\nview/item/context\n\n\n\ngradle.cancelTreeItemTask\n\n\n\nCancel Task\n\n\n\nview/item/context\n\n\n\ngradle.clearAllRecentTasks\n\n\n\nClear Recent Tasks\n\n\n\nview/title\n\n\n\ngradle.closeAllTaskTerminals\n\n\n\nClose All Terminals\n\n\n\nview/title\n\n\n\ngradle.closeTaskTerminals\n\n\n\nClose Terminal/s\n\n\n\nview/item/context\n\n\n\ngradle.createProject\n\n\n\nCreate a Gradle Java Project...\n\n\n\ncommandPalette\n\n\n\ngradle.createProjectAdvanced\n\n\n\nCreate a Gradle Java Project... (Advanced)\n\n\n\ncommandPalette\n\n\n\ngradle.debugTask\n\n\n\nDebug Task\n\n\n\nview/item/context\n\n\n\ngradle.debugTaskWithArgs\n\n\n\nDebug Task With Args\n\n\n\nview/item/context\n\n\n\ngradle.dependency.reveal\n\n\n\nGo to Dependency\n\n\n\nview/item/context\n\n\n\ngradle.explorerFlat\n\n\n\nShow Flat Tasks\n\n\n\nview/title\n\n\n\ngradle.explorerTree\n\n\n\nShow Hierarchical Tasks\n\n\n\nview/title\n\n\n\ngradle.findTask\n\n\n\nFind Gradle Task\n\n\n\ncommandPalette view/title\n\n\n\ngradle.hideStoppedDaemons\n\n\n\nHide Stopped Daemons\n\n\n\nview/title\n\n\n\ngradle.java.projectConfiguration.update\n\n\n\nReload All Gradle Projects\n\n\n\nview/title\n\n\n\ngradle.openBuildFile\n\n\n\nOpen Build File\n\n\n\njavaProject.gradle view/item/context\n\n\n\ngradle.openSettings\n\n\n\nOpen Settings\n\n\n\nview/title\n\n\n\ngradle.pinTask\n\n\n\nPin Task\n\n\n\nview/item/context\n\n\n\ngradle.pinTaskWithArgs\n\n\n\nPin Task With Args\n\n\n\nview/item/context\n\n\n\ngradle.refresh\n\n\n\nRefresh Gradle Projects View\n\n\n\ncommandPalette view/title\n\n\n\ngradle.refreshDaemonStatus\n\n\n\nRefresh Daemon Status\n\n\n\nview/title\n\n\n\ngradle.removeRecentTask\n\n\n\nRemove Recent Task\n\n\n\nview/item/context\n\n\n\ngradle.restartTask\n\n\n\nRestart Task\n\n\n\nview/item/context\n\n\n\ngradle.runBuild\n\n\n\nRun a Gradle Build\n\n\n\ncommandPalette view/title\n\n\n\ngradle.runTask\n\n\n\nRun Task\n\n\n\nview/item/context\n\n\n\ngradle.runTasks\n\n\n\nRun Gradle Tasks...\n\n\n\njavaProject.gradle\n\n\n\ngradle.runTaskWithArgs\n\n\n\nRun Task With Args\n\n\n\nview/item/context\n\n\n\ngradle.showLogs\n\n\n\nShow logs\n\n\n\ngradle.showProcessMessage\n\n\n\nShow Gradle process information message box\n\n\n\ngradle.showStoppedDaemons\n\n\n\nShow Stopped Daemons\n\n\n\nview/title\n\n\n\ngradle.showTasks\n\n\n\nShow Gradle Tasks\n\n\n\neditor/context explorer/gradle\n\n\n\ngradle.showTaskTerminal\n\n\n\nShow Terminal\n\n\n\nview/item/context\n\n\n\ngradle.stopDaemon\n\n\n\nStop Daemon\n\n\n\nview/item/context\n\n\n\ngradle.stopDaemons\n\n\n\nStop Daemons\n\n\n\nview/title\n\n\n\ngradle.unpinAllTasks\n\n\n\nUnpin all Tasks\n\n\n\nview/item/context view/title\n\n\n\ngradle.unpinTask\n\n\n\nUnpin Task\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "I did that and all it does is open a finder window",
+    "commandType": 4
+  },
+  {
+    "text": "how is it i dont see output",
+    "commandType": 4
+  },
+  {
+    "text": "ok repeat with me...process gets stucks everytime the only time it has worked has been when you downloaded and used the gradle exstention. thats all i know becuase i didnt do it so i dont have the memory of \"how it was used\" i just know you downloaded.. then asked me to instal (click a button) and that was that/. we need t find a way to use it. can you access context7 gradle docs maybe there could be somethig help full in that? he have to find a way to try without getting stuck or if we do have a way to know we are stuck you dotn seem to have this capability and if i cant see output then im no help either. \n\n\n\nThis here is from Cursor - Here's how Cursor and Gradle interact:\n\nDependency Management: Cursor can assist in managing build.gradle files by suggesting and adding necessary dependencies, potentially reducing the need for manual searching.\n\nBuild Automation: Cursor can understand and interact with Gradle commands, such as ./gradlew build or ./gradlew run, to execute build tasks, compile code, and run applications.\n\nAI-Assisted Code Generation and Modification: When working on projects that use Gradle, Cursor's AI agent can be prompted to generate or modify code, including build scripts or configurations within build.gradle files, based on natural language instructions.\n\nTroubleshooting and Optimization: Cursor can help analyze Gradle-related issues, such as dependency conflicts or build errors, and potentially suggest solutions or optimizations to improve build performance.\n\nLanguage Server Integration: Cursor aims to integrate with Gradle language servers to provide features like autocompletion and error checking within build.gradle files, although issues with language server detection can sometimes occur and require configuration adjustments (e.g., ensuring correct JAVA_HOME environment variable settings).\n\n\n\n##ok discovery###\n\ndid some research specifically on the exstension we are using and found this.. I installed the patch listd here :) \"Describe the Bug\n\nCursor cannot be used (fully) with Gradle 9 projects because the vscode-gradle extension is too out-of-date. In Cursor I see latest (as of today) as 3.15.0 (Feb 2024), but the actual most recent release of that extension is 3.16.4 (June 2025).\n\nThe vscode extension has fixed their issue with gradle 9. That fix didn\u2019t make it into their existing 3.17.0 pre-release, but hopefully will still be released relatively soon. See: Gradle for Java plugin breaks with Gradle 9 projects \u00b7 Issue #1686 \u00b7 microsoft/vscode-gradle \u00b7 GitHub\n\nWhy is the version of the vscode-gradle plugin in the Cursor extension marketplace more than a year old?\n\nSteps to Reproduce\n\nTry to use Cursor on any project build with Gradle 9.0.0 using the \u201cGradle for Java\u201d (microsoft/vscode-gradle) extension.\n\nExpected Behavior\n\nCursor should work on Gradle 9 projects just as well as is does with Gradle 8.14 projects. Cursor\u2019s extension marketplace should get new releases of the vscode-gradle plugin much faster than with >1yr delay.\n\nOperating System\n\nWindows 10/11\n\nCurrent Cursor Version (Menu \u2192 About Cursor \u2192 Copy)\n\nCursor Version: 1.3.9\n\nVSCode Version: 1.99.3\n\nDoes this stop you from using Cursor\n\nYes - Cursor is unusable\n\n304\n\nviews\n\n5\n\nlinks\n\npost by snjeza on Aug 7\n\nSnjezana Peco\n\nsnjeza\n\nAug 7\n\nCursor uses Open VSX Registry - Open VSX Registry\n\nMicrosoft hasn\u2019t published newer versions of Gradle For Java and pre-release versions na Open VSX Registry\n\nI have created VSIX using the latest Gradle For Java develop branch - https://github.com/snjeza/vscode-test/raw/refs/heads/master/vscode-gradle-3.17.6.vsix\n\nYou can install it with View>Command Palette>Extensions: Install from VSIX\u2026\n\nThe extension requires Language Support for Java\u2122 by Red Hat pre-release. It is on Open VSX registry so it can be installed from Cursor.\n\nAfter that, you can try to import a Gradle 9 project.\"",
+    "commandType": 4
+  },
+  {
+    "text": "and now? an what was the conclusion from all the info i gave you did you look at it? what are you thoughts what are you doing now ",
+    "commandType": 4
+  },
+  {
+    "text": "no panel when i try to run gradle it asks me to select a root project and its blank lol ",
+    "commandType": 4
+  },
+  {
+    "text": "not sure what i just did but i have this panel now - is it any use?",
+    "commandType": 4
+  },
+  {
+    "text": "o nothing is new when i open that folder and there's no .gradle file when i search to open no change to this workspace",
+    "commandType": 4
+  },
+  {
+    "text": "bro nothign when i do that no change we've done this several times now can we stop trying the exact same things exspecting different results ... yes EAS is configured you have sued it , is that soehting we can try? Is there now a way we can see how the app was compiled previously ? ",
+    "commandType": 4
+  },
+  {
+    "text": "is that how we got to a successfull build previously or you just goingto go get stuck in the cloud now? lol ",
+    "commandType": 4
+  },
+  {
+    "text": "\"Honest question: Do you remember what was different last time when the Gradle extension worked?\n\nWas it a different Cursor window/workspace?\n\nDid you have Android Studio open at the same time?\n\nAny setup steps you did before?\" No like i said you ran the show i have no idea anythign about app building or compiling this is my first andriod app build and we've pivoted so many times and tried so many things all i know is when you first installed the exstention it finally worked for the first time. maybe it was never used but it all of a sudden just worked. ",
+    "commandType": 4
+  },
+  {
+    "text": "heres where we are now - Last login: Mon Dec  1 13:08:26 on ttys001\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp/android\n\nexport JAVA_HOME=\"/Applications/Android Studio.app/Contents/jbr/Contents/Home\"\n\n./gradlew assembleRelease --info\n\nInitialized native services in: /Users/brianlapp/.gradle/native\n\nInitialized jansi services in: /Users/brianlapp/.gradle/native\n\nRemoving 1 daemon stop events from registry\n\nPrevious Daemon (63942) stopped at Tue Dec 02 09:25:15 EST 2025 stop command received\n\nPrevious Daemon (64457) stopped at Tue Dec 02 09:29:00 EST 2025 stop command received\n\nPrevious Daemon (12061) stopped at Tue Dec 02 09:25:15 EST 2025 by user or operating system\n\nStarting a Gradle Daemon, 3 stopped Daemons could not be reused, use --status for details\n\nStarting process 'Gradle build daemon'. Working directory: /Users/brianlapp/.gradle/daemon/8.14.3 Command: /Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/java --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.prefs/java.util.prefs=ALL-UNNAMED --add-opens=java.base/java.nio.charset=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED --add-opens=java.xml/javax.xml.namespace=ALL-UNNAMED -XX:MaxMetaspaceSize=512m -Xmx2048m -Dfile.encoding=UTF-8 -Duser.country=CA -Duser.language=en -Duser.variant -cp /Users/brianlapp/.gradle/wrapper/dists/gradle-8.14.3-bin/cv11ve7ro1n3o1j4so8xd9n66/gradle-8.14.3/lib/gradle-daemon-main-8.14.3.jar -javaagent:/Users/brianlapp/.gradle/wrapper/dists/gradle-8.14.3-bin/cv11ve7ro1n3o1j4so8xd9n66/gradle-8.14.3/lib/agents/gradle-instrumentation-agent-8.14.3.jar org.gradle.launcher.daemon.bootstrap.GradleDaemon 8.14.3\n\nSuccessfully started process 'Gradle build daemon'\n\nAn attempt to start the daemon took 0.69 secs.\n\nThe client will now receive all logging from the daemon (pid: 68633). The daemon log file: /Users/brianlapp/.gradle/daemon/8.14.3/daemon-68633.out.log\n\nStarting build in new daemon [memory: 2 GiB]\n\nUsing 8 worker leases.\n\nReceived JVM installation metadata from '/Applications/Android Studio.app/Contents/jbr/Contents/Home': {JAVA_HOME=/Applications/Android Studio.app/Contents/jbr/Contents/Home, JAVA_VERSION=21.0.6, JAVA_VENDOR=JetBrains s.r.o., RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=21.0.6+-13391695-b895.109, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=21.0.6+-13391695-b895.109, VM_VENDOR=JetBrains s.r.o., OS_ARCH=aarch64}\n\nWatching the file system is configured to be enabled if available\n\nNow considering [/Users/brianlapp/Documents/GitHub/TabletOrderApp/android] as hierarchies to watch\n\nFile system watching is active\n\nStarting Build\n\nStarting process 'command 'node''. Working directory: /Users/brianlapp/Documents/GitHub/TabletOrderApp/android Command: node --print require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })\n\nSuccessfully started process 'command 'node''\n\nStarting process 'command 'node''. Working directory: /Users/brianlapp/Documents/GitHub/TabletOrderApp/android Command: node --print require.resolve('expo-modules-autolinking/package.json', { paths: [require.resolve('expo/package.json')] })\n\nSuccessfully started process 'command 'node''\n\nNow considering [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android] as hierarchies to watch\n\nResolved plugin [id: 'org.gradle.toolchains.foojay-resolver-convention', version: '0.5.0']\n\nNow considering [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android] as hierarchies to watch\n\n\n\n> Configure project :gradle-plugin\n\nEvaluating project ':gradle-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20', apply: false]\n\n\n\n> Configure project :gradle-plugin:react-native-gradle-plugin\n\nEvaluating project ':gradle-plugin:react-native-gradle-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20']\n\nResolved plugin [id: 'java-gradle-plugin']\n\nBuild 430d5b9d-0cb3-4667-839c-9904ba183abf is started\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\n\n\n> Configure project :gradle-plugin:settings-plugin\n\nEvaluating project ':gradle-plugin:settings-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/settings-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20']\n\nResolved plugin [id: 'java-gradle-plugin']\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\n\n\n> Configure project :gradle-plugin:shared\n\nEvaluating project ':gradle-plugin:shared' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/shared/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20']\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\n\n\n> Configure project :gradle-plugin:shared-testutil\n\nEvaluating project ':gradle-plugin:shared-testutil' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/shared-testutil/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20']\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\nResolved plugin [id: 'com.facebook.react.settings']\n\n\n\n> Configure project :expo-gradle-plugin\n\nEvaluating project ':expo-gradle-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm', version: '2.1.20', apply: false]\n\nResolved plugin [id: 'java-gradle-plugin']\n\n\n\n> Configure project :expo-gradle-plugin:expo-autolinking-plugin\n\nEvaluating project ':expo-gradle-plugin:expo-autolinking-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm']\n\nResolved plugin [id: 'java-gradle-plugin']\n\nBuild 3671da1c-9793-4f8a-96a3-ef4625df339e is started\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\n\n\n> Configure project :expo-gradle-plugin:expo-autolinking-plugin-shared\n\nEvaluating project ':expo-gradle-plugin:expo-autolinking-plugin-shared' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-plugin-shared/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm']\n\nResolved plugin [id: 'org.jetbrains.kotlin.plugin.serialization', version: '1.9.24']\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\n\n\n> Configure project :expo-gradle-plugin:expo-autolinking-settings-plugin\n\nEvaluating project ':expo-gradle-plugin:expo-autolinking-settings-plugin' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin/expo-autolinking-settings-plugin/build.gradle.kts'.\n\nResolved plugin [id: 'org.jetbrains.kotlin.jvm']\n\nResolved plugin [id: 'java-gradle-plugin']\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nkotlin scripting plugin: created the scripting discovery configuration: kotlinScriptDef\n\nkotlin scripting plugin: created the scripting discovery configuration: testKotlinScriptDef\n\nResolved plugin [id: 'expo-autolinking-settings']\n\nStarting process 'command '/usr/libexec/java_home''. Working directory: /Users/brianlapp/.gradle/daemon/8.14.3 Command: /usr/libexec/java_home -V\n\nSuccessfully started process 'command '/usr/libexec/java_home''\n\nJava Toolchain auto-detection failed to find local MacOS system JVMs\n\nStarting process 'command '/Users/brianlapp/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java''. Working directory: /Users/brianlapp/.gradle/.tmp/tmp-jvm1255869028807602746probe Command: /Users/brianlapp/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java -Xmx32m -Xms32m -cp . JavaProbe\n\nSuccessfully started process 'command '/Users/brianlapp/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java''\n\nReceived JVM installation metadata from '/Users/brianlapp/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home': {JAVA_HOME=/Users/brianlapp/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home, JAVA_VERSION=17.0.17, JAVA_VENDOR=Eclipse Adoptium, RUNTIME_NAME=OpenJDK Runtime Environment, RUNTIME_VERSION=17.0.17+10, VM_NAME=OpenJDK 64-Bit Server VM, VM_VERSION=17.0.17+10, VM_VENDOR=Eclipse Adoptium, OS_ARCH=aarch64}\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors (Thread[#131,included builds,5,main]) started.\n\nResolve mutations for :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors (Thread[#132,included builds Thread 2,5,main]) started.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors (Thread[#139,Execution worker Thread 7,5,main]) started.\n\nResolve mutations for :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors (Thread[#139,Execution worker Thread 7,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors (Thread[#131,included builds,5,main]) started.\n\n:gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors (Thread[#132,included builds Thread 2,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.\n\n\n\n> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED\n\nSkipping task ':gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.\n\n\n\n> Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED\n\nSkipping task ':gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors SKIPPED\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.\n\nResolve mutations for :gradle-plugin:settings-plugin:pluginDescriptors (Thread[#132,included builds Thread 2,5,main]) started.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin (Thread[#131,included builds,5,main]) started.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors (Thread[#139,Execution worker Thread 7,5,main]) started.\n\nResolve mutations for :gradle-plugin:shared:compileKotlin (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors (Thread[#139,Execution worker Thread 7,5,main]) started.\n\n:gradle-plugin:shared:compileKotlin (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin (Thread[#131,included builds,5,main]) started.\n\n:gradle-plugin:settings-plugin:pluginDescriptors (Thread[#132,included builds Thread 2,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors' as it is up-to-date.\n\n\n\n> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE\n\nCaching disabled for task ':gradle-plugin:settings-plugin:pluginDescriptors' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':gradle-plugin:settings-plugin:pluginDescriptors' as it is up-to-date.\n\nResolve mutations for :gradle-plugin:settings-plugin:processResources (Thread[#132,included builds Thread 2,5,main]) started.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources (Thread[#139,Execution worker Thread 7,5,main]) started.\n\n:gradle-plugin:settings-plugin:processResources (Thread[#132,included builds Thread 2,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:processResources (Thread[#139,Execution worker Thread 7,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-settings-plugin:processResources' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:processResources' as it is up-to-date.\n\n\n\n> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE\n\nCaching disabled for task ':gradle-plugin:settings-plugin:processResources' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':gradle-plugin:settings-plugin:processResources' as it is up-to-date.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin' because:\n\n  Build cache is disabled\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin' as it is up-to-date.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava NO-SOURCE\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava' as it has no source files and no previous output files.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:processResources (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources NO-SOURCE\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:processResources' as it has no source files and no previous output files.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:classes (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:classes (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:classes UP-TO-DATE\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:classes' as it has no actions.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-plugin-shared:jar (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-plugin-shared:jar (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:jar UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-plugin-shared:jar' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-plugin-shared:jar' as it is up-to-date.\n\nwork action resolve expo-autolinking-plugin-shared-1.0.jar (project :expo-gradle-plugin:expo-autolinking-plugin-shared) (Thread[#131,included builds,5,main]) started.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin' because:\n\n  Build cache is disabled\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin' as it is up-to-date.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava NO-SOURCE\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava' as it has no source files and no previous output files.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:classes (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:classes (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:classes UP-TO-DATE\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:classes' as it has no actions.\n\nResolve mutations for :expo-gradle-plugin:expo-autolinking-settings-plugin:jar (Thread[#131,included builds,5,main]) started.\n\n:expo-gradle-plugin:expo-autolinking-settings-plugin:jar (Thread[#131,included builds,5,main]) started.\n\n\n\n> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:jar UP-TO-DATE\n\nCaching disabled for task ':expo-gradle-plugin:expo-autolinking-settings-plugin:jar' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':expo-gradle-plugin:expo-autolinking-settings-plugin:jar' as it is up-to-date.\n\n\n\n> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE\n\nCaching disabled for task ':gradle-plugin:shared:compileKotlin' because:\n\n  Build cache is disabled\n\nSkipping task ':gradle-plugin:shared:compileKotlin' as it is up-to-date.\n\nResolve mutations for :gradle-plugin:shared:compileJava (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:shared:compileJava (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n\n\n> Task :gradle-plugin:shared:compileJava NO-SOURCE\n\nSkipping task ':gradle-plugin:shared:compileJava' as it has no source files and no previous output files.\n\nResolve mutations for :gradle-plugin:shared:processResources (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:shared:processResources (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n\n\n> Task :gradle-plugin:shared:processResources NO-SOURCE\n\nSkipping task ':gradle-plugin:shared:processResources' as it has no source files and no previous output files.\n\nResolve mutations for :gradle-plugin:shared:classes (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:shared:classes (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n\n\n> Task :gradle-plugin:shared:classes UP-TO-DATE\n\nSkipping task ':gradle-plugin:shared:classes' as it has no actions.\n\nResolve mutations for :gradle-plugin:shared:jar (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:shared:jar (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n\n\n> Task :gradle-plugin:shared:jar UP-TO-DATE\n\nCaching disabled for task ':gradle-plugin:shared:jar' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nSkipping task ':gradle-plugin:shared:jar' as it is up-to-date.\n\nwork action resolve shared.jar (project :gradle-plugin:shared) (Thread[#138,Execution worker Thread 6,5,main]) started.\n\nResolve mutations for :gradle-plugin:settings-plugin:compileKotlin (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n:gradle-plugin:settings-plugin:compileKotlin (Thread[#138,Execution worker Thread 6,5,main]) started.\n\n<-------------> 0% INITIALIZING [56s]\n\n> IDLE\n\n> Evaluating settings > :gradle-plugin:settings-plugin:compileKotlin\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "still moving - <=------------> 9% CONFIGURING [11m 29s]\n\n> root project\n\n> IDLE\n\n> root project > :gradle-plugin:react-native-gradle-plugin:compileKotlin",
+    "commandType": 4
+  },
+  {
+    "text": "im so glad we are doing this way i would never have been this patient if i coul dnot see the progress count. \"<====---------> 33% EXECUTING [23m 17s]\"",
+    "commandType": 4
+  },
+  {
+    "text": "Sad sad day my friend we got all the way to like 95% then- FAILURE: Build failed with an exception.\n\n\n\n* What went wrong:\n\nExecution failed for task ':app:createBundleReleaseJsAndAssets'.\n\n> Process 'command 'node'' finished with non-zero exit value 7\n\n\n\n* Try:\n\n> Run with --stacktrace option to get the stack trace.\n\n> Run with --debug option to get more log output.\n\n> Run with --scan to get full insights.\n\n> Get more help at https://help.gradle.org.\n\n\n\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\n\n\n\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\n\n\n\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\n\n\nBUILD FAILED in 32m 58s\n\n375 actionable tasks: 351 executed, 24 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android %",
+    "commandType": 4
+  },
+  {
+    "text": "maybe you can fix it? \n\nBUILD FAILED in 32m 58s\n\n375 actionable tasks: 351 executed, 24 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nrm -rf node_modules\n\nnpm install\n\n\u283ccd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nrm -rf node_modules/@react-native-community\n\nnpm error code ERESOLVE\n\nnpm error ERESOLVE unable to resolve dependency tree\n\nnpm error\n\nnpm error While resolving: temp-app@1.0.0\n\nnpm error Found: react-native@0.81.5\n\nnpm error node_modules/react-native\n\nnpm error   react-native@\"0.81.5\" from the root project\n\nnpm error\n\nnpm error Could not resolve dependency:\n\nnpm error peer react-native@\"^0.41.2 || ^0.57.0 || ^0.68.0 || ^0.70.0\" from react-native-ping@1.2.8\n\nnpm error node_modules/react-native-ping\n\nnpm error   react-native-ping@\"^1.2.8\" from the root project\n\nnpm error\n\nnpm error Fix the upstream dependency conflict, or retry\n\nnpm error this command with --force or --legacy-peer-deps\n\nnpm error to accept an incorrect (and potentially broken) dependency resolution.\n\nnpm error\n\nnpm error\n\nnpm error For a full report see:\n\nnpm error /Users/brianlapp/.npm/_logs/2025-12-02T15_17_31_134Z-eresolve-report.txt\n\nnpm error A complete log of this run can be found in: /Users/brianlapp/.npm/_logs/2025-12-02T15_17_31_134Z-debug-0.log\n\nbrianlapp@MacBook-Pro TabletOrderApp % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nbrianlapp@MacBook-Pro TabletOrderApp % rm -rf node_modules/@react-native-community\n\nbrianlapp@MacBook-Pro TabletOrderApp % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp\n\nrm -rf node_modules/@react-native-community\n\nnpm install\n\nnpm error code ERESOLVE\n\nnpm error ERESOLVE unable to resolve dependency tree\n\nnpm error\n\nnpm error While resolving: temp-app@1.0.0\n\nnpm error Found: react-native@0.81.5\n\nnpm error node_modules/react-native\n\nnpm error   react-native@\"0.81.5\" from the root project\n\nnpm error\n\nnpm error Could not resolve dependency:\n\nnpm error peer react-native@\"^0.41.2 || ^0.57.0 || ^0.68.0 || ^0.70.0\" from react-native-ping@1.2.8\n\nnpm error node_modules/react-native-ping\n\nnpm error   react-native-ping@\"^1.2.8\" from the root project\n\nnpm error\n\nnpm error Fix the upstream dependency conflict, or retry\n\nnpm error this command with --force or --legacy-peer-deps\n\nnpm error to accept an incorrect (and potentially broken) dependency resolution.\n\nnpm error\n\nnpm error\n\nnpm error For a full report see:\n\nnpm error /Users/brianlapp/.npm/_logs/2025-12-02T15_17_47_387Z-eresolve-report.txt\n\nnpm error A complete log of this run can be found in: /Users/brianlapp/.npm/_logs/2025-12-02T15_17_47_387Z-debug-0.log\n\nbrianlapp@MacBook-Pro TabletOrderApp % ",
+    "commandType": 4
+  },
+  {
+    "text": "fail: > Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE\n\nSkipping task ':gradle-plugin:react-native-gradle-plugin:compileJava' as it has no source files and no previous output files.\n\nResolve mutations for :gradle-plugin:react-native-gradle-plugin:classes (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:gradle-plugin:react-native-gradle-plugin:classes (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n\n\n> Task :gradle-plugin:react-native-gradle-plugin:classes\n\nSkipping task ':gradle-plugin:react-native-gradle-plugin:classes' as it has no actions.\n\nResolve mutations for :gradle-plugin:react-native-gradle-plugin:jar (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:gradle-plugin:react-native-gradle-plugin:jar (Thread[#134,Execution worker Thread 2,5,main]) started.\n\nother build task :gradle-plugin:react-native-gradle-plugin:compileJava (Thread[#136,Execution worker Thread 4,5,main]) started.\n\n\n\n> Task :gradle-plugin:react-native-gradle-plugin:jar\n\nCaching disabled for task ':gradle-plugin:react-native-gradle-plugin:jar' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nTask ':gradle-plugin:react-native-gradle-plugin:jar' is not up-to-date because:\n\n  No history is available.\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/build/classes/java/main', not found\n\nwork action resolve main (project :gradle-plugin:react-native-gradle-plugin) (Thread[#134,Execution worker Thread 2,5,main]) started.\n\nwork action resolve main (project :gradle-plugin:react-native-gradle-plugin) (Thread[#134,Execution worker Thread 2,5,main]) started.\n\nResolve mutations for :expo-module-gradle-plugin:compileKotlin (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:expo-module-gradle-plugin:compileKotlin (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n\n\n> Task :expo-module-gradle-plugin:compileKotlin\n\nCaching disabled for task ':expo-module-gradle-plugin:compileKotlin' because:\n\n  Build cache is disabled\n\nTask ':expo-module-gradle-plugin:compileKotlin' is not up-to-date because:\n\n  No history is available.\n\nThe input changes require a full rebuild for incremental task ':expo-module-gradle-plugin:compileKotlin'.\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/java', not found\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/java', not found\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/java', not found\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/java', not found\n\nKotlin source files: /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/AutolinkingIntegration.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ExtraPropertiesExtension.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/Version.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/gradle/ExpoModuleExtension.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/gradle/ExpoGradleHelperExtension.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ExpoModulesGradlePlugin.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/MavenPublicationExtension.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/AndroidLibraryExtension.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/ProjectConfiguration.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/Warnings.kt, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/withAutolinkingPlugin/kotlin/expo/modules/plugin/AutolinkingIntegrationImpl.kt\n\nJava source files: \n\nScript source files: \n\nScript file extensions: \n\nUsing Kotlin/JVM incremental compilation\n\n[KOTLIN] Kotlin compilation 'jdkHome' argument: /Applications/Android Studio.app/Contents/jbr/Contents/Home\n\nOptions for KOTLIN DAEMON: IncrementalCompilationOptions(super=CompilationOptions(compilerMode=INCREMENTAL_COMPILER, targetPlatform=JVM, reportCategories=[0, 3], reportSeverity=2, requestedCompilationResults=[0], kotlinScriptExtensions=[]), sourceChanges=org.jetbrains.kotlin.buildtools.api.SourcesChanges$Unknown@1faeaa12, classpathChanges=NotAvailableForNonIncrementalRun, workingDir=/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable, multiModuleICSettings=MultiModuleICSettings(buildHistoryFile=/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/local-state/build-history.bin, useModuleDetection=false), usePreciseJavaTracking=true, icFeatures=IncrementalCompilationFeatures(withAbiSnapshot=false, preciseCompilationResultsBackup=true, keepIncrementalCompilationCachesInMemory=true, enableUnsafeIncrementalCompilationForMultiplatform=false, enableMonotonousIncrementalCompileSetExpansion=true), outputFiles=[/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/kotlin/main, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/cacheable, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/kotlin/compileKotlin/local-state])\n\nw: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/src/main/kotlin/expo/modules/plugin/android/AndroidLibraryExtension.kt:9:24 'var targetSdk: Int?' is deprecated. Will be removed from library DSL in v9.0. Use testOptions.targetSdk or/and lint.targetSdk instead.\n\nFinished executing kotlin compiler using DAEMON strategy\n\nResolve mutations for :expo-module-gradle-plugin:compileJava (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:expo-module-gradle-plugin:compileJava (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n\n\n> Task :expo-module-gradle-plugin:compileJava NO-SOURCE\n\nSkipping task ':expo-module-gradle-plugin:compileJava' as it has no source files and no previous output files.\n\nResolve mutations for :expo-module-gradle-plugin:classes (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:expo-module-gradle-plugin:classes (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n\n\n> Task :expo-module-gradle-plugin:classes\n\nSkipping task ':expo-module-gradle-plugin:classes' as it has no actions.\n\nResolve mutations for :expo-module-gradle-plugin:jar (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n:expo-module-gradle-plugin:jar (Thread[#134,Execution worker Thread 2,5,main]) started.\n\n\n\n> Task :expo-module-gradle-plugin:jar\n\nCaching disabled for task ':expo-module-gradle-plugin:jar' because:\n\n  Build cache is disabled\n\n  Not worth caching\n\nTask ':expo-module-gradle-plugin:jar' is not up-to-date because:\n\n  No history is available.\n\nfile or directory '/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin/build/classes/java/main', not found\n\n\n\n> Configure project :\n\n[ExpoRootProject] Using the following versions:\n\n  - buildTools:  36.0.0\n\n  - minSdk:      24\n\n  - compileSdk:  36\n\n  - targetSdk:   36\n\n  - ndk:         27.1.12297006\n\n  - kotlin:      2.1.20\n\n  - ksp:         2.1.20-2.0.1\n\n\n\n> Configure project :app\n\nEvaluating project ':app' using build file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/app/build.gradle'.\n\nUsing default execution profile\n\nBuild b8b921a8-b0b1-4947-bbaf-08b90fbd9521 is started\n\nUsing Kotlin Gradle Plugin gradle85 variant\n\nBuild 8d2b3e52-df20-4cc2-ab89-7675eb5ca1ad is closed\n\nBuild 753635ef-b0be-4328-85bc-845d946bca04 is closed\n\nBuild 1276dee6-424e-4d0f-8887-ad96cd94b8de is closed\n\nBuild b8b921a8-b0b1-4947-bbaf-08b90fbd9521 is closed\n\n\n\n[Incubating] Problems report is available at: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/android/build/reports/problems/problems-report.html\n\n\n\nFAILURE: Build failed with an exception.\n\n\n\n* Where:\n\nBuild file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/app/build.gradle' line: 177\n\n\n\n* What went wrong:\n\nA problem occurred evaluating project ':app'.\n\n> Could not get unknown property 'hermesEnabled' for object of type org.gradle.api.internal.artifacts.dsl.dependencies.DefaultDependencyHandler.\n\n\n\n* Try:\n\n> Run with --stacktrace option to get the stack trace.\n\n> Run with --debug option to get more log output.\n\n> Run with --scan to get full insights.\n\n> Get more help at https://help.gradle.org.\n\n\n\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\n\n\n\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\n\n\n\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\n\n\nBUILD FAILED in 18s\n\n24 actionable tasks: 24 executed\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin]\n\nbrianlapp@MacBook-Pro android % \n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "i did the thing but dont see anything happening here? ",
+    "commandType": 4
+  },
+  {
+    "text": "stuck here Last login: Tue Dec  2 09:37:55 on ttys018\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp/android\n\n./gradlew clean\n\n./gradlew assembleRelease --info\n\nException in thread \"main\" java.lang.RuntimeException: Error when loading properties file=/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradle.properties\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:3)\n\n\tat org.gradle.wrapper.GradleWrapperMain.main(SourceFile:34)\n\nCaused by: java.io.IOException: Operation canceled\n\n\tat java.base/java.io.FileInputStream.readBytes(Native Method)\n\n\tat java.base/java.io.FileInputStream.read(Unknown Source)\n\n\tat java.base/java.util.Properties$LineReader.readLine(Unknown Source)\n\n\tat java.base/java.util.Properties.load0(Unknown Source)\n\n\tat java.base/java.util.Properties.load(Unknown Source)\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:1)\n\n\t... 1 more\n\n\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "can you audit for anythign else that might need to be fixed so we can stop wasting compiling time ???? find issues before hand maybe? this is wasting again hours from my day is it normally this difficult to compile an app we are about 7hours in if you could yesetdrays troubles?",
+    "commandType": 4
+  },
+  {
+    "text": "how long does this normally take i asked? pleaee dont ignore my questiosn i asked 2 simple questiosn in 1 simpel scentence ",
+    "commandType": 4
+  },
+  {
+    "text": "I have errors here - Last login: Tue Dec  2 09:37:55 on ttys018\n\nbrianlapp@MacBook-Pro ~ % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp/android\n\n./gradlew clean\n\n./gradlew assembleRelease --info\n\nException in thread \"main\" java.lang.RuntimeException: Error when loading properties file=/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradle.properties\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:3)\n\n\tat org.gradle.wrapper.GradleWrapperMain.main(SourceFile:34)\n\nCaused by: java.io.IOException: Operation canceled\n\n\tat java.base/java.io.FileInputStream.readBytes(Native Method)\n\n\tat java.base/java.io.FileInputStream.read(Unknown Source)\n\n\tat java.base/java.util.Properties$LineReader.readLine(Unknown Source)\n\n\tat java.base/java.util.Properties.load0(Unknown Source)\n\n\tat java.base/java.util.Properties.load(Unknown Source)\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:1)\n\n\t... 1 more\n\nException in thread \"main\" java.lang.RuntimeException: Error when loading properties file=/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradle.properties\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:3)\n\n\tat org.gradle.wrapper.GradleWrapperMain.main(SourceFile:34)\n\nCaused by: java.io.IOException: Operation canceled\n\n\tat java.base/java.io.FileInputStream.readBytes(Native Method)\n\n\tat java.base/java.io.FileInputStream.read(Unknown Source)\n\n\tat java.base/java.util.Properties$LineReader.readLine(Unknown Source)\n\n\tat java.base/java.util.Properties.load0(Unknown Source)\n\n\tat java.base/java.util.Properties.load(Unknown Source)\n\n\tat org.gradle.wrapper.PropertiesFileHandler.getSystemProperties(SourceFile:1)\n\n\t... 1 more\n\nbrianlapp@MacBook-Pro android % \n\nfrom terminla and then more erros in cursor \"Failed to save 'gradle.properties': Unable to write file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradle.properties' (Unknown (FileSystemError): Error: ECANCELED: operation canceled, open '/Users/brianlapp/Documents/GitHub/TabletOrderApp/android/gradle.properties')\"\n\n\n\nand now you need me to run more terminal commands? ",
+    "commandType": 4
+  },
+  {
+    "text": "\n\nBUILD FAILED in 2m 47s\n\n159 actionable tasks: 131 executed, 28 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android % \n\n",
+    "commandType": 4
+  },
+  {
+    "text": "[Incubating] Problems report is available at: file:///Users/brianlapp/Documents/GitHub/TabletOrderApp/android/build/reports/problems/problems-report.html\n\n\n\nFAILURE: Build failed with an exception.\n\n\n\n* What went wrong:\n\nExecution failed for task ':app:createBundleReleaseJsAndAssets'.\n\n> Process 'command 'node'' finished with non-zero exit value 1\n\n\n\n* Try:\n\n> Run with --stacktrace option to get the stack trace.\n\n> Run with --debug option to get more log output.\n\n> Run with --scan to get full insights.\n\n> Get more help at https://help.gradle.org.\n\n\n\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\n\n\n\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\n\n\n\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\n\n\nBUILD FAILED in 2m 47s\n\n159 actionable tasks: 131 executed, 28 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android % \n\n\n\n\n\n\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "BRO!@ commonhelp me out here - You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\n\n\n\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\n\n\nBUILD FAILED in 2m 47s\n\n159 actionable tasks: 131 executed, 28 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android % cd /Users/brianlapp/Documents/GitHub/TabletOrderApp && npx react-native bundle --platform android --dev false --entry-file index.js --bundle-output /tmp/test.bundle 2>&1\n\n=================================================================================================\n\nFrom React Native 0.73, your project's Metro config should extend '@react-native/metro-config'\n\nor it will fail to build. Please copy the template at:\n\nhttps://github.com/react-native-community/template/blob/main/template/metro.config.js\n\nThis warning will be removed in future (https://github.com/facebook/metro/issues/1018).\n\n=================================================================================================\n\n\n\n                        \u2592\u2592\u2593\u2593\u2593\u2593\u2592\u2592\n\n                     \u2592\u2593\u2593\u2593\u2592\u2592\u2591\u2591\u2592\u2592\u2593\u2593\u2593\u2592\n\n                  \u2592\u2593\u2593\u2593\u2593\u2591\u2591\u2591\u2592\u2592\u2592\u2592\u2591\u2591\u2591\u2593\u2593\u2593\u2593\u2592\n\n                 \u2593\u2593\u2592\u2592\u2592\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2592\u2592\u2592\u2593\u2593\n\n                 \u2593\u2593\u2591\u2591\u2591\u2591\u2591\u2592\u2593\u2593\u2593\u2593\u2593\u2593\u2592\u2591\u2591\u2591\u2591\u2591\u2593\u2593\n\n                 \u2593\u2593\u2591\u2591\u2593\u2593\u2592\u2591\u2591\u2591\u2592\u2592\u2591\u2591\u2591\u2592\u2593\u2592\u2591\u2591\u2593\u2593\n\n                 \u2593\u2593\u2591\u2591\u2593\u2593\u2593\u2593\u2593\u2592\u2592\u2592\u2592\u2593\u2593\u2593\u2593\u2592\u2591\u2591\u2593\u2593\n\n                 \u2593\u2593\u2591\u2591\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2592\u2591\u2591\u2593\u2593\n\n                 \u2593\u2593\u2592\u2591\u2591\u2592\u2592\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2593\u2592\u2591\u2591\u2591\u2592\u2593\u2593\n\n                  \u2592\u2593\u2593\u2593\u2592\u2591\u2591\u2591\u2592\u2593\u2593\u2592\u2591\u2591\u2591\u2592\u2593\u2593\u2593\u2592\n\n                     \u2592\u2593\u2593\u2593\u2592\u2591\u2591\u2591\u2591\u2592\u2593\u2593\u2593\u2592\n\n                        \u2592\u2592\u2593\u2593\u2593\u2593\u2592\u2592\n\n\n\n\n\n                Welcome to Metro v0.83.3\n\n              Fast - Scalable - Integrated\n\n\n\n\n\nerror The resource `/Users/brianlapp/Documents/GitHub/TabletOrderApp/index.js` was not found.\n\nError: The resource `/Users/brianlapp/Documents/GitHub/TabletOrderApp/index.js` was not found.\n\n    at /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/metro/src/IncrementalBundler.js:291:24\n\n    at gotStat (node:fs:2931:21)\n\n    at FSReqCallback.oncomplete (node:fs:195:21)\n\nbrianlapp@MacBook-Pro TabletOrderApp % \n\n",
+    "commandType": 4
+  },
+  {
+    "text": "how could yo not see this in the audot you just did ? did you even do one? what the fuck ",
+    "commandType": 4
+  },
+  {
+    "text": "WHY DID YOU NOT TELL ME YOU DIDNT DO THE AUDIT\n\n?!@?!?!?!?!?!?!?!?!",
+    "commandType": 4
+  },
+  {
+    "text": "what ? \"The index.js file is now created.\n\nRun the build again in your terminal:' arew you fucking kidding me right now? GO DO THE AUDIT and dont come back until its dome if you have issues tell and we will find a work around. do the audit and stop wasting my day here",
+    "commandType": 4
+  },
+  {
+    "text": "why are we repeatedly seeing emtpy files here? we had this workign did we not? ",
+    "commandType": 4
+  },
+  {
+    "text": "bro im in the git folder righ tnow what the fuck are you on about?",
+    "commandType": 4
+  },
+  {
+    "text": "https://github.com/Work-Local-Inc/TabletOrderApp ",
+    "commandType": 4
+  },
+  {
+    "text": "re fucking base then",
+    "commandType": 4
+  },
+  {
+    "text": "have we fixed these issues, its the lastest build error ? but i may have ran it before you implimented the last updates - FAILURE: Build failed with an exception.\n\n\n\n* What went wrong:\n\nExecution failed for task ':app:createBundleReleaseJsAndAssets'.\n\n> Cannot access input property 'sources' of task ':app:createBundleReleaseJsAndAssets'. Accessing unreadable inputs or outputs is not supported. Declare the task as untracked by using Task.doNotTrackState(). For more information, please refer to https://docs.gradle.org/8.14.3/userguide/incremental_build.html#sec:disable-state-tracking in the Gradle documentation.\n\n   > Failed to create MD5 hash for file '/Users/brianlapp/Documents/GitHub/TabletOrderApp/metro.config.js'\n\n\n\n* Try:\n\n> Run with --stacktrace option to get the stack trace.\n\n> Run with --debug option to get more log output.\n\n> Run with --scan to get full insights.\n\n> Get more help at https://help.gradle.org.\n\n\n\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\n\n\n\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\n\n\n\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\n\n\nBUILD FAILED in 26m 28s\n\n",
+    "commandType": 4
+  },
+  {
+    "text": "also seeing these still in cursor ",
+    "commandType": 4
+  },
+  {
+    "text": "holy craptasticj brosive! looky here -> BUILD SUCCESSFUL in 7m 47s\n\n437 actionable tasks: 258 executed, 179 up-to-date\n\nWatched directory hierarchies: [/Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-core/expo-module-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/expo-modules-autolinking/android/expo-gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/node_modules/@react-native/gradle-plugin, /Users/brianlapp/Documents/GitHub/TabletOrderApp/android]\n\nbrianlapp@MacBook-Pro android % \n\n",
+    "commandType": 4
+  },
+  {
+    "text": "Innnncredible!!!.....Now we need to resolve the issue where orders dotn print and also rightnow order come in they say they printed (but dont) and are marked as active we can only mark as active after a successfull print but righ tnow we are giving false sucess so we need to resolve that",
+    "commandType": 4
+  },
+  {
+    "text": "hats going on here? you havnt been able to do git stuff withotu gettign stuck for some time whats the issue?",
+    "commandType": 4
+  }
+]

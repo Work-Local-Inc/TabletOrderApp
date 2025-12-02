@@ -23,7 +23,10 @@ import {
   printCustomerReceipt, 
   printBoth,
   connectPrinter, 
-  isPrinterConnected 
+  isPrinterConnected,
+  ensureConnected,
+  verifyConnection,
+  getConnectedPrinterAddress,
 } from '../services/printService';
 import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus } from '../components/orders';
 import { useTheme } from '../theme';
@@ -123,8 +126,11 @@ export const OrdersListScreen: React.FC = () => {
     ? ordersList.find(o => o.id === selectedOrderId) || null
     : null;
 
-  // Print function
+  // Print function - ONLY marks as printed if print ACTUALLY succeeds
   const handlePrint = useCallback(async (order: Order) => {
+    console.log(`[Print] 🖨️ Starting print for order #${order.order_number}...`);
+    
+    // Check if printer is supposedly connected (from settings)
     if (!printerConnected) {
       Alert.alert('Printer Not Connected', 'Please connect a printer in Settings first.');
       return;
@@ -132,6 +138,33 @@ export const OrdersListScreen: React.FC = () => {
 
     setPrintingOrderId(order.id);
     try {
+      // CRITICAL: Verify the ACTUAL Bluetooth connection before printing
+      const macAddress = settings?.printerMacAddress;
+      if (!macAddress) {
+        Alert.alert('No Printer Configured', 'Please connect a printer in Settings first.');
+        setPrintingOrderId(null);
+        return;
+      }
+
+      // Ensure we have an active connection
+      console.log(`[Print] 🔗 Verifying connection to ${settings?.printerName}...`);
+      const isConnected = await ensureConnected(macAddress);
+      
+      if (!isConnected) {
+        console.error('[Print] ❌ Could not establish printer connection');
+        Alert.alert(
+          'Printer Connection Failed', 
+          `Could not connect to ${settings?.printerName}.\n\nPlease check that:\n• Printer is powered on\n• Bluetooth is enabled\n• You are within range`,
+          [{ text: 'OK' }]
+        );
+        // Update settings to reflect actual state
+        updateSettings({ printerConnected: false });
+        setPrintingOrderId(null);
+        return;
+      }
+      
+      console.log(`[Print] ✓ Connection verified, printing...`);
+      
       const printType = settings?.defaultPrintType || 'kitchen';
       let success = false;
       
@@ -148,13 +181,15 @@ export const OrdersListScreen: React.FC = () => {
       }
 
       if (success) {
-        // MARK AS PRINTED - prevents ANY reprinting
+        console.log(`[Print] ✓ Print succeeded for order #${order.order_number}`);
+        
+        // ONLY mark as printed if print ACTUALLY succeeded
         markAsPrinted(order.id);
         Vibration.vibrate(100);
         
         // Move to Active (preparing) status
         if (order.status === 'pending') {
-          console.log(`[Print] ✓ Printed! Moving order #${order.order_number} to Active...`);
+          console.log(`[Print] ✓ Moving order #${order.order_number} to Active...`);
           try {
             const statusResult = await updateOrderStatus(order.id, 'preparing');
             if (statusResult) {
@@ -167,17 +202,26 @@ export const OrdersListScreen: React.FC = () => {
             console.error('[Print] Failed to update status:', err);
             Alert.alert('Status Update Error', `${err.message || err}`);
           }
+        } else {
+          Alert.alert('✓ Printed', `Order #${order.order_number} printed successfully`);
         }
       } else {
-        Alert.alert('Print Failed', 'Could not print the order. Please try again.');
+        console.error(`[Print] ❌ Print FAILED for order #${order.order_number}`);
+        // Update settings to reflect that printer may be disconnected
+        updateSettings({ printerConnected: false });
+        Alert.alert(
+          'Print Failed', 
+          'Could not print the order. The printer may have disconnected.\n\nPlease reconnect the printer in Settings and try again.'
+        );
       }
-    } catch (error) {
-      console.error('[Print] Error:', error);
-      Alert.alert('Print Error', 'An error occurred while printing.');
+    } catch (error: any) {
+      console.error('[Print] ❌ Error:', error);
+      updateSettings({ printerConnected: false });
+      Alert.alert('Print Error', `An error occurred while printing:\n${error?.message || error}`);
     } finally {
       setPrintingOrderId(null);
     }
-  }, [printerConnected, settings?.defaultPrintType, markAsPrinted, updateOrderStatus]);
+  }, [printerConnected, settings?.defaultPrintType, settings?.printerMacAddress, settings?.printerName, markAsPrinted, updateOrderStatus, updateSettings]);
 
   // Auto-print new orders
   const autoPrintOrder = useCallback(async (order: Order) => {
@@ -296,26 +340,59 @@ export const OrdersListScreen: React.FC = () => {
     }
   }, [ordersList.length]); // Only run when order count changes
 
-  // Auto-reconnect printer
+  // Auto-reconnect printer on app load and periodically verify connection
   useEffect(() => {
     const autoReconnect = async () => {
-      if (settings?.printerMacAddress && !isPrinterConnected()) {
-        console.log(`[AutoConnect] Reconnecting to ${settings.printerName}...`);
+      // Only attempt if we have a stored printer address
+      if (!settings?.printerMacAddress) {
+        console.log('[AutoConnect] No printer configured');
+        return;
+      }
+
+      // Check if we're actually connected
+      const actuallyConnected = isPrinterConnected();
+      const storedAsConnected = settings?.printerConnected;
+
+      console.log(`[AutoConnect] State check - stored: ${storedAsConnected}, actual: ${actuallyConnected}`);
+
+      if (!actuallyConnected) {
+        console.log(`[AutoConnect] 🔄 Reconnecting to ${settings.printerName}...`);
         try {
           const success = await connectPrinter(settings.printerMacAddress);
           if (success) {
             updateSettings({ printerConnected: true });
-            console.log('[AutoConnect] Reconnected successfully!');
+            console.log('[AutoConnect] ✓ Reconnected successfully!');
+          } else {
+            // Connection failed - update UI to reflect reality
+            if (storedAsConnected) {
+              console.log('[AutoConnect] ❌ Reconnection failed, updating UI state');
+              updateSettings({ printerConnected: false });
+            }
           }
         } catch (error) {
-          console.error('[AutoConnect] Failed:', error);
+          console.error('[AutoConnect] ❌ Failed:', error);
+          if (storedAsConnected) {
+            updateSettings({ printerConnected: false });
+          }
         }
+      } else if (!storedAsConnected) {
+        // Actually connected but UI doesn't know - sync state
+        console.log('[AutoConnect] ✓ Already connected, syncing UI state');
+        updateSettings({ printerConnected: true });
       }
     };
     
+    // Initial reconnect attempt
     const timer = setTimeout(autoReconnect, 2000);
-    return () => clearTimeout(timer);
-  }, [settings?.printerMacAddress, settings?.printerName, updateSettings]);
+    
+    // Periodic connection check (every 30 seconds)
+    const interval = setInterval(autoReconnect, 30000);
+    
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
+  }, [settings?.printerMacAddress, settings?.printerName, settings?.printerConnected, updateSettings]);
 
   // Polling
   useFocusEffect(

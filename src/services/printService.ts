@@ -1,6 +1,10 @@
 /**
  * Thermal Printer Service for ESC/POS Compatible Printers
  * Uses react-native-thermal-receipt-printer-image-qr for Bluetooth printing
+ * 
+ * IMPORTANT: This service maintains its own connection state.
+ * The app should ALWAYS call verifyConnection() before printing
+ * to ensure the Bluetooth connection is actually active.
  */
 
 import { Order, OrderItem } from '../types';
@@ -10,14 +14,16 @@ import { Order, OrderItem } from '../types';
 let BLEPrinter: any = null;
 let printerConnected = false;
 let connectedPrinterAddress: string | null = null;
+let lastConnectionAttempt: number = 0;
+const CONNECTION_RETRY_DELAY = 3000; // Wait 3 seconds between reconnection attempts
 
 // Try to import the printer library (may not be installed yet)
 try {
   const printerLib = require('react-native-thermal-receipt-printer-image-qr');
   BLEPrinter = printerLib.BLEPrinter;
-  console.log('[PrintService] Bluetooth printer library loaded');
+  console.log('[PrintService] ✓ Bluetooth printer library loaded');
 } catch (e) {
-  console.warn('[PrintService] Printer library not installed. Run: npm install react-native-thermal-receipt-printer-image-qr');
+  console.warn('[PrintService] ✗ Printer library not installed. Run: npm install react-native-thermal-receipt-printer-image-qr');
 }
 
 // ESC/POS Commands
@@ -285,16 +291,16 @@ export const generateTestReceipt = (): string => {
  */
 export const initPrinter = async (): Promise<boolean> => {
   if (!BLEPrinter) {
-    console.error('[PrintService] Printer library not available');
+    console.error('[PrintService] ✗ Printer library not available');
     return false;
   }
   
   try {
     await BLEPrinter.init();
-    console.log('[PrintService] Printer initialized');
+    console.log('[PrintService] ✓ Printer module initialized');
     return true;
   } catch (error) {
-    console.error('[PrintService] Init failed:', error);
+    console.error('[PrintService] ✗ Init failed:', error);
     return false;
   }
 };
@@ -304,45 +310,54 @@ export const initPrinter = async (): Promise<boolean> => {
  */
 export const discoverPrinters = async (): Promise<Array<{device_name: string, inner_mac_address: string}>> => {
   if (!BLEPrinter) {
-    console.warn('[PrintService] Printer library not installed');
+    console.warn('[PrintService] ✗ Printer library not installed');
     return [];
   }
 
   try {
-    console.log('[PrintService] Scanning for Bluetooth printers...');
+    console.log('[PrintService] 🔍 Scanning for Bluetooth printers...');
     await BLEPrinter.init();
     const devices = await BLEPrinter.getDeviceList();
-    console.log('[PrintService] Found devices:', devices);
+    console.log('[PrintService] ✓ Found devices:', devices?.length || 0);
     return devices || [];
   } catch (error) {
-    console.error('[PrintService] Discovery failed:', error);
+    console.error('[PrintService] ✗ Discovery failed:', error);
     return [];
   }
 };
 
 /**
  * Connect to a Bluetooth printer by MAC address
+ * @returns {Promise<boolean>} true if connection was successful
  */
 export const connectPrinter = async (macAddress: string): Promise<boolean> => {
   if (!BLEPrinter) {
-    console.error('[PrintService] Printer library not available');
+    console.error('[PrintService] ✗ Printer library not available');
     return false;
   }
 
+  // Rate limit connection attempts
+  const now = Date.now();
+  if (now - lastConnectionAttempt < CONNECTION_RETRY_DELAY) {
+    console.log('[PrintService] ⏳ Waiting before retry...');
+    return printerConnected;
+  }
+  lastConnectionAttempt = now;
+
   try {
-    console.log(`[PrintService] Initializing printer module...`);
-    // MUST init before connecting!
+    console.log(`[PrintService] 🔄 Initializing printer module...`);
     await BLEPrinter.init();
     
-    console.log(`[PrintService] Connecting to printer: ${macAddress}`);
+    console.log(`[PrintService] 🔗 Connecting to printer: ${macAddress}`);
     await BLEPrinter.connectPrinter(macAddress);
     printerConnected = true;
     connectedPrinterAddress = macAddress;
-    console.log('[PrintService] Connected successfully!');
+    console.log('[PrintService] ✓ Connected successfully to', macAddress);
     return true;
-  } catch (error) {
-    console.error('[PrintService] Connection failed:', error);
+  } catch (error: any) {
+    console.error('[PrintService] ✗ Connection failed:', error?.message || error);
     printerConnected = false;
+    connectedPrinterAddress = null;
     return false;
   }
 };
@@ -351,37 +366,97 @@ export const connectPrinter = async (macAddress: string): Promise<boolean> => {
  * Disconnect from printer
  */
 export const disconnectPrinter = async (): Promise<void> => {
-  if (BLEPrinter && printerConnected) {
+  console.log('[PrintService] 🔌 Disconnecting printer...');
+  printerConnected = false;
+  connectedPrinterAddress = null;
+  
+  if (BLEPrinter) {
     try {
       await BLEPrinter.closeConn();
-      printerConnected = false;
-      connectedPrinterAddress = null;
-      console.log('[PrintService] Disconnected');
+      console.log('[PrintService] ✓ Disconnected');
     } catch (error) {
-      console.error('[PrintService] Disconnect error:', error);
+      console.error('[PrintService] Disconnect error (ignored):', error);
     }
   }
 };
 
 /**
- * Check if printer is connected
+ * Check if printer is connected (based on local state)
  */
 export const isPrinterConnected = (): boolean => {
-  return printerConnected;
+  return printerConnected && BLEPrinter !== null;
+};
+
+/**
+ * Get the currently connected printer address
+ */
+export const getConnectedPrinterAddress = (): string | null => {
+  return printerConnected ? connectedPrinterAddress : null;
+};
+
+/**
+ * Verify printer connection is actually working
+ * This attempts a lightweight operation to test the connection
+ * @returns {Promise<boolean>} true if printer is actually responsive
+ */
+export const verifyConnection = async (): Promise<boolean> => {
+  if (!BLEPrinter || !printerConnected || !connectedPrinterAddress) {
+    console.log('[PrintService] ❌ No printer connected (state check failed)');
+    return false;
+  }
+
+  try {
+    // Try to re-init - this helps detect stale connections
+    await BLEPrinter.init();
+    console.log('[PrintService] ✓ Connection verified');
+    return true;
+  } catch (error) {
+    console.error('[PrintService] ✗ Connection verification failed:', error);
+    printerConnected = false;
+    return false;
+  }
+};
+
+/**
+ * Ensure printer is connected before printing
+ * Will attempt reconnection if necessary
+ * @param macAddress - The printer MAC address to connect to
+ * @returns {Promise<boolean>} true if printer is ready to print
+ */
+export const ensureConnected = async (macAddress?: string): Promise<boolean> => {
+  // Already connected and verified?
+  if (await verifyConnection()) {
+    return true;
+  }
+
+  // Try to reconnect if we have an address
+  const addressToUse = macAddress || connectedPrinterAddress;
+  if (addressToUse) {
+    console.log('[PrintService] 🔄 Reconnecting to printer...');
+    return await connectPrinter(addressToUse);
+  }
+
+  console.log('[PrintService] ❌ No printer address available for reconnection');
+  return false;
 };
 
 /**
  * Print an order receipt
+ * @returns {Promise<boolean>} true ONLY if print was actually sent to printer
  */
 export const printOrder = async (order: Order): Promise<boolean> => {
   const receiptText = generateReceiptText(order);
 
-  // Always log for debugging
-  console.log('[PrintService] Printing order:', order.order_number);
+  console.log('[PrintService] 🖨️ Printing order:', order.order_number);
 
-  if (!BLEPrinter || !printerConnected) {
-    console.warn('[PrintService] No printer connected, logging receipt only:');
-    console.log(receiptText);
+  // CRITICAL: Verify actual connection, not just stored state
+  if (!BLEPrinter) {
+    console.error('[PrintService] ❌ Printer library not available');
+    return false;
+  }
+
+  if (!printerConnected || !connectedPrinterAddress) {
+    console.error('[PrintService] ❌ No printer connected - printerConnected:', printerConnected);
     return false;
   }
 
@@ -398,10 +473,12 @@ export const printOrder = async (order: Order): Promise<boolean> => {
     // Cut paper
     await BLEPrinter.printText('\n\n\n');
     
-    console.log('[PrintService] Print successful!');
+    console.log('[PrintService] ✓ Print successful for order', order.order_number);
     return true;
-  } catch (error) {
-    console.error('[PrintService] Print failed:', error);
+  } catch (error: any) {
+    console.error('[PrintService] ❌ Print FAILED:', error?.message || error);
+    // Mark as disconnected since print failed
+    printerConnected = false;
     return false;
   }
 };
@@ -645,19 +722,26 @@ const generateReceiptText = (order: Order): string => {
 
 /**
  * Print a KITCHEN TICKET (for the cook board)
+ * @returns {Promise<boolean>} true ONLY if print was actually sent to printer
  */
 export const printKitchenTicket = async (order: Order): Promise<boolean> => {
   const ticketText = generateKitchenTicket(order);
 
-  console.log('[PrintService] Printing KITCHEN TICKET for order:', order.order_number);
+  console.log('[PrintService] 🍳 Printing KITCHEN TICKET for order:', order.order_number);
 
-  if (!BLEPrinter || !printerConnected) {
-    console.warn('[PrintService] No printer connected, logging kitchen ticket:');
-    console.log(ticketText);
+  // CRITICAL: Verify actual connection, not just stored state
+  if (!BLEPrinter) {
+    console.error('[PrintService] ❌ Printer library not available - CANNOT PRINT');
+    return false;
+  }
+
+  if (!printerConnected || !connectedPrinterAddress) {
+    console.error('[PrintService] ❌ No printer connected - printerConnected:', printerConnected, 'address:', connectedPrinterAddress);
     return false;
   }
 
   try {
+    console.log('[PrintService] 📤 Sending to printer...');
     await BLEPrinter.printText(ticketText, {
       encoding: 'UTF8',
       codepage: 0,
@@ -666,29 +750,38 @@ export const printKitchenTicket = async (order: Order): Promise<boolean> => {
       fonttype: 0,
     });
     
-    console.log('[PrintService] Kitchen ticket printed!');
+    console.log('[PrintService] ✓ Kitchen ticket PRINTED for order', order.order_number);
     return true;
-  } catch (error) {
-    console.error('[PrintService] Kitchen ticket print failed:', error);
+  } catch (error: any) {
+    console.error('[PrintService] ❌ Kitchen ticket print FAILED:', error?.message || error);
+    // Mark as disconnected since print failed
+    printerConnected = false;
     return false;
   }
 };
 
 /**
  * Print a CUSTOMER RECEIPT (for the bag/customer)
+ * @returns {Promise<boolean>} true ONLY if print was actually sent to printer
  */
 export const printCustomerReceipt = async (order: Order): Promise<boolean> => {
   const receiptText = generateReceiptText(order);
 
-  console.log('[PrintService] Printing CUSTOMER RECEIPT for order:', order.order_number);
+  console.log('[PrintService] 🧾 Printing CUSTOMER RECEIPT for order:', order.order_number);
 
-  if (!BLEPrinter || !printerConnected) {
-    console.warn('[PrintService] No printer connected, logging receipt:');
-    console.log(receiptText);
+  // CRITICAL: Verify actual connection, not just stored state
+  if (!BLEPrinter) {
+    console.error('[PrintService] ❌ Printer library not available - CANNOT PRINT');
+    return false;
+  }
+
+  if (!printerConnected || !connectedPrinterAddress) {
+    console.error('[PrintService] ❌ No printer connected - printerConnected:', printerConnected, 'address:', connectedPrinterAddress);
     return false;
   }
 
   try {
+    console.log('[PrintService] 📤 Sending to printer...');
     await BLEPrinter.printText(receiptText, {
       encoding: 'UTF8',
       codepage: 0,
@@ -697,32 +790,50 @@ export const printCustomerReceipt = async (order: Order): Promise<boolean> => {
       fonttype: 0,
     });
     
-    console.log('[PrintService] Customer receipt printed!');
+    console.log('[PrintService] ✓ Customer receipt PRINTED for order', order.order_number);
     return true;
-  } catch (error) {
-    console.error('[PrintService] Customer receipt print failed:', error);
+  } catch (error: any) {
+    console.error('[PrintService] ❌ Customer receipt print FAILED:', error?.message || error);
+    // Mark as disconnected since print failed
+    printerConnected = false;
     return false;
   }
 };
 
 /**
  * Print BOTH kitchen ticket and customer receipt
+ * @returns {Promise<boolean>} true ONLY if BOTH prints succeeded
  */
 export const printBoth = async (order: Order): Promise<boolean> => {
-  console.log('[PrintService] Printing BOTH for order:', order.order_number);
+  console.log('[PrintService] 📋 Printing BOTH for order:', order.order_number);
+  
+  // Pre-check connection before attempting either print
+  if (!BLEPrinter || !printerConnected || !connectedPrinterAddress) {
+    console.error('[PrintService] ❌ Cannot print - no printer connected');
+    return false;
+  }
   
   const kitchenResult = await printKitchenTicket(order);
+  
+  if (!kitchenResult) {
+    console.error('[PrintService] ❌ Kitchen ticket failed, skipping customer receipt');
+    return false;
+  }
   
   // Small pause between prints
   await new Promise(resolve => setTimeout(resolve, 500));
   
   const receiptResult = await printCustomerReceipt(order);
   
-  return kitchenResult && receiptResult;
+  const bothSucceeded = kitchenResult && receiptResult;
+  console.log('[PrintService]', bothSucceeded ? '✓ Both prints succeeded' : '❌ One or more prints failed');
+  
+  return bothSucceeded;
 };
 
 /**
  * Print a test page
+ * @returns {Promise<boolean>} true ONLY if test print was actually sent
  */
 export const printTestPage = async (): Promise<boolean> => {
   const testText = `
@@ -738,20 +849,27 @@ ${centerText(new Date().toLocaleString())}
 ${dividerLine('=')}
 \n\n\n`;
 
-  console.log('[PrintService] Printing test page');
+  console.log('[PrintService] 🧪 Printing test page...');
 
-  if (!BLEPrinter || !printerConnected) {
-    console.warn('[PrintService] No printer connected');
-    console.log(testText);
+  // CRITICAL: Verify actual connection
+  if (!BLEPrinter) {
+    console.error('[PrintService] ❌ Printer library not available');
+    return false;
+  }
+
+  if (!printerConnected || !connectedPrinterAddress) {
+    console.error('[PrintService] ❌ No printer connected for test print');
     return false;
   }
 
   try {
     await BLEPrinter.printText(testText, {});
-    console.log('[PrintService] Test print successful!');
+    console.log('[PrintService] ✓ Test print successful!');
     return true;
-  } catch (error) {
-    console.error('[PrintService] Test print failed:', error);
+  } catch (error: any) {
+    console.error('[PrintService] ❌ Test print FAILED:', error?.message || error);
+    // Mark as disconnected since print failed
+    printerConnected = false;
     return false;
   }
 };
@@ -777,4 +895,7 @@ export default {
   connectPrinter,
   disconnectPrinter,
   isPrinterConnected,
+  getConnectedPrinterAddress,
+  verifyConnection,
+  ensureConnected,
 };
