@@ -331,31 +331,43 @@ export const discoverPrinters = async (): Promise<Array<{device_name: string, in
  * @returns {Promise<boolean>} true if connection was successful
  */
 export const connectPrinter = async (macAddress: string): Promise<boolean> => {
+  console.log('[PrintService] 🔗 connectPrinter called with:', macAddress);
+  
   if (!BLEPrinter) {
-    console.error('[PrintService] ✗ Printer library not available');
+    console.error('[PrintService] ✗ Printer library not available - BLEPrinter is null');
     return false;
   }
 
   // Rate limit connection attempts
   const now = Date.now();
   if (now - lastConnectionAttempt < CONNECTION_RETRY_DELAY) {
-    console.log('[PrintService] ⏳ Waiting before retry...');
+    console.log('[PrintService] ⏳ Waiting before retry... current state:', printerConnected);
     return printerConnected;
   }
   lastConnectionAttempt = now;
 
+  // Reset state before connecting
+  printerConnected = false;
+  connectedPrinterAddress = null;
+
   try {
-    console.log(`[PrintService] 🔄 Initializing printer module...`);
+    console.log(`[PrintService] 🔄 Step 1: Initializing printer module...`);
     await BLEPrinter.init();
+    console.log(`[PrintService] ✓ Init complete`);
     
-    console.log(`[PrintService] 🔗 Connecting to printer: ${macAddress}`);
+    console.log(`[PrintService] 🔗 Step 2: Connecting to printer: ${macAddress}`);
     await BLEPrinter.connectPrinter(macAddress);
+    console.log(`[PrintService] ✓ connectPrinter() returned`);
+    
+    // Mark as connected
     printerConnected = true;
     connectedPrinterAddress = macAddress;
-    console.log('[PrintService] ✓ Connected successfully to', macAddress);
+    console.log('[PrintService] ✓ Connection state set - printerConnected:', printerConnected);
+    
     return true;
   } catch (error: any) {
     console.error('[PrintService] ✗ Connection failed:', error?.message || error);
+    console.error('[PrintService] Full error:', JSON.stringify(error));
     printerConnected = false;
     connectedPrinterAddress = null;
     return false;
@@ -850,6 +862,7 @@ ${dividerLine('=')}
 \n\n\n`;
 
   console.log('[PrintService] 🧪 Printing test page...');
+  console.log('[PrintService] State check - BLEPrinter:', !!BLEPrinter, 'printerConnected:', printerConnected, 'address:', connectedPrinterAddress);
 
   // CRITICAL: Verify actual connection
   if (!BLEPrinter) {
@@ -858,13 +871,18 @@ ${dividerLine('=')}
   }
 
   if (!printerConnected || !connectedPrinterAddress) {
-    console.error('[PrintService] ❌ No printer connected for test print');
+    console.error('[PrintService] ❌ No printer connected for test print - need to reconnect');
     return false;
   }
 
   try {
+    // Re-initialize before printing to ensure connection is fresh
+    console.log('[PrintService] 🔄 Re-initializing printer before test...');
+    await BLEPrinter.init();
+    
+    console.log('[PrintService] 📤 Sending test text to printer...');
     await BLEPrinter.printText(testText, {});
-    console.log('[PrintService] ✓ Test print successful!');
+    console.log('[PrintService] ✓ Test print command sent!');
     return true;
   } catch (error: any) {
     console.error('[PrintService] ❌ Test print FAILED:', error?.message || error);

@@ -222,14 +222,17 @@ export const SettingsScreen: React.FC = () => {
   }, [updateSettings]);
 
   const handleTestPrint = useCallback(async () => {
-    if (!settings.printerConnected || !settings.printerMacAddress) {
-      Alert.alert('No Printer', 'Please connect a printer first');
+    console.log('[Settings] 🧪 Test print button pressed');
+    console.log('[Settings] Current state - printerConnected:', settings.printerConnected, 'MAC:', settings.printerMacAddress);
+    
+    if (!settings.printerMacAddress) {
+      Alert.alert('No Printer', 'Please scan and connect a printer first');
       return;
     }
 
     Alert.alert(
       'Test Print',
-      'This will print a test receipt on the connected printer.',
+      `This will print a test receipt.\n\nPrinter: ${settings.printerName || 'Unknown'}\nMAC: ${settings.printerMacAddress}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -237,39 +240,44 @@ export const SettingsScreen: React.FC = () => {
           onPress: async () => {
             try {
               // First verify the connection is actually active
-              console.log('[Settings] 🧪 Testing printer connection...');
+              console.log('[Settings] 🔗 Step 1: Ensuring connection to', settings.printerMacAddress);
               const isConnected = await ensureConnected(settings.printerMacAddress!);
+              console.log('[Settings] Connection result:', isConnected);
               
               if (!isConnected) {
                 console.log('[Settings] ❌ Connection verification failed');
                 updateSettings({ printerConnected: false });
                 Alert.alert(
-                  'Connection Lost', 
-                  'Printer connection was lost. Please reconnect the printer.',
+                  'Connection Failed', 
+                  `Could not connect to printer.\n\nMAC: ${settings.printerMacAddress}\n\nMake sure the printer is:\n• Powered on\n• Paired in Bluetooth settings\n• Within range`,
                   [{ text: 'OK' }]
                 );
                 return;
               }
               
-              console.log('[Settings] ✓ Connection verified, printing test...');
+              // Update UI to show connected
+              updateSettings({ printerConnected: true });
+              
+              console.log('[Settings] ✓ Step 2: Sending test print...');
               const success = await printTestReceipt();
+              console.log('[Settings] Test print result:', success);
               
               if (success) {
-                Alert.alert('✓ Success', 'Test receipt printed successfully!');
+                Alert.alert('✓ Success', 'Test receipt sent to printer!\n\nIf nothing printed, check the printer has paper and is ready.');
               } else {
                 updateSettings({ printerConnected: false });
-                Alert.alert('Print Failed', 'Could not print test receipt. The printer may have disconnected.');
+                Alert.alert('Print Failed', 'Print command failed. The printer may have disconnected.\n\nTry disconnecting and reconnecting the printer.');
               }
             } catch (error: any) {
               console.error('[Settings] Test print error:', error);
               updateSettings({ printerConnected: false });
-              Alert.alert('Print Error', error.message || 'Unknown error');
+              Alert.alert('Print Error', `${error.message || 'Unknown error'}\n\nTry reconnecting the printer.`);
             }
           },
         },
       ]
     );
-  }, [settings.printerConnected, settings.printerMacAddress, updateSettings]);
+  }, [settings.printerConnected, settings.printerMacAddress, settings.printerName, updateSettings]);
 
   const selectedInterval = POLL_INTERVALS.find((i) => i.value === settings.pollIntervalMs);
 
