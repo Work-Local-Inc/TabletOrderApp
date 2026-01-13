@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "TabletOrderApp",
+    "name": "Menu.ca Orders",
     "slug": "TabletOrderApp",
     "version": "1.0.0",
     "orientation": "landscape",
@@ -17,14 +17,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.TabletOrderApp"
+      "bundleIdentifier": "ca.menu.orders"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.TabletOrderApp",
+      "package": "ca.menu.orders",
       "permissions": [
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
@@ -42,13 +42,22 @@
               "pathPrefix": "/setup"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": []
+    "plugins": [],
+    "extra": {
+      "eas": {
+        "projectId": "a8b29fb9-0480-49fb-b993-b008bfb974bf"
+      }
+    },
+    "owner": "brianworklocal"
   }
 }

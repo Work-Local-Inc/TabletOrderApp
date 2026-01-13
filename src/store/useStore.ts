@@ -29,6 +29,8 @@ interface SettingsState {
   printerName: string | null;
   printerMacAddress: string | null;
   defaultPrintType: 'kitchen' | 'receipt' | 'both';
+  printerAlertsEnabled: boolean; // Sound + vibration alerts for unprinted orders
+  orderAgingEnabled: boolean; // Color-coded order aging (green → yellow → red)
 }
 
 interface OfflineState {
@@ -322,6 +324,8 @@ export const useStore = create<AppStore>()(
         printerName: null,
         printerMacAddress: null,
         defaultPrintType: 'kitchen', // Default to kitchen tickets
+        printerAlertsEnabled: true, // Alert when orders can't print
+        orderAgingEnabled: false, // Color-coded aging OFF by default
       },
 
       updateSettings: (settings) =>

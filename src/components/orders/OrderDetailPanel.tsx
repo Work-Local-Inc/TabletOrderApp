@@ -268,6 +268,32 @@ export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
               <Text style={[styles.detailValue, { color: colors.link }]}>{order.customer.phone}</Text>
             </View>
           )}
+          
+          {/* Delivery Address (for delivery orders) */}
+          {orderType === 'delivery' && order.delivery_address && (
+            <View style={[styles.detailRow, { borderBottomColor: colors.border, flexDirection: 'column', alignItems: 'flex-start' }]}>
+              <Text style={[styles.detailLabel, { color: colors.textMuted, marginBottom: 4 }]}>Delivery Address</Text>
+              <View>
+                {order.delivery_address.street && (
+                  <Text style={[styles.detailValue, { color: colors.text }]}>{order.delivery_address.street}</Text>
+                )}
+                {(order.delivery_address.city || order.delivery_address.province || order.delivery_address.postal_code || order.delivery_address.postalCode) && (
+                  <Text style={[styles.detailValue, { color: colors.text }]}>
+                    {[
+                      order.delivery_address.city, 
+                      order.delivery_address.province, 
+                      order.delivery_address.postal_code || order.delivery_address.postalCode
+                    ].filter(Boolean).join(', ')}
+                  </Text>
+                )}
+                {(order.delivery_address.instructions || order.delivery_address.delivery_instructions) && (
+                  <Text style={[styles.itemNotes, { marginTop: 4 }]}>
+                    📍 {order.delivery_address.instructions || order.delivery_address.delivery_instructions}
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Items Section */}

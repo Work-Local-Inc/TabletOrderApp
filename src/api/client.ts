@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import {
   ApiResponse,
   AuthResponse,
@@ -13,12 +14,43 @@ import {
 
 const BASE_URL = 'https://39d6a4b9-a0f2-4544-a607-a9203b1fa6a8-00-1qkpr2vwm16p5.riker.replit.dev';
 
-const STORAGE_KEYS = {
-  SESSION_TOKEN: '@tablet_session_token',
-  TOKEN_EXPIRY: '@tablet_token_expiry',
-  DEVICE_CREDENTIALS: '@tablet_device_credentials',
-  RESTAURANT_INFO: '@tablet_restaurant_info',
+// SECURITY: Sensitive keys stored in SecureStore (OS keychain/keystore)
+// Non-sensitive keys remain in AsyncStorage for performance
+const SECURE_KEYS = {
+  SESSION_TOKEN: 'tablet_session_token',      // SecureStore (sensitive)
+  TOKEN_EXPIRY: 'tablet_token_expiry',        // SecureStore (sensitive)
+  DEVICE_CREDENTIALS: 'tablet_device_creds',  // SecureStore (sensitive)
 };
+
+const STORAGE_KEYS = {
+  RESTAURANT_INFO: '@tablet_restaurant_info', // AsyncStorage (non-sensitive, display only)
+};
+
+// Helper functions for SecureStore with error handling
+async function secureGet(key: string): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(key);
+  } catch (error) {
+    console.error(`[SecureStore] Failed to get ${key}:`, error);
+    return null;
+  }
+}
+
+async function secureSet(key: string, value: string): Promise<void> {
+  try {
+    await SecureStore.setItemAsync(key, value);
+  } catch (error) {
+    console.error(`[SecureStore] Failed to set ${key}:`, error);
+  }
+}
+
+async function secureDelete(key: string): Promise<void> {
+  try {
+    await SecureStore.deleteItemAsync(key);
+  } catch (error) {
+    console.error(`[SecureStore] Failed to delete ${key}:`, error);
+  }
+}
 
 class ApiClient {
   private client: AxiosInstance;
@@ -80,8 +112,8 @@ class ApiClient {
   private async loadStoredToken(): Promise<void> {
     try {
       const [token, expiry] = await Promise.all([
-        AsyncStorage.getItem(STORAGE_KEYS.SESSION_TOKEN),
-        AsyncStorage.getItem(STORAGE_KEYS.TOKEN_EXPIRY),
+        secureGet(SECURE_KEYS.SESSION_TOKEN),
+        secureGet(SECURE_KEYS.TOKEN_EXPIRY),
       ]);
 
       if (token && expiry) {
@@ -139,8 +171,10 @@ class ApiClient {
     this.tokenExpiry = new Date(auth.expires_at);
 
     await Promise.all([
-      AsyncStorage.setItem(STORAGE_KEYS.SESSION_TOKEN, auth.session_token),
-      AsyncStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRY, auth.expires_at),
+      // Sensitive data -> SecureStore
+      secureSet(SECURE_KEYS.SESSION_TOKEN, auth.session_token),
+      secureSet(SECURE_KEYS.TOKEN_EXPIRY, auth.expires_at),
+      // Non-sensitive display data -> AsyncStorage
       AsyncStorage.setItem(
         STORAGE_KEYS.RESTAURANT_INFO,
         JSON.stringify({
@@ -175,10 +209,8 @@ class ApiClient {
         };
 
         await this.storeAuthData(authData);
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.DEVICE_CREDENTIALS,
-          JSON.stringify(credentials)
-        );
+        // Store device credentials securely
+        await secureSet(SECURE_KEYS.DEVICE_CREDENTIALS, JSON.stringify(credentials));
 
         return { success: true, data: authData };
       }
@@ -197,8 +229,11 @@ class ApiClient {
     this.sessionToken = null;
     this.tokenExpiry = null;
     await Promise.all([
-      AsyncStorage.removeItem(STORAGE_KEYS.SESSION_TOKEN),
-      AsyncStorage.removeItem(STORAGE_KEYS.TOKEN_EXPIRY),
+      // Clear sensitive data from SecureStore
+      secureDelete(SECURE_KEYS.SESSION_TOKEN),
+      secureDelete(SECURE_KEYS.TOKEN_EXPIRY),
+      secureDelete(SECURE_KEYS.DEVICE_CREDENTIALS),
+      // Clear non-sensitive data from AsyncStorage
       AsyncStorage.removeItem(STORAGE_KEYS.RESTAURANT_INFO),
     ]);
   }
@@ -210,7 +245,7 @@ class ApiClient {
 
   async getStoredCredentials(): Promise<DeviceCredentials | null> {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEYS.DEVICE_CREDENTIALS);
+      const stored = await secureGet(SECURE_KEYS.DEVICE_CREDENTIALS);
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;

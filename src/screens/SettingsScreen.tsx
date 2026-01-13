@@ -155,7 +155,14 @@ export const SettingsScreen: React.FC = () => {
   }, [logout]);
 
   const handleScanPrinters = useCallback(async () => {
-    console.log('[Settings] 🔵 SCAN BUTTON PRESSED - scanning directly!');
+    console.log('[Settings] 🔵 SCAN BUTTON PRESSED');
+    
+    // Request Bluetooth permissions first
+    const hasPermission = await requestBluetoothPermissions();
+    if (!hasPermission) {
+      console.log('[Settings] Bluetooth permission denied');
+      return;
+    }
     
     setIsScanning(true);
     setShowPrinterList(true);
@@ -441,6 +448,38 @@ export const SettingsScreen: React.FC = () => {
                 onValueChange={(value) => updateSettings({ autoPrint: value })}
                 trackColor={{ false: '#374151', true: '#22c55e' }}
                 thumbColor={settings.autoPrint ? '#fff' : '#9ca3af'}
+              />
+            </View>
+
+            {/* Printer Alerts Toggle */}
+            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>🔔 Printer Alerts</Text>
+                <Text style={styles.settingDescription}>
+                  Sound + vibration when orders can't print
+                </Text>
+              </View>
+              <Switch
+                value={settings.printerAlertsEnabled ?? true}
+                onValueChange={(value) => updateSettings({ printerAlertsEnabled: value })}
+                trackColor={{ false: '#374151', true: '#f59e0b' }}
+                thumbColor={settings.printerAlertsEnabled ?? true ? '#fff' : '#9ca3af'}
+              />
+            </View>
+
+            {/* Order Aging Colors Toggle */}
+            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>🎨 Order Aging Colors</Text>
+                <Text style={styles.settingDescription}>
+                  Orders turn yellow (5min) → red (10min)
+                </Text>
+              </View>
+              <Switch
+                value={settings.orderAgingEnabled ?? false}
+                onValueChange={(value) => updateSettings({ orderAgingEnabled: value })}
+                trackColor={{ false: '#374151', true: '#10b981' }}
+                thumbColor={settings.orderAgingEnabled ? '#fff' : '#9ca3af'}
               />
             </View>
 

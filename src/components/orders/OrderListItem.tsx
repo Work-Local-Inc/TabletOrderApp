@@ -7,8 +7,36 @@ interface OrderListItemProps {
   order: Order;
   isSelected: boolean;
   isPrinted: boolean;
+  isBacklogged?: boolean;
+  orderAgingEnabled?: boolean;
   onPress: () => void;
 }
+
+// Calculate order age in minutes
+const getOrderAgeMinutes = (createdAt: string): number => {
+  const created = new Date(createdAt);
+  const now = new Date();
+  return Math.floor((now.getTime() - created.getTime()) / (1000 * 60));
+};
+
+// Get aging color based on order age
+const getAgingColor = (ageMinutes: number, themeMode: string): { bg: string; border: string } | null => {
+  if (ageMinutes >= 10) {
+    // RED - Order is old/late
+    return {
+      bg: themeMode === 'dark' ? '#450a0a' : '#fef2f2',
+      border: '#ef4444',
+    };
+  } else if (ageMinutes >= 5) {
+    // YELLOW - Order is getting old
+    return {
+      bg: themeMode === 'dark' ? '#422006' : '#fefce8',
+      border: '#eab308',
+    };
+  }
+  // GREEN/Normal - Order is fresh (no special coloring needed, default is fine)
+  return null;
+};
 
 const formatTime = (dateString: string): string => {
   const date = new Date(dateString);
@@ -33,35 +61,69 @@ export const OrderListItem: React.FC<OrderListItemProps> = ({
   order,
   isSelected,
   isPrinted,
+  isBacklogged = false,
+  orderAgingEnabled = false,
   onPress,
 }) => {
   const { theme, themeMode } = useTheme();
   const customerName = order.customer?.name || 'Walk-in';
   const orderType = order.order_type || 'pickup';
   
+  // Calculate order age for color coding
+  const orderAgeMinutes = getOrderAgeMinutes(order.created_at);
+  const agingColors = orderAgingEnabled && !isPrinted && order.status === 'pending' 
+    ? getAgingColor(orderAgeMinutes, themeMode) 
+    : null;
+  
   const colors = {
     bg: themeMode === 'dark' ? '#1e293b' : '#ffffff',
     bgSelected: themeMode === 'dark' ? '#1e3a5f' : '#eff6ff',
+    bgBacklogged: themeMode === 'dark' ? '#422006' : '#fef3c7', // Amber/warning background
     text: theme.text,
     textSecondary: theme.textSecondary,
     textMuted: theme.textMuted,
     border: themeMode === 'dark' ? '#334155' : '#e2e8f0',
   };
   
+  // Determine background color: backlogged > aging > selected > default
+  let bgColor = colors.bg;
+  let leftBorderColor: string | undefined = undefined;
+  
+  if (isBacklogged) {
+    bgColor = colors.bgBacklogged;
+  } else if (agingColors) {
+    bgColor = agingColors.bg;
+    leftBorderColor = agingColors.border;
+  } else if (isSelected) {
+    bgColor = colors.bgSelected;
+  }
+  
   return (
     <TouchableOpacity
       style={[
         styles.container,
-        { backgroundColor: isSelected ? colors.bgSelected : colors.bg, borderBottomColor: colors.border },
+        { backgroundColor: bgColor, borderBottomColor: colors.border },
+        isBacklogged && styles.containerBacklogged,
+        leftBorderColor && { borderLeftWidth: 4, borderLeftColor: leftBorderColor },
       ]}
       onPress={onPress}
       activeOpacity={0.7}
     >
+      {/* Backlogged indicator (warning icon) */}
+      {isBacklogged && (
+        <View style={styles.backlogIndicator}>
+          <Text style={styles.backlogIndicatorText}>⚠️</Text>
+        </View>
+      )}
+      
       {/* Customer Column */}
       <View style={styles.customerColumn}>
         <Text style={[styles.customerName, { color: colors.text }]} numberOfLines={1}>
           {customerName}
         </Text>
+        {isBacklogged && (
+          <Text style={styles.backlogLabel}>NEEDS PRINT</Text>
+        )}
       </View>
       
       {/* Type Column */}
@@ -91,8 +153,8 @@ export const OrderListItem: React.FC<OrderListItemProps> = ({
         </Text>
       </View>
       
-      {/* New order indicator dot */}
-      {!isPrinted && order.status === 'pending' && (
+      {/* New order indicator dot (not shown for backlogged - they have their own indicator) */}
+      {!isPrinted && !isBacklogged && order.status === 'pending' && (
         <View style={styles.newIndicator} />
       )}
     </TouchableOpacity>
@@ -171,6 +233,24 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: '#3b82f6',
+  },
+  // Backlogged order styles
+  containerBacklogged: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b', // Amber color for warning
+  },
+  backlogIndicator: {
+    marginRight: 8,
+  },
+  backlogIndicatorText: {
+    fontSize: 18,
+  },
+  backlogLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#d97706', // Amber-600
+    marginTop: 2,
+    letterSpacing: 0.5,
   },
 });
 

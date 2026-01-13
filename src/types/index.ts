@@ -12,6 +12,8 @@ export interface OrderModifier {
   id: string;
   name: string;
   price: number;
+  quantity?: number; // Quantity of this modifier (e.g., "extra cheese x2")
+  placement?: 'whole' | 'left' | 'right' | null;
 }
 
 export interface CustomerInfo {
@@ -24,8 +26,11 @@ export interface DeliveryAddress {
   street: string;
   unit?: string;
   city: string;
-  postalCode: string;
-  instructions?: string;
+  province?: string;              // province/state
+  postalCode?: string;            // camelCase version
+  postal_code?: string;           // snake_case version (API uses this)
+  instructions?: string;          // Delivery instructions
+  delivery_instructions?: string; // Alternative field name for instructions
 }
 
 export type OrderStatus =

@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// import { Audio } from 'expo-av'; // Temporarily disabled
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useStore } from '../store/useStore';
@@ -27,10 +28,11 @@ import {
   ensureConnected,
   verifyConnection,
   getConnectedPrinterAddress,
+  disconnectPrinter,
 } from '../services/printService';
 import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus } from '../components/orders';
 import { useTheme } from '../theme';
-import { useHeartbeat } from '../hooks';
+// useHeartbeat removed - already running at app root (App.tsx)
 
 type RootStackParamList = {
   Orders: undefined;
@@ -44,6 +46,26 @@ type PrintType = 'kitchen' | 'receipt' | 'both';
 // Storage key for printed orders
 const PRINTED_ORDERS_KEY = '@printed_order_ids';
 
+// Storage key for backlogged orders (arrived while printer was off)
+const BACKLOGGED_ORDERS_KEY = '@backlogged_order_ids';
+
+// Storage key for print counts (tracks how many times each order was printed)
+const PRINT_COUNTS_KEY = '@order_print_counts';
+
+// How often to ping for backlogged orders (in ms)
+const BACKLOG_ALERT_INTERVAL_MS = 60000; // 60 seconds (1 minute)
+
+// How often to verify printer connection (in ms)
+const PRINTER_VERIFY_INTERVAL_MS = 15000; // 15 seconds
+
+// ⚠️ CRITICAL SAFETY: Maximum age (in minutes) for auto-printing
+// Orders older than this will NEVER auto-print - they go to backlog instead
+// This prevents infinite print loops if orders get "stuck" in pending status
+const MAX_AUTO_PRINT_AGE_MINUTES = 10;
+
+// Maximum times an order can be printed (safety limit)
+const MAX_PRINT_COUNT = 2;
+
 export const OrdersListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { theme, themeMode } = useTheme();
@@ -51,8 +73,8 @@ export const OrdersListScreen: React.FC = () => {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastKnownOrderIds = useRef<Set<string>>(new Set());
   
-  // Start heartbeat to keep device online in dashboard
-  useHeartbeat();
+  // NOTE: Heartbeat removed - already running at app root (App.tsx)
+  // Having it here caused duplicate heartbeats (2x network, 2x battery drain)
   
   // Local state
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -63,6 +85,21 @@ export const OrdersListScreen: React.FC = () => {
   // PRINTED ORDER TRACKING - React state so we properly wait for it to load
   const [printedOrderIds, setPrintedOrderIds] = useState<Set<string>>(new Set());
   const [printedIdsLoaded, setPrintedIdsLoaded] = useState(false);
+  
+  // BACKLOGGED ORDER TRACKING - Orders that arrived while printer was offline
+  const [backloggedOrderIds, setBackloggedOrderIds] = useState<Set<string>>(new Set());
+  const [backlogIdsLoaded, setBacklogIdsLoaded] = useState(false);
+  const backlogAlertInterval = useRef<NodeJS.Timeout | null>(null);
+  
+  // PRINT COUNT TRACKING - Prevents infinite print loops (safety limit)
+  const [printCounts, setPrintCounts] = useState<Map<string, number>>(new Map());
+  const [printCountsLoaded, setPrintCountsLoaded] = useState(false);
+  
+  // Alert sound - temporarily disabled
+  // const alertSoundRef = useRef<Audio.Sound | null>(null);
+  
+  // Track orders currently being printed to prevent double-triggers
+  const currentlyPrinting = useRef<Set<string>>(new Set());
   
   // Load printed IDs from storage on mount
   useEffect(() => {
@@ -82,6 +119,67 @@ export const OrdersListScreen: React.FC = () => {
     loadPrintedIds();
   }, []);
   
+  // Load backlogged order IDs from storage on mount
+  useEffect(() => {
+    const loadBacklogIds = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(BACKLOGGED_ORDERS_KEY);
+        if (stored) {
+          const ids = JSON.parse(stored);
+          setBackloggedOrderIds(new Set(ids));
+          console.log(`[Backlog] ✓ Loaded ${ids.length} backlogged order IDs`);
+        }
+      } catch (error) {
+        console.error('[Backlog] Error loading:', error);
+      }
+      setBacklogIdsLoaded(true);
+    };
+    loadBacklogIds();
+  }, []);
+  
+  // Load print counts from storage on mount
+  useEffect(() => {
+    const loadPrintCounts = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(PRINT_COUNTS_KEY);
+        if (stored) {
+          const counts = JSON.parse(stored);
+          setPrintCounts(new Map(Object.entries(counts)));
+          console.log(`[PrintCounts] ✓ Loaded print counts for ${Object.keys(counts).length} orders`);
+        }
+      } catch (error) {
+        console.error('[PrintCounts] Error loading:', error);
+      }
+      setPrintCountsLoaded(true);
+    };
+    loadPrintCounts();
+  }, []);
+  
+  // Initialize sound on mount
+  useEffect(() => {
+    const loadSound = async () => {
+      try {
+        const { initSound } = await import('../services/soundService');
+        await initSound();
+        console.log('[OrdersListScreen] Sound initialized');
+      } catch (error) {
+        console.error('[OrdersListScreen] Failed to init sound:', error);
+      }
+    };
+    loadSound();
+  }, []);
+  
+  // Sound alert using soundService
+  const playAlertSound = useCallback(async () => {
+    try {
+      const { playAlert } = await import('../services/soundService');
+      await playAlert();
+      console.log('[Sound] 🔔 Alert triggered!');
+    } catch (error) {
+      console.error('[Sound] Failed to play:', error);
+    }
+  }, []);
+  
   // Save printed IDs whenever they change
   const savePrintedIds = useCallback(async (ids: Set<string>) => {
     try {
@@ -92,6 +190,43 @@ export const OrdersListScreen: React.FC = () => {
     }
   }, []);
   
+  // Save backlogged IDs whenever they change
+  const saveBacklogIds = useCallback(async (ids: Set<string>) => {
+    try {
+      await AsyncStorage.setItem(BACKLOGGED_ORDERS_KEY, JSON.stringify([...ids]));
+      console.log(`[Backlog] ✓ Saved ${ids.size} backlogged IDs`);
+    } catch (error) {
+      console.error('[Backlog] Error saving:', error);
+    }
+  }, []);
+  
+  // Save print counts whenever they change
+  const savePrintCounts = useCallback(async (counts: Map<string, number>) => {
+    try {
+      await AsyncStorage.setItem(PRINT_COUNTS_KEY, JSON.stringify(Object.fromEntries(counts)));
+      console.log(`[PrintCounts] ✓ Saved print counts for ${counts.size} orders`);
+    } catch (error) {
+      console.error('[PrintCounts] Error saving:', error);
+    }
+  }, []);
+  
+  // Get print count for an order
+  const getPrintCount = useCallback((orderId: string): number => {
+    return printCounts.get(orderId) || 0;
+  }, [printCounts]);
+  
+  // Increment print count for an order
+  const incrementPrintCount = useCallback((orderId: string) => {
+    setPrintCounts(prev => {
+      const newMap = new Map(prev);
+      const currentCount = newMap.get(orderId) || 0;
+      newMap.set(orderId, currentCount + 1);
+      savePrintCounts(newMap);
+      console.log(`[PrintCounts] 📊 Order ${orderId} printed ${currentCount + 1} time(s)`);
+      return newMap;
+    });
+  }, [savePrintCounts]);
+  
   // Mark order as printed
   const markAsPrinted = useCallback((orderId: string) => {
     setPrintedOrderIds(prev => {
@@ -101,12 +236,58 @@ export const OrdersListScreen: React.FC = () => {
       console.log(`[PrintQueue] 🖨️ Marked ${orderId} as printed`);
       return newSet;
     });
-  }, [savePrintedIds]);
+    // Track print count
+    incrementPrintCount(orderId);
+    // Also remove from backlog if it was there
+    setBackloggedOrderIds(prev => {
+      if (prev.has(orderId)) {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        saveBacklogIds(newSet);
+        console.log(`[Backlog] ✓ Removed ${orderId} from backlog (printed)`);
+        return newSet;
+      }
+      return prev;
+    });
+  }, [savePrintedIds, saveBacklogIds, incrementPrintCount]);
+  
+  // Add order to backlog (arrived while printer was offline)
+  const addToBacklog = useCallback((orderId: string) => {
+    setBackloggedOrderIds(prev => {
+      if (!prev.has(orderId)) {
+        const newSet = new Set(prev);
+        newSet.add(orderId);
+        saveBacklogIds(newSet);
+        console.log(`[Backlog] ⚠️ Added ${orderId} to backlog (printer was offline)`);
+        return newSet;
+      }
+      return prev;
+    });
+  }, [saveBacklogIds]);
+  
+  // Clear order from backlog (manually acknowledged)
+  const removeFromBacklog = useCallback((orderId: string) => {
+    setBackloggedOrderIds(prev => {
+      if (prev.has(orderId)) {
+        const newSet = new Set(prev);
+        newSet.delete(orderId);
+        saveBacklogIds(newSet);
+        console.log(`[Backlog] ✓ Removed ${orderId} from backlog`);
+        return newSet;
+      }
+      return prev;
+    });
+  }, [saveBacklogIds]);
   
   // Check if order was printed
   const wasPrinted = useCallback((orderId: string): boolean => {
     return printedOrderIds.has(orderId);
   }, [printedOrderIds]);
+  
+  // Check if order is backlogged
+  const isBacklogged = useCallback((orderId: string): boolean => {
+    return backloggedOrderIds.has(orderId);
+  }, [backloggedOrderIds]);
 
   // Store state
   const {
@@ -130,6 +311,34 @@ export const OrdersListScreen: React.FC = () => {
   const handlePrint = useCallback(async (order: Order) => {
     console.log(`[Print] 🖨️ Starting print for order #${order.order_number}...`);
     
+    // ⚠️ SAFETY: Warn if order has been printed multiple times (possible loop detected)
+    const orderPrintCount = printCounts.get(order.id) || 0;
+    if (orderPrintCount >= MAX_PRINT_COUNT) {
+      console.warn(`[Print] ⛔ Order ${order.id} already printed ${orderPrintCount} times!`);
+      Alert.alert(
+        '⚠️ Reprint Warning',
+        `This order has already been printed ${orderPrintCount} time(s).\n\nAre you sure you want to print it again?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Print Anyway', 
+            style: 'destructive',
+            onPress: () => {
+              // Allow reprint but log it
+              console.log(`[Print] ⚠️ User confirmed reprint of order ${order.id}`);
+              performPrint(order);
+            }
+          }
+        ]
+      );
+      return;
+    }
+    
+    await performPrint(order);
+  }, [printCounts, performPrint]);
+  
+  // Actual print logic (separated to allow confirmation dialog above)
+  const performPrint = useCallback(async (order: Order) => {
     // Check if printer is supposedly connected (from settings)
     if (!printerConnected) {
       Alert.alert('Printer Not Connected', 'Please connect a printer in Settings first.');
@@ -191,16 +400,25 @@ export const OrdersListScreen: React.FC = () => {
         if (order.status === 'pending') {
           console.log(`[Print] ✓ Moving order #${order.order_number} to Active...`);
           try {
-            const statusResult = await updateOrderStatus(order.id, 'preparing');
-            if (statusResult) {
-              console.log(`[Print] ✓ Order #${order.order_number} is now Active`);
-              Alert.alert('✓ Printed & Active', `Order #${order.order_number} printed and moved to Active`);
-            } else {
-              Alert.alert('⚠️ Printed but Status Failed', `Order printed but couldn't update status.\nOrder ID: ${order.id}`);
-            }
+            // Don't await - fire and forget, we already did optimistic update
+            updateOrderStatus(order.id, 'preparing')
+              .then(result => {
+                if (result) {
+                  console.log(`[Print] ✓ Backend confirmed: Order #${order.order_number} is Active`);
+                } else {
+                  console.warn(`[Print] ⚠️ Backend update failed for order #${order.order_number} - will sync on next fetch`);
+                }
+              })
+              .catch(err => {
+                console.warn(`[Print] ⚠️ Backend update error for order #${order.order_number}:`, err);
+              });
+            
+            // Show success immediately - don't wait for backend
+            Alert.alert('✓ Printed', `Order #${order.order_number} printed successfully`);
           } catch (err: any) {
             console.error('[Print] Failed to update status:', err);
-            Alert.alert('Status Update Error', `${err.message || err}`);
+            // Still show success since print worked
+            Alert.alert('✓ Printed', `Order #${order.order_number} printed successfully`);
           }
         } else {
           Alert.alert('✓ Printed', `Order #${order.order_number} printed successfully`);
@@ -209,41 +427,107 @@ export const OrdersListScreen: React.FC = () => {
         console.error(`[Print] ❌ Print FAILED for order #${order.order_number}`);
         // Update settings to reflect that printer may be disconnected
         updateSettings({ printerConnected: false });
+        // Add to backlog so it can be retried
+        addToBacklog(order.id);
+        
+        // 🚨 ALERT: Sound + vibration on print failure! (if enabled)
+        if (settings?.printerAlertsEnabled ?? true) {
+          playAlertSound();
+          Vibration.vibrate([0, 1000, 300, 1000, 300, 1000]);
+        }
+        
         Alert.alert(
-          'Print Failed', 
-          'Could not print the order. The printer may have disconnected.\n\nPlease reconnect the printer in Settings and try again.'
+          '🚨 Print Failed!', 
+          'Could not print the order. The printer may be off or disconnected.\n\n• Check printer power\n• Check Bluetooth connection\n• Try reconnecting in Settings',
+          [
+            { text: 'OK', style: 'cancel' },
+            { text: 'Go to Settings', onPress: () => navigation.navigate('Settings' as never) }
+          ]
         );
       }
     } catch (error: any) {
       console.error('[Print] ❌ Error:', error);
       updateSettings({ printerConnected: false });
-      Alert.alert('Print Error', `An error occurred while printing:\n${error?.message || error}`);
+      // Add to backlog so it can be retried
+      addToBacklog(order.id);
+      
+      // 🚨 ALERT: Sound + vibration on print error! (if enabled)
+      if (settings?.printerAlertsEnabled ?? true) {
+        playAlertSound();
+        Vibration.vibrate([0, 1000, 300, 1000, 300, 1000]);
+      }
+      
+      Alert.alert(
+        '🚨 Print Error!', 
+        `${error?.message || error}\n\n• Check printer power\n• Check Bluetooth connection`,
+        [
+            { text: 'OK', style: 'cancel' },
+            { text: 'Go to Settings', onPress: () => navigation.navigate('Settings' as never) }
+        ]
+      );
     } finally {
       setPrintingOrderId(null);
     }
-  }, [printerConnected, settings?.defaultPrintType, settings?.printerMacAddress, settings?.printerName, markAsPrinted, updateOrderStatus, updateSettings]);
+  }, [printerConnected, settings?.defaultPrintType, settings?.printerMacAddress, settings?.printerName, markAsPrinted, updateOrderStatus, updateSettings, addToBacklog]);
 
-  // Auto-print new orders
-  const autoPrintOrder = useCallback(async (order: Order) => {
+  // Auto-print new orders - returns true if print succeeded, false if failed
+  const autoPrintOrder = useCallback(async (order: Order): Promise<boolean> => {
     if (!settings?.autoPrint) {
       console.log('[AutoPrint] Auto-print disabled');
-      return;
+      return false;
     }
     
     if (!settings?.printerMacAddress) {
       console.log('[AutoPrint] No printer configured - skipping auto-print');
-      return;
+      return false;
     }
     
+    // CRITICAL: Check ACTUAL Bluetooth connection, not just stored setting
+    const actuallyConnected = isPrinterConnected();
+    if (!actuallyConnected) {
+      console.log(`[AutoPrint] ⚠️ Printer not actually connected - adding to backlog`);
+      addToBacklog(order.id);
+      updateSettings({ printerConnected: false });
+      return false;
+    }
+    
+    // PREVENT DOUBLE PRINT: Check if already printing this order
+    if (currentlyPrinting.current.has(order.id)) {
+      console.log(`[AutoPrint] ⚠️ BLOCKED - Order #${order.order_number} is already being printed`);
+      return false;
+    }
+    
+    // Mark as currently printing BEFORE starting
+    currentlyPrinting.current.add(order.id);
     console.log(`[AutoPrint] 🖨️ Auto-printing order #${order.order_number}...`);
-    await handlePrint(order);
-  }, [settings?.autoPrint, settings?.printerMacAddress, handlePrint]);
+    
+    try {
+      // Try to print - handlePrint will verify connection and print
+      await handlePrint(order);
+      
+      // Check if it was actually printed (added to printedOrderIds)
+      // Note: handlePrint only adds to printedOrderIds on success
+      // We can't check here immediately due to async state, but handlePrint
+      // handles all the success/failure logic internally
+      return true;
+    } catch (error) {
+      console.error(`[AutoPrint] ❌ Failed to print order #${order.order_number}:`, error);
+      // Print failed - add to backlog so user can retry
+      addToBacklog(order.id);
+      return false;
+    } finally {
+      // Remove from currently printing after done (success or fail)
+      currentlyPrinting.current.delete(order.id);
+    }
+  }, [settings?.autoPrint, settings?.printerMacAddress, handlePrint, addToBacklog, updateSettings]);
 
   // AUTO-PRINT - Only prints NEW orders, NEVER reprints
+  // Also tracks backlogged orders (arrived while printer offline)
+  // ⚠️ CRITICAL SAFETY: Multiple layers of protection against infinite print loops
   useEffect(() => {
-    // WAIT until printed IDs are loaded from storage
-    if (!printedIdsLoaded) {
-      console.log('[AutoPrint] Waiting for printed IDs to load...');
+    // WAIT until all tracking data is loaded from storage
+    if (!printedIdsLoaded || !backlogIdsLoaded || !printCountsLoaded) {
+      console.log('[AutoPrint] Waiting for tracking data to load...');
       return;
     }
     
@@ -254,50 +538,192 @@ export const OrdersListScreen: React.FC = () => {
       return;
     }
     
-    // Skip if auto-print disabled or no printer
-    if (!settings?.autoPrint || !printerConnected) {
-      lastKnownOrderIds.current = new Set(ordersList.map(o => o.id));
-      return;
-    }
-    
-    // Find NEW orders to print:
+    // Find NEW orders that just arrived:
     // 1. NOT already printed (check printedOrderIds first!)
     // 2. Not in known list (just arrived)
     // 3. Status is pending
-    // 4. Created in last 5 minutes
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    // 4. Created within MAX_AUTO_PRINT_AGE_MINUTES (safety limit for old orders)
+    // 5. Print count hasn't exceeded MAX_PRINT_COUNT (prevents infinite loops)
+    const maxAgeTime = new Date(Date.now() - MAX_AUTO_PRINT_AGE_MINUTES * 60 * 1000);
     
     const newOrders = ordersList.filter(order => {
-      // MOST IMPORTANT: Skip if already printed
+      // SAFETY CHECK 1: Skip if already marked as printed
       if (printedOrderIds.has(order.id)) {
+        return false;
+      }
+      
+      // SAFETY CHECK 2: Skip if print count exceeds limit (prevents infinite loops!)
+      const orderPrintCount = printCounts.get(order.id) || 0;
+      if (orderPrintCount >= MAX_PRINT_COUNT) {
+        console.warn(`[AutoPrint] ⛔ BLOCKED: Order ${order.id} already printed ${orderPrintCount} times (max: ${MAX_PRINT_COUNT})`);
         return false;
       }
       
       const isNewToSession = !lastKnownOrderIds.current.has(order.id);
       const isPending = order.status === 'pending';
-      const isRecent = new Date(order.created_at) > fiveMinutesAgo;
       
-      return isNewToSession && isPending && isRecent;
+      // SAFETY CHECK 3: Only print orders created within MAX_AUTO_PRINT_AGE_MINUTES
+      const orderAge = new Date(order.created_at);
+      const isRecentEnough = orderAge > maxAgeTime;
+      
+      // If order is too old, log a warning and add to backlog instead
+      if (isNewToSession && isPending && !isRecentEnough) {
+        console.warn(`[AutoPrint] ⚠️ Order #${order.order_number} is too old (${Math.round((Date.now() - orderAge.getTime()) / 60000)} min old) - adding to backlog`);
+        if (!backloggedOrderIds.has(order.id)) {
+          addToBacklog(order.id);
+        }
+        return false;
+      }
+      
+      return isNewToSession && isPending && isRecentEnough;
     });
     
     if (newOrders.length > 0) {
-      console.log(`[AutoPrint] 🆕 ${newOrders.length} NEW orders to print!`);
+      console.log(`[AutoPrint] 🆕 ${newOrders.length} NEW orders detected!`);
       Vibration.vibrate([0, 500, 200, 500]);
       
-      // Print each order with delay
-      newOrders.forEach((order, index) => {
-        setTimeout(() => {
-          // Double-check not printed before actually printing
-          if (!printedOrderIds.has(order.id)) {
-            autoPrintOrder(order);
+      // Check ACTUAL printer connection (not just stored setting)
+      const actuallyConnected = isPrinterConnected();
+      
+      if (!actuallyConnected || !settings?.autoPrint) {
+        // PRINTER OFFLINE: Add to backlog instead of printing
+        console.log(`[Backlog] ⚠️ Printer ${actuallyConnected ? 'connected but auto-print off' : 'OFFLINE'} - adding ${newOrders.length} orders to backlog`);
+        newOrders.forEach(order => {
+          if (!backloggedOrderIds.has(order.id)) {
+            addToBacklog(order.id);
           }
-        }, index * 2000);
-      });
+        });
+        // Update stored state to reflect reality
+        if (!actuallyConnected && printerConnected) {
+          updateSettings({ printerConnected: false });
+        }
+        
+        // IMMEDIATE ALERT: Sound + vibration when orders go to backlog!
+        console.log(`[Backlog] 🚨 ALERTING: ${newOrders.length} new orders could NOT auto-print!`);
+        playAlertSound();
+        Vibration.vibrate([0, 800, 200, 800, 200, 800]);
+      } else {
+        // PRINTER ONLINE: Auto-print each order (but NOT backlogged ones!)
+        newOrders.forEach((order, index) => {
+          // Skip if this order is backlogged (came in while offline, needs manual review)
+          if (backloggedOrderIds.has(order.id)) {
+            console.log(`[AutoPrint] ⚠️ Skipping backlogged order #${order.order_number} - requires manual print`);
+            return;
+          }
+          
+          setTimeout(() => {
+            // Double-check not printed and not backlogged before actually printing
+            if (!printedOrderIds.has(order.id) && !backloggedOrderIds.has(order.id)) {
+              autoPrintOrder(order);
+            }
+          }, index * 2000);
+        });
+      }
     }
     
     // Update known orders
     lastKnownOrderIds.current = new Set(ordersList.map(o => o.id));
-  }, [ordersList, printedIdsLoaded, printedOrderIds, settings?.autoPrint, printerConnected, autoPrintOrder]);
+  }, [ordersList, printedIdsLoaded, backlogIdsLoaded, printCountsLoaded, printedOrderIds, backloggedOrderIds, printCounts, settings?.autoPrint, printerConnected, autoPrintOrder, addToBacklog, updateSettings, playAlertSound]);
+
+  // Track if we've shown the alert popup and played initial sound (don't spam)
+  const alertPopupShown = useRef(false);
+  const initialAlertPlayed = useRef(false);
+  const lastUnprintedCount = useRef(0);
+  
+  // SIMPLE ALERT: Any pending order that hasn't been printed = ALERT
+  // Doesn't matter why it wasn't printed - just alert!
+  useEffect(() => {
+    // Find ALL pending orders that haven't been printed
+    const unprintedPendingOrders = ordersList.filter(
+      order => order.status === 'pending' && !printedOrderIds.has(order.id)
+    );
+    
+    const currentCount = unprintedPendingOrders.length;
+    // IMPORTANT: Default to TRUE if setting is undefined (defensive coding)
+    const alertsEnabled = settings?.printerAlertsEnabled !== false;
+    
+    console.log(`[ALERT-CHECK] Unprinted: ${currentCount}, AlertsEnabled: ${alertsEnabled}, Setting value: ${settings?.printerAlertsEnabled}`);
+    
+    // Only play IMMEDIATE alert if:
+    // 1. Count increased (new unprinted order arrived)
+    // 2. OR first time seeing unprinted orders this session
+    const shouldPlayImmediate = currentCount > 0 && 
+      (currentCount > lastUnprintedCount.current || !initialAlertPlayed.current);
+    
+    if (shouldPlayImmediate && alertsEnabled) {
+      console.log(`[ALERT] 🚨 NEW unprinted order! Count: ${currentCount}`);
+      playAlertSound();
+      Vibration.vibrate([0, 800, 200, 800, 200, 800]);
+      initialAlertPlayed.current = true;
+    }
+    
+    // Update the count tracker
+    lastUnprintedCount.current = currentCount;
+    
+    // Clear existing interval
+    if (backlogAlertInterval.current) {
+      clearInterval(backlogAlertInterval.current);
+      backlogAlertInterval.current = null;
+    }
+    
+    if (currentCount > 0) {
+      // Show popup ONCE per session - only if alerts enabled
+      if (!alertPopupShown.current && alertsEnabled) {
+        alertPopupShown.current = true;
+        
+        // Different buttons based on printer connection status
+        const hasPrinter = !!settings?.printerMacAddress;
+        
+        Alert.alert(
+          '⚠️ Unprinted Orders!',
+          hasPrinter 
+            ? `You have ${currentCount} order(s) waiting to be printed.\n\nTap "Print Now" to print, or go to Settings to check printer connection.`
+            : `You have ${currentCount} order(s) waiting to be printed.\n\nNo printer connected. Go to Settings to connect a printer.`,
+          hasPrinter 
+            ? [
+                { text: 'OK', style: 'default' },
+                { 
+                  text: 'Print Now', 
+                  style: 'default',
+                  onPress: () => {
+                    if (unprintedPendingOrders[0]) {
+                      setSelectedOrderId(unprintedPendingOrders[0].id);
+                    }
+                  }
+                }
+              ]
+            : [
+                { text: 'OK', style: 'default' },
+                { 
+                  text: 'Connect Printer', 
+                  style: 'default',
+                  onPress: () => navigation.navigate('Settings' as never)
+                }
+              ]
+        );
+      }
+      
+      // Keep alerting every 60 seconds until handled (only if alerts enabled)
+      if (alertsEnabled) {
+        backlogAlertInterval.current = setInterval(() => {
+          console.log(`[ALERT] 🔔 REMINDER: ${currentCount} unprinted orders!`);
+          playAlertSound();
+          Vibration.vibrate([0, 800, 200, 800, 200, 800]);
+        }, BACKLOG_ALERT_INTERVAL_MS);
+      }
+    } else {
+      // No unprinted orders - reset flags for next time
+      alertPopupShown.current = false;
+      initialAlertPlayed.current = false;
+    }
+    
+    return () => {
+      if (backlogAlertInterval.current) {
+        clearInterval(backlogAlertInterval.current);
+        backlogAlertInterval.current = null;
+      }
+    };
+  }, [ordersList, printedOrderIds, playAlertSound, settings?.printerAlertsEnabled, settings?.printerMacAddress, navigation]);
 
   // Sync printed orders to Active status on load
   // Direct: pending → preparing (backend now allows this)
@@ -348,59 +774,103 @@ export const OrdersListScreen: React.FC = () => {
     }
   }, [ordersList.length]); // Only run when order count changes
 
-  // Auto-reconnect printer on app load and periodically verify connection
+  // Auto-reconnect to saved printer on app startup (runs once on mount)
   useEffect(() => {
     const autoReconnect = async () => {
-      // Only attempt if we have a stored printer address
+      // Only attempt if we have a saved printer address
       if (!settings?.printerMacAddress) {
-        console.log('[AutoConnect] No printer configured');
+        console.log('[AutoReconnect] No printer configured - skipping auto-reconnect');
         return;
       }
 
-      // Check if we're actually connected
-      const actuallyConnected = isPrinterConnected();
-      const storedAsConnected = settings?.printerConnected;
-
-      console.log(`[AutoConnect] State check - stored: ${storedAsConnected}, actual: ${actuallyConnected}`);
-
-      if (!actuallyConnected) {
-        console.log(`[AutoConnect] 🔄 Reconnecting to ${settings.printerName}...`);
-        try {
-          const success = await connectPrinter(settings.printerMacAddress);
-          if (success) {
-            updateSettings({ printerConnected: true });
-            console.log('[AutoConnect] ✓ Reconnected successfully!');
-          } else {
-            // Connection failed - update UI to reflect reality
-            if (storedAsConnected) {
-              console.log('[AutoConnect] ❌ Reconnection failed, updating UI state');
-              updateSettings({ printerConnected: false });
-            }
-          }
-        } catch (error) {
-          console.error('[AutoConnect] ❌ Failed:', error);
-          if (storedAsConnected) {
-            updateSettings({ printerConnected: false });
-          }
-        }
-      } else if (!storedAsConnected) {
-        // Actually connected but UI doesn't know - sync state
-        console.log('[AutoConnect] ✓ Already connected, syncing UI state');
+      // Check if already connected
+      const isCurrentlyConnected = await verifyConnection();
+      if (isCurrentlyConnected) {
+        console.log('[AutoReconnect] ✓ Already connected to printer');
         updateSettings({ printerConnected: true });
+        return;
+      }
+
+      // Attempt to reconnect
+      console.log(`[AutoReconnect] 🔄 Attempting to reconnect to ${settings.printerName || 'printer'} (${settings.printerMacAddress})...`);
+      try {
+        const success = await connectPrinter(settings.printerMacAddress);
+        if (success) {
+          console.log('[AutoReconnect] ✓ Successfully reconnected to printer!');
+          updateSettings({ printerConnected: true });
+        } else {
+          console.log('[AutoReconnect] ⚠️ Reconnect failed - printer may be off or out of range');
+          updateSettings({ printerConnected: false });
+        }
+      } catch (error) {
+        console.error('[AutoReconnect] ✗ Reconnect error:', error);
+        updateSettings({ printerConnected: false });
       }
     };
     
-    // Initial reconnect attempt
+    // Small delay to let Bluetooth initialize (2 seconds)
     const timer = setTimeout(autoReconnect, 2000);
+    return () => clearTimeout(timer);
+  }, []); // Only run once on mount
+
+  // Periodically VERIFY connection (runs every 15 seconds)
+  // This actually tests if the printer responds, not just checking stored state
+  useEffect(() => {
+    const checkConnection = async () => {
+      // Only verify if we have a stored printer address
+      if (!settings?.printerMacAddress) {
+        return;
+      }
+
+      const storedAsConnected = settings?.printerConnected;
+
+      // CRITICAL: Actually verify the Bluetooth connection works
+      console.log('[PrinterCheck] 🔍 Verifying actual printer connection...');
+      const actuallyWorking = await verifyConnection();
+      
+      console.log(`[PrinterCheck] Result - stored: ${storedAsConnected}, actuallyWorking: ${actuallyWorking}`);
+
+      if (!actuallyWorking) {
+        // Printer is NOT actually responding - mark as disconnected
+        console.log('[PrinterCheck] ❌ Printer not responding - marking as DISCONNECTED');
+        updateSettings({ printerConnected: false });
+        
+        // Alert user of connection loss with sound AND vibration (if alerts enabled)
+        if (storedAsConnected && settings?.printerAlertsEnabled !== false) {
+          console.log('[PrinterCheck] ⚠️ Printer was connected but is now OFF! Playing alert...');
+          Vibration.vibrate([0, 800, 200, 800, 200, 800]);
+          playAlertSound(); // Play sound alert
+        }
+      } else if (!storedAsConnected) {
+        // Printer just came back online! Alert user
+        console.log('[PrinterCheck] 🎉 Printer is back ONLINE!');
+        updateSettings({ printerConnected: true });
+        
+        // Play happy alert and show notification
+        if (settings?.printerAlertsEnabled !== false) {
+          Vibration.vibrate([0, 200, 100, 200]); // Short happy vibration
+          Alert.alert(
+            '🖨️ Printer Connected!',
+            'Your printer is back online and ready to print.',
+            [{ text: 'Great!', style: 'default' }]
+          );
+        }
+      } else {
+        console.log('[PrinterCheck] ✓ Printer connected and verified');
+      }
+    };
     
-    // Periodic connection check (every 30 seconds)
-    const interval = setInterval(autoReconnect, 30000);
+    // Initial verification after a short delay (let auto-reconnect happen first)
+    const initialTimer = setTimeout(checkConnection, 5000);
+    
+    // Periodic connection verification
+    const interval = setInterval(checkConnection, PRINTER_VERIFY_INTERVAL_MS);
     
     return () => {
-      clearTimeout(timer);
+      clearTimeout(initialTimer);
       clearInterval(interval);
     };
-  }, [settings?.printerMacAddress, settings?.printerName, settings?.printerConnected, updateSettings]);
+  }, [settings?.printerMacAddress, settings?.printerName, settings?.printerConnected, settings?.printerAlertsEnabled, updateSettings, playAlertSound]);
 
   // Polling
   useFocusEffect(
@@ -440,6 +910,65 @@ export const OrdersListScreen: React.FC = () => {
   const handlePrinted = useCallback((orderId: string) => {
     markAsPrinted(orderId);
   }, [markAsPrinted]);
+  
+  // Handle printing all backlogged orders
+  const handlePrintBackloggedOrders = useCallback(async () => {
+    if (!settings?.printerMacAddress) {
+      Alert.alert(
+        'No Printer Connected', 
+        'You need to connect a printer before printing orders.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Connect Printer', onPress: () => navigation.navigate('Settings' as never) }
+        ]
+      );
+      return;
+    }
+    
+    const backloggedOrders = ordersList.filter(
+      o => backloggedOrderIds.has(o.id) && o.status === 'pending'
+    );
+    
+    if (backloggedOrders.length === 0) {
+      Alert.alert('No Backlogged Orders', 'There are no backlogged orders to print.');
+      return;
+    }
+    
+    Alert.alert(
+      '⚠️ Print Backlogged Orders',
+      `You have ${backloggedOrders.length} order(s) that arrived while the printer was offline.\n\nThese orders may be old. Review before printing to kitchen.\n\nPrint all ${backloggedOrders.length} order(s) now?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Review Individually', 
+          onPress: () => {
+            // Just switch to New filter so user can see and print one by one
+            setActiveFilter('new');
+          }
+        },
+        { 
+          text: `Print All (${backloggedOrders.length})`, 
+          style: 'destructive',
+          onPress: async () => {
+            console.log(`[Backlog] 🖨️ Printing ${backloggedOrders.length} backlogged orders...`);
+            
+            for (let i = 0; i < backloggedOrders.length; i++) {
+              const order = backloggedOrders[i];
+              try {
+                await handlePrint(order);
+                // Small delay between prints
+                await new Promise(resolve => setTimeout(resolve, 1500));
+              } catch (error) {
+                console.error(`[Backlog] ❌ Failed to print order #${order.order_number}:`, error);
+              }
+            }
+            
+            console.log('[Backlog] ✓ Finished printing backlogged orders');
+          }
+        }
+      ]
+    );
+  }, [printerConnected, ordersList, backloggedOrderIds, handlePrint]);
 
   // Filter orders
   const getFilteredOrders = useCallback(() => {
@@ -467,6 +996,11 @@ export const OrdersListScreen: React.FC = () => {
     ready: ordersList.filter(o => o.status === 'ready').length,
     completed: ordersList.filter(o => o.status === 'completed' || o.status === 'cancelled').length,
   };
+  
+  // Count backlogged orders (pending + in backlog)
+  const backloggedCount = ordersList.filter(
+    o => backloggedOrderIds.has(o.id) && o.status === 'pending'
+  ).length;
 
   // Dynamic styles based on theme
   const dynamicStyles = {
@@ -489,6 +1023,58 @@ export const OrdersListScreen: React.FC = () => {
     <View style={[styles.container, dynamicStyles.container]}>
       {/* Spacer bar to separate from Samsung status bar */}
       <View style={[styles.statusBarSpacer, { height: topPadding, backgroundColor: themeMode === 'dark' ? '#0a0f1a' : '#f1f5f9' }]} />
+      
+      {/* PRINTER OFFLINE BANNER - Shows when printer is configured but disconnected */}
+      {settings?.printerMacAddress && !printerConnected && (
+        <TouchableOpacity 
+          style={styles.printerOfflineBanner}
+          onPress={() => navigation.navigate('Settings' as never)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.backlogBannerContent}>
+            <Text style={styles.backlogBannerIcon}>🔌</Text>
+            <View style={styles.backlogBannerText}>
+              <Text style={styles.printerOfflineTitle}>Printer Offline</Text>
+              <Text style={styles.backlogBannerSubtitle}>
+                Check printer power & Bluetooth • Tap to reconnect
+              </Text>
+            </View>
+            <Text style={styles.printerOfflineAction}>CONNECT</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+      
+      {/* BACKLOG WARNING BANNER */}
+      {backloggedCount > 0 && (
+        <TouchableOpacity 
+          style={styles.backlogBanner}
+          onPress={() => {
+            if (settings?.printerMacAddress) {
+              handlePrintBackloggedOrders();
+            } else {
+              navigation.navigate('Settings' as never);
+            }
+          }}
+          activeOpacity={0.8}
+        >
+          <View style={styles.backlogBannerContent}>
+            <Text style={styles.backlogBannerIcon}>⚠️</Text>
+            <View style={styles.backlogBannerText}>
+              <Text style={styles.backlogBannerTitle}>
+                {backloggedCount} Order{backloggedCount > 1 ? 's' : ''} Waiting
+              </Text>
+              <Text style={styles.backlogBannerSubtitle}>
+                {settings?.printerMacAddress 
+                  ? 'Tap to review and print • These orders need attention'
+                  : 'No printer connected • Tap to connect in Settings'}
+              </Text>
+            </View>
+            <Text style={styles.backlogBannerAction}>
+              {settings?.printerMacAddress ? 'PRINT' : 'CONNECT'}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
       
       {/* Header - Single Horizontal Line */}
       <View style={[styles.header, dynamicStyles.header]}>
@@ -558,6 +1144,8 @@ export const OrdersListScreen: React.FC = () => {
                   order={item}
                   isSelected={selectedOrderId === item.id}
                   isPrinted={printedOrderIds.has(item.id)}
+                  isBacklogged={backloggedOrderIds.has(item.id) && item.status === 'pending'}
+                  orderAgingEnabled={settings?.orderAgingEnabled ?? false}
                   onPress={() => setSelectedOrderId(item.id)}
                 />
               )}
@@ -718,6 +1306,64 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+  },
+  // Backlog warning banner styles
+  backlogBanner: {
+    backgroundColor: '#dc2626',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  backlogBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backlogBannerIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  backlogBannerText: {
+    flex: 1,
+  },
+  backlogBannerTitle: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  backlogBannerSubtitle: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 13,
+    marginTop: 2,
+  },
+  backlogBannerAction: {
+    backgroundColor: '#ffffff',
+    color: '#dc2626',
+    fontSize: 14,
+    fontWeight: '800',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  // Printer offline banner styles
+  printerOfflineBanner: {
+    backgroundColor: '#7c3aed', // Purple to differentiate from red backlog banner
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  printerOfflineTitle: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  printerOfflineAction: {
+    backgroundColor: '#ffffff',
+    color: '#7c3aed',
+    fontSize: 13,
+    fontWeight: '800',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+    overflow: 'hidden',
   },
 });
 
