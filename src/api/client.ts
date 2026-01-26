@@ -103,6 +103,10 @@ class ApiClient {
             // Retry the original request
             error.config.headers.Authorization = `Bearer ${this.sessionToken}`;
             return this.client.request(error.config);
+          } else {
+            // Refresh failed - clear all stored data to force re-login
+            console.log('[API] Token refresh failed, clearing stored credentials');
+            await this.clearAllStoredData();
           }
         }
         return Promise.reject(error);
@@ -235,8 +239,14 @@ class ApiClient {
   }
 
   async logout(): Promise<void> {
+    await this.clearAllStoredData();
+  }
+
+  private async clearAllStoredData(): Promise<void> {
+    console.log('[API] Clearing all stored credentials and data');
     this.sessionToken = null;
     this.tokenExpiry = null;
+    this.deviceCredentials = null;
     await Promise.all([
       // Clear sensitive data from SecureStore
       secureDelete(SECURE_KEYS.SESSION_TOKEN),
@@ -467,12 +477,38 @@ class ApiClient {
     console.log(`[API] Checking dispatch availability for order ${orderId}...`);
     
     try {
-      const response = await this.client.get<DispatchAvailabilityResponse>(endpoint);
+      const response = await this.client.get<any>(endpoint);
       console.log('[API] Dispatch availability response:', response.data);
+      
+      // Handle both old format (uses_restozone) and new format (provider object)
+      const rawData = response.data;
+      let normalizedData: DispatchAvailabilityResponse;
+      
+      if (rawData.provider) {
+        // New format - already has provider object
+        normalizedData = rawData as DispatchAvailabilityResponse;
+      } else if (rawData.uses_restozone && rawData.restozone_id) {
+        // Old format - transform to new format
+        normalizedData = {
+          dispatch_available: rawData.dispatch_available ?? true,
+          provider: {
+            code: 'restozone',
+            name: 'RestoZone',
+            external_id: String(rawData.restozone_id),
+          },
+        };
+        console.log('[API] Transformed old format to new provider format:', normalizedData);
+      } else {
+        // Unknown format or dispatch not available
+        normalizedData = {
+          dispatch_available: rawData.dispatch_available ?? false,
+          provider: null,
+        };
+      }
       
       return {
         success: true,
-        data: response.data,
+        data: normalizedData,
       };
     } catch (error) {
       const axiosError = error as AxiosError<any>;

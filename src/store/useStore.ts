@@ -195,6 +195,22 @@ export const useStore = create<AppStore>()(
             },
           });
         } else {
+          // Check if this is an auth error - if so, re-check auth state
+          if (result.error?.includes('401') || result.error?.includes('session') || result.error?.includes('expired')) {
+            console.log('[Store] Auth error detected, re-checking authentication');
+            const isAuthenticated = await apiClient.isAuthenticated();
+            if (!isAuthenticated) {
+              set({
+                auth: {
+                  isAuthenticated: false,
+                  isLoading: false,
+                  restaurantId: null,
+                  restaurantName: null,
+                  deviceName: null,
+                },
+              });
+            }
+          }
           set((state) => ({
             orders: {
               ...state.orders,

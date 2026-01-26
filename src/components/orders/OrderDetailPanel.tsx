@@ -343,30 +343,8 @@ export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
             <Text style={[styles.headerButtonText, { color: colors.text }]}>✕</Text>
           </TouchableOpacity>
         )}
-        <View style={styles.headerSpacer} />
         
-        {/* Print Button */}
-        <TouchableOpacity 
-          style={[styles.headerButton, { borderColor: colors.border }]} 
-          onPress={() => setShowPrintMenu(!showPrintMenu)}
-          disabled={!!printingType}
-        >
-          {printingType ? (
-            <ActivityIndicator size="small" color={colors.text} />
-          ) : (
-            <Text style={styles.printIcon}>🖨️</Text>
-          )}
-        </TouchableOpacity>
-        
-        {/* More Button */}
-        <TouchableOpacity 
-          style={[styles.headerButton, { borderColor: colors.border }]}
-          onPress={() => setShowMoreMenu(!showMoreMenu)}
-        >
-          <Text style={[styles.headerButtonText, { color: colors.text }]}>⋯</Text>
-        </TouchableOpacity>
-        
-        {/* Mark as Button */}
+        {/* Mark as Button - positioned left to avoid OS gesture area */}
         <TouchableOpacity 
           style={styles.markAsButton}
           onPress={() => setShowStatusModal(true)}
@@ -379,7 +357,7 @@ export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
           )}
         </TouchableOpacity>
         
-        {/* Request Driver Button - Only shows when delivery provider is configured */}
+        {/* Request Driver Button - positioned left, next to Mark as */}
         {dispatchInfo?.dispatch_available && dispatchInfo?.provider && !driverDispatched && (
           <TouchableOpacity 
             style={styles.dispatchButton}
@@ -402,6 +380,29 @@ export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
             <Text style={styles.dispatchedText}>Driver Requested</Text>
           </View>
         )}
+        
+        <View style={styles.headerSpacer} />
+        
+        {/* Print Button */}
+        <TouchableOpacity 
+          style={[styles.headerButton, { borderColor: colors.border }]} 
+          onPress={() => setShowPrintMenu(!showPrintMenu)}
+          disabled={!!printingType}
+        >
+          {printingType ? (
+            <ActivityIndicator size="small" color={colors.text} />
+          ) : (
+            <Text style={styles.printIcon}>🖨️</Text>
+          )}
+        </TouchableOpacity>
+        
+        {/* More Button */}
+        <TouchableOpacity 
+          style={[styles.headerButton, { borderColor: colors.border }]}
+          onPress={() => setShowMoreMenu(!showMoreMenu)}
+        >
+          <Text style={[styles.headerButtonText, { color: colors.text }]}>⋯</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Print Menu Dropdown */}
