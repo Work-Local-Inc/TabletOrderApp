@@ -55,7 +55,27 @@ const requestBluetoothPermissions = async (): Promise<boolean> => {
       ];
 
       console.log('[Permissions] Calling requestMultiple...');
-      const results = await PermissionsAndroid.requestMultiple(permissions);
+      
+      // Add timeout to prevent hanging if Expo Go doesn't support these permissions
+      const timeoutPromise = new Promise<any>((_, reject) => 
+        setTimeout(() => reject(new Error('Permission request timed out')), 5000)
+      );
+      
+      let results: any;
+      try {
+        results = await Promise.race([
+          PermissionsAndroid.requestMultiple(permissions),
+          timeoutPromise,
+        ]);
+      } catch (e: any) {
+        console.log('[Permissions] Request timed out or failed:', e.message);
+        Alert.alert(
+          'Bluetooth Permissions',
+          'Could not request permissions automatically.\n\nPlease go to:\nSettings → Apps → Expo Go → Permissions\n\nThen enable "Nearby devices" and "Location"',
+          [{ text: 'OK' }]
+        );
+        return false;
+      }
       console.log('[Permissions] Results:', JSON.stringify(results));
       
       const allGranted = Object.values(results).every(
