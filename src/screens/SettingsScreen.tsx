@@ -449,6 +449,22 @@ export const SettingsScreen: React.FC = () => {
                 thumbColor={themeMode === 'light' ? '#FF5722' : '#e94560'}
               />
             </View>
+
+            {/* Simplified View Toggle */}
+            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>📋 Simplified View</Text>
+                <Text style={styles.settingDescription}>
+                  2 columns: "New Orders" → "Ready" (faster workflow)
+                </Text>
+              </View>
+              <Switch
+                value={settings.simplifiedView ?? false}
+                onValueChange={(value) => updateSettings({ simplifiedView: value })}
+                trackColor={{ false: '#374151', true: '#8b5cf6' }}
+                thumbColor={settings.simplifiedView ? '#fff' : '#9ca3af'}
+              />
+            </View>
           </View>
         </View>
 

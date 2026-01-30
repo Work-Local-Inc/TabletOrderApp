@@ -30,8 +30,9 @@ import {
   getConnectedPrinterAddress,
   disconnectPrinter,
 } from '../services/printService';
-import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus } from '../components/orders';
+import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus, KanbanBoard } from '../components/orders';
 import { useTheme } from '../theme';
+import { tabletUpdateOrderStatus } from '../api/supabaseRpc';
 // useHeartbeat removed - already running at app root (App.tsx)
 
 type RootStackParamList = {
@@ -300,6 +301,7 @@ export const OrdersListScreen: React.FC = () => {
   } = useStore();
 
   const printerConnected = settings?.printerConnected ?? false;
+  const simplifiedView = settings?.simplifiedView ?? false;
   const ordersList = orders?.orders || [];
   
   // Find selected order
@@ -889,6 +891,15 @@ export const OrdersListScreen: React.FC = () => {
     }, [fetchOrders, settings?.pollIntervalMs])
   );
 
+  // Reset filter when switching between simplified and standard view
+  useEffect(() => {
+    if (simplifiedView) {
+      setActiveFilter('simplified_new');
+    } else {
+      setActiveFilter('new');
+    }
+  }, [simplifiedView]);
+
   // Refresh handler
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -905,6 +916,24 @@ export const OrdersListScreen: React.FC = () => {
       Alert.alert('Error', 'Failed to update order status');
     }
   }, [updateOrderStatus]);
+
+  // Kanban status change - uses direct Supabase call for flexible transitions
+  const handleKanbanStatusChange = useCallback(async (orderId: string, targetStatus: string) => {
+    try {
+      // Use direct Supabase RPC call - bypasses PHP backend restrictions
+      const result = await tabletUpdateOrderStatus(orderId, targetStatus);
+      
+      if (result.success) {
+        // Refresh orders to get updated status
+        await fetchOrders();
+      } else {
+        Alert.alert('Status Update Failed', result.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('[KanbanStatusChange] Error:', error);
+      Alert.alert('Error', 'Failed to update order status');
+    }
+  }, [fetchOrders]);
 
   // Mark as printed callback (used by detail panel)
   const handlePrinted = useCallback((orderId: string) => {
@@ -981,6 +1010,15 @@ export const OrdersListScreen: React.FC = () => {
         return ordersList.filter(o => o.status === 'ready');
       case 'completed':
         return ordersList.filter(o => o.status === 'completed' || o.status === 'cancelled');
+      // Simplified view filters
+      case 'simplified_new':
+        return ordersList.filter(o => 
+          o.status === 'pending' || o.status === 'confirmed' || o.status === 'preparing'
+        );
+      case 'simplified_ready':
+        return ordersList.filter(o => 
+          o.status === 'ready' || o.status === 'completed' || o.status === 'cancelled'
+        );
       default:
         return ordersList;
     }
@@ -995,6 +1033,13 @@ export const OrdersListScreen: React.FC = () => {
     active: ordersList.filter(o => o.status === 'preparing' || o.status === 'confirmed').length,
     ready: ordersList.filter(o => o.status === 'ready').length,
     completed: ordersList.filter(o => o.status === 'completed' || o.status === 'cancelled').length,
+    // Simplified view counts
+    simplified_new: ordersList.filter(o => 
+      o.status === 'pending' || o.status === 'confirmed' || o.status === 'preparing'
+    ).length,
+    simplified_ready: ordersList.filter(o => 
+      o.status === 'ready' || o.status === 'completed' || o.status === 'cancelled'
+    ).length,
   };
   
   // Count backlogged orders (pending + in backlog)
@@ -1104,63 +1149,83 @@ export const OrdersListScreen: React.FC = () => {
 
       {/* Main Content */}
       <View style={styles.content}>
-        {/* Order List Column - Full width when no order selected */}
-        <View style={[styles.listColumn, dynamicStyles.listColumn, !selectedOrder && styles.listColumnFull]}>
-          <OrderFilters
-            selectedFilter={activeFilter}
-            onFilterChange={setActiveFilter}
+        {simplifiedView ? (
+          /* Kanban Board for Simplified View */
+          <KanbanBoard
+            newOrders={ordersList.filter(o => 
+              o.status === 'pending' || o.status === 'confirmed' || o.status === 'preparing'
+            )}
+            completeOrders={ordersList.filter(o => 
+              o.status === 'ready' || o.status === 'completed' || o.status === 'cancelled'
+            )}
+            onMoveToComplete={(orderId) => handleKanbanStatusChange(orderId, 'ready')}
+            onMoveToNew={(orderId) => handleKanbanStatusChange(orderId, 'preparing')}
+            onOrderTap={(orderId) => setSelectedOrderId(orderId)}
             onRefresh={handleRefresh}
-            counts={counts}
+            refreshing={refreshing}
           />
-
-          {/* Table Header */}
-          <View style={[styles.tableHeader, { borderBottomColor: theme.cardBorder }]}>
-            <Text style={[styles.tableHeaderText, styles.customerCol, { color: theme.textMuted }]}>Customer</Text>
-            <Text style={[styles.tableHeaderText, styles.typeCol, { color: theme.textMuted }]}>Type</Text>
-            <Text style={[styles.tableHeaderText, styles.printedCol, { color: theme.textMuted }]}>Printed</Text>
-            <Text style={[styles.tableHeaderText, styles.timeCol, { color: theme.textMuted }]}>Time</Text>
-      </View>
-
-          {orders?.isLoading && ordersList.length === 0 ? (
-        <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={theme.primary} />
-              <Text style={[styles.loadingText, dynamicStyles.headerSubtext]}>
-                Loading orders...
-              </Text>
-        </View>
-          ) : filteredOrders.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>📋</Text>
-              <Text style={[styles.emptyText, dynamicStyles.headerSubtext]}>
-                No orders found
-              </Text>
-        </View>
-          ) : (
-          <FlatList
-              data={filteredOrders}
-            keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <OrderListItem
-                  order={item}
-                  isSelected={selectedOrderId === item.id}
-                  isPrinted={printedOrderIds.has(item.id)}
-                  isBacklogged={backloggedOrderIds.has(item.id) && item.status === 'pending'}
-                  orderAgingEnabled={settings?.orderAgingEnabled ?? false}
-                  onPress={() => setSelectedOrderId(item.id)}
-                />
-              )}
-            refreshControl={
-              <RefreshControl
-                  refreshing={refreshing}
-                onRefresh={handleRefresh}
-                  tintColor={theme.primary}
-                />
-              }
-            contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
+        ) : (
+          /* Standard List View */
+          <View style={[styles.listColumn, dynamicStyles.listColumn, !selectedOrder && styles.listColumnFull]}>
+            <OrderFilters
+              selectedFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+              onRefresh={handleRefresh}
+              counts={counts}
+              simplifiedView={simplifiedView}
             />
-          )}
-        </View>
+
+            {/* Table Header */}
+            <View style={[styles.tableHeader, { borderBottomColor: theme.cardBorder }]}>
+              <Text style={[styles.tableHeaderText, styles.customerCol, { color: theme.textMuted }]}>Customer</Text>
+              <Text style={[styles.tableHeaderText, styles.typeCol, { color: theme.textMuted }]}>Type</Text>
+              <Text style={[styles.tableHeaderText, styles.printedCol, { color: theme.textMuted }]}>Printed</Text>
+              <Text style={[styles.tableHeaderText, styles.timeCol, { color: theme.textMuted }]}>Time</Text>
+            </View>
+
+            {orders?.isLoading && ordersList.length === 0 ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={theme.primary} />
+                <Text style={[styles.loadingText, dynamicStyles.headerSubtext]}>
+                  Loading orders...
+                </Text>
+              </View>
+            ) : filteredOrders.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyIcon}>📋</Text>
+                <Text style={[styles.emptyText, dynamicStyles.headerSubtext]}>
+                  No orders found
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={filteredOrders}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <OrderListItem
+                    order={item}
+                    isSelected={selectedOrderId === item.id}
+                    isPrinted={printedOrderIds.has(item.id)}
+                    isBacklogged={backloggedOrderIds.has(item.id) && item.status === 'pending'}
+                    orderAgingEnabled={settings?.orderAgingEnabled ?? false}
+                    onPress={() => setSelectedOrderId(item.id)}
+                    simplifiedView={simplifiedView}
+                    onQuickMarkReady={undefined}
+                  />
+                )}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={handleRefresh}
+                    tintColor={theme.primary}
+                  />
+                }
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+              />
+            )}
+          </View>
+        )}
       </View>
 
       {/* Detail Panel - Full height overlay when order selected */}
@@ -1172,6 +1237,7 @@ export const OrdersListScreen: React.FC = () => {
             onPrinted={handlePrinted}
             onClose={() => setSelectedOrderId(null)}
             printerConnected={printerConnected}
+            simplifiedView={simplifiedView}
           />
         </View>
       )}

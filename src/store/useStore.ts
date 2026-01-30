@@ -31,6 +31,7 @@ interface SettingsState {
   defaultPrintType: 'kitchen' | 'receipt' | 'both';
   printerAlertsEnabled: boolean; // Sound + vibration alerts for unprinted orders
   orderAgingEnabled: boolean; // Color-coded order aging (green → yellow → red)
+  simplifiedView: boolean; // 2-column view: "New Orders" + "Ready" instead of 4 columns
 }
 
 interface OfflineState {
@@ -342,6 +343,7 @@ export const useStore = create<AppStore>()(
         defaultPrintType: 'kitchen', // Default to kitchen tickets
         printerAlertsEnabled: true, // Alert when orders can't print
         orderAgingEnabled: false, // Color-coded aging OFF by default
+        simplifiedView: false, // 4-column view by default
       },
 
       updateSettings: (settings) =>

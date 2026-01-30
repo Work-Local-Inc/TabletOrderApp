@@ -10,6 +10,9 @@ interface OrderListItemProps {
   isBacklogged?: boolean;
   orderAgingEnabled?: boolean;
   onPress: () => void;
+  // Simplified view props
+  simplifiedView?: boolean;
+  onQuickMarkReady?: (orderId: string) => void;
 }
 
 // Calculate order age in minutes
@@ -64,6 +67,8 @@ export const OrderListItem: React.FC<OrderListItemProps> = ({
   isBacklogged = false,
   orderAgingEnabled = false,
   onPress,
+  simplifiedView = false,
+  onQuickMarkReady,
 }) => {
   const { theme, themeMode } = useTheme();
   const customerName = order.customer?.name || 'Walk-in';
@@ -152,6 +157,16 @@ export const OrderListItem: React.FC<OrderListItemProps> = ({
           {formatTime(order.created_at)}
         </Text>
       </View>
+      
+      {/* Quick Mark Ready Button - Only in simplified view for non-ready orders */}
+      {simplifiedView && order.status !== 'ready' && onQuickMarkReady && (
+        <TouchableOpacity
+          style={styles.quickReadyButton}
+          onPress={() => onQuickMarkReady(order.id)}
+        >
+          <Text style={styles.quickReadyText}>Ready ✓</Text>
+        </TouchableOpacity>
+      )}
       
       {/* New order indicator dot (not shown for backlogged - they have their own indicator) */}
       {!isPrinted && !isBacklogged && order.status === 'pending' && (
@@ -251,6 +266,19 @@ const styles = StyleSheet.create({
     color: '#d97706', // Amber-600
     marginTop: 2,
     letterSpacing: 0.5,
+  },
+  // Quick Mark Ready button for simplified view
+  quickReadyButton: {
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginLeft: 12,
+  },
+  quickReadyText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
 

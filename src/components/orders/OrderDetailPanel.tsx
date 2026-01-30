@@ -26,6 +26,7 @@ interface OrderDetailPanelProps {
   onPrinted?: (orderId: string) => void;
   onClose?: () => void;
   printerConnected: boolean;
+  simplifiedView?: boolean;
 }
 
 const formatDate = (dateString: string): string => {
@@ -52,6 +53,12 @@ const STATUS_OPTIONS = [
   { key: 'completed', label: 'Picked up' },
 ];
 
+// Simplified view: only 2 states (New = pending/preparing, Complete = completed)
+const SIMPLIFIED_STATUS_OPTIONS = [
+  { key: 'pending', label: 'New' },
+  { key: 'completed', label: 'Complete' },
+];
+
 // User-friendly status options - app handles auto-transitions behind the scenes
 const getAvailableStatusOptions = (currentStatus: string) => {
   // Show practical options based on where the order is in the workflow
@@ -75,6 +82,19 @@ const getAvailableStatusOptions = (currentStatus: string) => {
   }
 };
 
+// Simplified view: just toggle between New and Complete
+const getSimplifiedStatusOptions = (currentStatus: string) => {
+  // In simplified view, show the opposite state
+  const isComplete = currentStatus === 'completed' || currentStatus === 'ready' || currentStatus === 'cancelled';
+  if (isComplete) {
+    // Can move back to New
+    return SIMPLIFIED_STATUS_OPTIONS.filter(o => o.key === 'pending');
+  } else {
+    // Can mark as Complete
+    return SIMPLIFIED_STATUS_OPTIONS.filter(o => o.key === 'completed');
+  }
+};
+
 const getInitials = (name: string): string => {
   if (!name) return '??';
   const parts = name.split(' ');
@@ -84,12 +104,19 @@ const getInitials = (name: string): string => {
   return name.substring(0, 2).toUpperCase();
 };
 
+// Get short, memorable order number (last 4 chars)
+const getShortOrderNumber = (orderNumber: string): string => {
+  if (!orderNumber) return '----';
+  return orderNumber.slice(-4).toUpperCase();
+};
+
 export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
   order,
   onStatusChange,
   onPrinted,
   onClose,
   printerConnected,
+  simplifiedView = false,
 }) => {
   const { theme, themeMode } = useTheme();
   const insets = useSafeAreaInsets();
@@ -242,7 +269,7 @@ export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
     setShowMoreMenu(false);
     Alert.alert(
       'Cancel Order',
-      `Are you sure you want to cancel order #${order.order_number}? This cannot be undone.`,
+      `Are you sure you want to cancel order #${getShortOrderNumber(order.order_number)}? This cannot be undone.`,
       [
         { text: 'No, Keep Order', style: 'cancel' },
         { 
@@ -486,7 +513,7 @@ export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
           
           <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
             <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Order #</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>{order.order_number}</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>#{getShortOrderNumber(order.order_number)}</Text>
           </View>
           
           {order.customer?.phone && (
@@ -604,7 +631,7 @@ export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
               {order.items?.[0]?.name || 'Order'} x {itemCount}
             </Text>
             
-            {getAvailableStatusOptions(order.status).map((option) => {
+            {(simplifiedView ? getSimplifiedStatusOptions(order.status) : getAvailableStatusOptions(order.status)).map((option) => {
               const isCurrentStatus = order.status === option.key;
               return (
                 <TouchableOpacity
