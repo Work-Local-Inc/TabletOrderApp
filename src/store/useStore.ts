@@ -280,7 +280,9 @@ export const useStore = create<AppStore>()(
 
       updateOrderStatus: async (orderId, status) => {
         console.log(`[Store] Updating order ${orderId} to ${status}`);
-        const { offline } = get();
+        const { offline, orders: currentOrdersState } = get();
+        const previousOrders = currentOrdersState.orders;
+        const previousSelected = currentOrdersState.selectedOrder;
 
         // ALWAYS update local state immediately (optimistic update)
         set((state) => ({
@@ -315,6 +317,14 @@ export const useStore = create<AppStore>()(
           console.log(`[Store] ✓ Backend updated to ${status}`);
           return true;
         } else {
+          // Revert optimistic update on failure
+          set((state) => ({
+            orders: {
+              ...state.orders,
+              orders: previousOrders,
+              selectedOrder: previousSelected,
+            },
+          }));
           // SHOW ERROR ON SCREEN so user can see what's wrong
           const { Alert } = require('react-native');
           Alert.alert(
@@ -397,7 +407,7 @@ export const useStore = create<AppStore>()(
               const result = await apiClient.acknowledgeOrder(action.order_id);
               success = result.success;
             } else if (action.type === 'status_update') {
-              const result = await apiClient.updateOrderStatus(
+              const result = await tabletUpdateOrderStatus(
                 action.order_id,
                 action.payload.status
               );

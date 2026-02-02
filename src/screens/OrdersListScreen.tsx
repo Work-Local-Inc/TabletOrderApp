@@ -2,7 +2,6 @@ import React, { useEffect, useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
   TouchableOpacity,
   StyleSheet,
   RefreshControl,
@@ -31,7 +30,7 @@ import {
   getConnectedPrinterAddress,
   disconnectPrinter,
 } from '../services/printService';
-import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus, KanbanBoard } from '../components/orders';
+import { FilterStatus, KanbanBoard } from '../components/orders';
 import { KanbanBoard4Col } from '../components/orders/KanbanBoard4Col';
 import { useTheme } from '../theme';
 import { tabletUpdateOrderStatus } from '../api/supabaseRpc';
@@ -312,36 +311,6 @@ export const OrdersListScreen: React.FC = () => {
     ? ordersList.find(o => o.id === selectedOrderId) || null
     : null;
 
-  // Print function - ONLY marks as printed if print ACTUALLY succeeds
-  const handlePrint = useCallback(async (order: Order) => {
-    console.log(`[Print] 🖨️ Starting print for order #${order.order_number}...`);
-    
-    // ⚠️ SAFETY: Warn if order has been printed multiple times (possible loop detected)
-    const orderPrintCount = printCounts.get(order.id) || 0;
-    if (orderPrintCount >= MAX_PRINT_COUNT) {
-      console.warn(`[Print] ⛔ Order ${order.id} already printed ${orderPrintCount} times!`);
-      Alert.alert(
-        '⚠️ Reprint Warning',
-        `This order has already been printed ${orderPrintCount} time(s).\n\nAre you sure you want to print it again?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Print Anyway', 
-            style: 'destructive',
-            onPress: () => {
-              // Allow reprint but log it
-              console.log(`[Print] ⚠️ User confirmed reprint of order ${order.id}`);
-              performPrint(order);
-            }
-          }
-        ]
-      );
-      return;
-    }
-    
-    await performPrint(order);
-  }, [printCounts, performPrint]);
-  
   // Actual print logic (separated to allow confirmation dialog above)
   const performPrint = useCallback(async (order: Order) => {
     // Check if printer is supposedly connected (from settings)
@@ -473,7 +442,49 @@ export const OrdersListScreen: React.FC = () => {
     } finally {
       setPrintingOrderId(null);
     }
-  }, [printerConnected, settings?.defaultPrintType, settings?.printerMacAddress, settings?.printerName, markAsPrinted, updateOrderStatus, updateSettings, addToBacklog]);
+  }, [
+    printerConnected,
+    settings?.defaultPrintType,
+    settings?.printerMacAddress,
+    settings?.printerName,
+    settings?.printerAlertsEnabled,
+    markAsPrinted,
+    updateOrderStatus,
+    updateSettings,
+    addToBacklog,
+    navigation,
+    playAlertSound,
+  ]);
+
+  // Print function - ONLY marks as printed if print ACTUALLY succeeds
+  const handlePrint = useCallback(async (order: Order) => {
+    console.log(`[Print] 🖨️ Starting print for order #${order.order_number}...`);
+    
+    // ⚠️ SAFETY: Warn if order has been printed multiple times (possible loop detected)
+    const orderPrintCount = printCounts.get(order.id) || 0;
+    if (orderPrintCount >= MAX_PRINT_COUNT) {
+      console.warn(`[Print] ⛔ Order ${order.id} already printed ${orderPrintCount} times!`);
+      Alert.alert(
+        '⚠️ Reprint Warning',
+        `This order has already been printed ${orderPrintCount} time(s).\n\nAre you sure you want to print it again?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Print Anyway', 
+            style: 'destructive',
+            onPress: () => {
+              // Allow reprint but log it
+              console.log(`[Print] ⚠️ User confirmed reprint of order ${order.id}`);
+              performPrint(order);
+            }
+          }
+        ]
+      );
+      return;
+    }
+    
+    await performPrint(order);
+  }, [printCounts, performPrint]);
 
   // Auto-print new orders - returns true if print succeeded, false if failed
   const autoPrintOrder = useCallback(async (order: Order): Promise<boolean> => {
