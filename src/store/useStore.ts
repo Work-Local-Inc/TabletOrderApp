@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Order, DeviceConfig, QueuedAction, OrderStatus } from '../types';
 import { apiClient } from '../api/client';
+import { tabletUpdateOrderStatus } from '../api/supabaseRpc';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -306,9 +307,9 @@ export const useStore = create<AppStore>()(
           return true;
         }
 
-        // Try to update on backend
-        const result = await apiClient.updateOrderStatus(orderId, status);
-        console.log(`[Store] API result:`, result.success, result.error || 'OK');
+        // Try to update on backend via Supabase RPC (bypasses PHP restrictions)
+        const result = await tabletUpdateOrderStatus(orderId, status);
+        console.log(`[Store] Supabase RPC result:`, result.success, result.error || 'OK');
         
         if (result.success) {
           console.log(`[Store] ✓ Backend updated to ${status}`);
@@ -343,7 +344,7 @@ export const useStore = create<AppStore>()(
         defaultPrintType: 'kitchen', // Default to kitchen tickets
         printerAlertsEnabled: true, // Alert when orders can't print
         orderAgingEnabled: false, // Color-coded aging OFF by default
-        simplifiedView: false, // 4-column view by default
+        simplifiedView: true, // Simplified 2-column Kanban view by default
       },
 
       updateSettings: (settings) =>

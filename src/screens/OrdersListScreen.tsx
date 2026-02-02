@@ -12,6 +12,7 @@ import {
   Image,
   StatusBar,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // import { Audio } from 'expo-av'; // Temporarily disabled
@@ -31,6 +32,7 @@ import {
   disconnectPrinter,
 } from '../services/printService';
 import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus, KanbanBoard } from '../components/orders';
+import { KanbanBoard4Col } from '../components/orders/KanbanBoard4Col';
 import { useTheme } from '../theme';
 import { tabletUpdateOrderStatus } from '../api/supabaseRpc';
 // useHeartbeat removed - already running at app root (App.tsx)
@@ -293,6 +295,7 @@ export const OrdersListScreen: React.FC = () => {
   // Store state
   const {
     orders,
+    setOrders,
     fetchOrders,
     updateOrderStatus,
     settings,
@@ -761,20 +764,15 @@ export const OrdersListScreen: React.FC = () => {
     }
   }, [ordersList.length, printedIdsLoaded, printedOrderIds, updateOrderStatus, fetchOrders]);
 
-  // Auto-select the most recent order on load
+  // Clear selection when entering simplified view (cards should start collapsed)
   useEffect(() => {
-    if (ordersList.length > 0 && !selectedOrderId) {
-      // Sort by created_at descending and select the newest
-      const sortedOrders = [...ordersList].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      const newestOrder = sortedOrders[0];
-      if (newestOrder) {
-        console.log(`[AutoSelect] Opening most recent order #${newestOrder.order_number}`);
-        setSelectedOrderId(newestOrder.id);
-      }
+    if (simplifiedView) {
+      setSelectedOrderId(null);
     }
-  }, [ordersList.length]); // Only run when order count changes
+  }, [simplifiedView]);
+
+  // Auto-select disabled - both views now use Kanban with cards that start collapsed
+  // Users tap to expand whichever order they want to work with
 
   // Auto-reconnect to saved printer on app startup (runs once on mount)
   useEffect(() => {
@@ -919,21 +917,32 @@ export const OrdersListScreen: React.FC = () => {
 
   // Kanban status change - uses direct Supabase call for flexible transitions
   const handleKanbanStatusChange = useCallback(async (orderId: string, targetStatus: string) => {
+    // Optimistic update - immediately move the order to new column
+    const currentOrders = orders?.orders || [];
+    const updatedOrders = currentOrders.map(order => 
+      order.id === orderId ? { ...order, status: targetStatus as OrderStatus } : order
+    );
+    setOrders({ orders: updatedOrders });
+
     try {
       // Use direct Supabase RPC call - bypasses PHP backend restrictions
       const result = await tabletUpdateOrderStatus(orderId, targetStatus);
       
       if (result.success) {
-        // Refresh orders to get updated status
+        // Refresh orders to confirm and get any other updates
         await fetchOrders();
       } else {
+        // Revert optimistic update on failure
+        setOrders({ orders: currentOrders });
         Alert.alert('Status Update Failed', result.error || 'Unknown error');
       }
     } catch (error) {
+      // Revert optimistic update on error
+      setOrders({ orders: currentOrders });
       console.error('[KanbanStatusChange] Error:', error);
       Alert.alert('Error', 'Failed to update order status');
     }
-  }, [fetchOrders]);
+  }, [fetchOrders, orders, setOrders]);
 
   // Mark as printed callback (used by detail panel)
   const handlePrinted = useCallback((orderId: string) => {
@@ -1143,7 +1152,7 @@ export const OrdersListScreen: React.FC = () => {
           style={[styles.settingsButton, { backgroundColor: theme.surface }]}
             onPress={() => navigation.navigate('Settings')}
           >
-            <Text style={styles.settingsIcon}>⚙️</Text>
+            <Ionicons name="settings-outline" size={24} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -1158,89 +1167,30 @@ export const OrdersListScreen: React.FC = () => {
             completeOrders={ordersList.filter(o => 
               o.status === 'ready' || o.status === 'completed' || o.status === 'cancelled'
             )}
+            selectedOrderId={selectedOrderId}
             onMoveToComplete={(orderId) => handleKanbanStatusChange(orderId, 'ready')}
             onMoveToNew={(orderId) => handleKanbanStatusChange(orderId, 'preparing')}
-            onOrderTap={(orderId) => setSelectedOrderId(orderId)}
+            onOrderSelect={(orderId) => setSelectedOrderId(orderId)}
             onRefresh={handleRefresh}
             refreshing={refreshing}
           />
         ) : (
-          /* Standard List View */
-          <View style={[styles.listColumn, dynamicStyles.listColumn, !selectedOrder && styles.listColumnFull]}>
-            <OrderFilters
-              selectedFilter={activeFilter}
-              onFilterChange={setActiveFilter}
-              onRefresh={handleRefresh}
-              counts={counts}
-              simplifiedView={simplifiedView}
-            />
-
-            {/* Table Header */}
-            <View style={[styles.tableHeader, { borderBottomColor: theme.cardBorder }]}>
-              <Text style={[styles.tableHeaderText, styles.customerCol, { color: theme.textMuted }]}>Customer</Text>
-              <Text style={[styles.tableHeaderText, styles.typeCol, { color: theme.textMuted }]}>Type</Text>
-              <Text style={[styles.tableHeaderText, styles.printedCol, { color: theme.textMuted }]}>Printed</Text>
-              <Text style={[styles.tableHeaderText, styles.timeCol, { color: theme.textMuted }]}>Time</Text>
-            </View>
-
-            {orders?.isLoading && ordersList.length === 0 ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={theme.primary} />
-                <Text style={[styles.loadingText, dynamicStyles.headerSubtext]}>
-                  Loading orders...
-                </Text>
-              </View>
-            ) : filteredOrders.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyIcon}>📋</Text>
-                <Text style={[styles.emptyText, dynamicStyles.headerSubtext]}>
-                  No orders found
-                </Text>
-              </View>
-            ) : (
-              <FlatList
-                data={filteredOrders}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <OrderListItem
-                    order={item}
-                    isSelected={selectedOrderId === item.id}
-                    isPrinted={printedOrderIds.has(item.id)}
-                    isBacklogged={backloggedOrderIds.has(item.id) && item.status === 'pending'}
-                    orderAgingEnabled={settings?.orderAgingEnabled ?? false}
-                    onPress={() => setSelectedOrderId(item.id)}
-                    simplifiedView={simplifiedView}
-                    onQuickMarkReady={undefined}
-                  />
-                )}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={handleRefresh}
-                    tintColor={theme.primary}
-                  />
-                }
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-              />
-            )}
-          </View>
+          /* 4-Column Kanban Board for Regular View */
+          <KanbanBoard4Col
+            newOrders={ordersList.filter(o => o.status === 'pending')}
+            activeOrders={ordersList.filter(o => o.status === 'confirmed' || o.status === 'preparing')}
+            readyOrders={ordersList.filter(o => o.status === 'ready')}
+            completeOrders={ordersList.filter(o => o.status === 'completed')}
+            selectedOrderId={selectedOrderId}
+            onStatusChange={handleKanbanStatusChange}
+            onOrderSelect={(orderId) => setSelectedOrderId(orderId)}
+            onRefresh={handleRefresh}
+            refreshing={refreshing}
+          />
         )}
       </View>
 
-      {/* Detail Panel - Full height overlay when order selected */}
-      {selectedOrder && (
-        <View style={[styles.detailOverlay, dynamicStyles.detailColumn]}>
-          <OrderDetailPanel
-            order={selectedOrder}
-            onStatusChange={handleStatusChange}
-            onPrinted={handlePrinted}
-            onClose={() => setSelectedOrderId(null)}
-            printerConnected={printerConnected}
-            simplifiedView={simplifiedView}
-          />
-        </View>
-      )}
+      {/* Detail Panel removed - both views now use expandable cards */}
     </View>
   );
 };

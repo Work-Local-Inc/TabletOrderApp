@@ -10,14 +10,15 @@ import {
 } from 'react-native';
 import { Order } from '../../types';
 import { useTheme } from '../../theme';
-import { DraggableOrderCard } from './DraggableOrderCard';
+import { ExpandableOrderCard } from './ExpandableOrderCard';
 
 interface KanbanBoardProps {
   newOrders: Order[];
   completeOrders: Order[];
+  selectedOrderId: string | null;
   onMoveToComplete: (orderId: string) => void;
   onMoveToNew: (orderId: string) => void;
-  onOrderTap: (orderId: string) => void;
+  onOrderSelect: (orderId: string | null) => void;
   onRefresh?: () => void;
   refreshing?: boolean;
 }
@@ -25,9 +26,10 @@ interface KanbanBoardProps {
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   newOrders,
   completeOrders,
+  selectedOrderId,
   onMoveToComplete,
   onMoveToNew,
-  onOrderTap,
+  onOrderSelect,
   onRefresh,
   refreshing = false,
 }) => {
@@ -42,8 +44,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     border: themeMode === 'dark' ? '#334155' : '#e2e8f0',
     text: themeMode === 'dark' ? '#f1f5f9' : '#1e293b',
     textMuted: themeMode === 'dark' ? '#94a3b8' : '#64748b',
-    newDot: '#FF5722',
-    completeDot: '#10b981',
+    newDot: '#22c55e',
+    completeDot: '#DC2626',
     countBadge: themeMode === 'dark' ? '#334155' : '#e2e8f0',
   };
 
@@ -51,16 +53,39 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     (orderId: string, translationX: number, fromColumn: 'new' | 'complete') => {
       // Positive X = dragged right, Negative X = dragged left
       if (fromColumn === 'new' && translationX > 0) {
-        // Dragged from New to Complete (right)
         Vibration.vibrate(100);
         onMoveToComplete(orderId);
       } else if (fromColumn === 'complete' && translationX < 0) {
-        // Dragged from Complete to New (left)
         Vibration.vibrate(100);
         onMoveToNew(orderId);
       }
     },
     [onMoveToComplete, onMoveToNew]
+  );
+
+  const handleOrderTap = useCallback(
+    (orderId: string) => {
+      // Toggle selection - if already selected, deselect; otherwise select
+      if (selectedOrderId === orderId) {
+        onOrderSelect(null);
+      } else {
+        onOrderSelect(orderId);
+      }
+    },
+    [selectedOrderId, onOrderSelect]
+  );
+
+  const handleStatusChange = useCallback(
+    (orderId: string, column: 'new' | 'complete') => {
+      if (column === 'new') {
+        onMoveToComplete(orderId);
+      } else {
+        onMoveToNew(orderId);
+      }
+      // Collapse the card after action
+      onOrderSelect(null);
+    },
+    [onMoveToComplete, onMoveToNew, onOrderSelect]
   );
 
   return (
@@ -102,15 +127,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </View>
           ) : (
             newOrders.map((order) => (
-              <DraggableOrderCard
+              <ExpandableOrderCard
                 key={order.id}
                 order={order}
                 column="new"
+                isExpanded={selectedOrderId === order.id}
                 containerWidth={columnWidth}
                 onDragEnd={(orderId, translationX) =>
                   handleDragEnd(orderId, translationX, 'new')
                 }
-                onTap={onOrderTap}
+                onTap={handleOrderTap}
+                onStatusChange={() => handleStatusChange(order.id, 'new')}
               />
             ))
           )}
@@ -118,7 +145,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         {/* Drag hint */}
         <View style={[styles.dragHint, { borderTopColor: colors.border }]}>
           <Text style={[styles.dragHintText, { color: colors.textMuted }]}>
-            Drag right to complete →
+            Drag right to complete
           </Text>
         </View>
       </View>
@@ -150,15 +177,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </View>
           ) : (
             completeOrders.map((order) => (
-              <DraggableOrderCard
+              <ExpandableOrderCard
                 key={order.id}
                 order={order}
                 column="complete"
+                isExpanded={selectedOrderId === order.id}
                 containerWidth={columnWidth}
                 onDragEnd={(orderId, translationX) =>
                   handleDragEnd(orderId, translationX, 'complete')
                 }
-                onTap={onOrderTap}
+                onTap={handleOrderTap}
+                onStatusChange={() => handleStatusChange(order.id, 'complete')}
               />
             ))
           )}
@@ -166,7 +195,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         {/* Drag hint */}
         <View style={[styles.dragHint, { borderTopColor: colors.border }]}>
           <Text style={[styles.dragHintText, { color: colors.textMuted }]}>
-            ← Drag left to reopen
+            Drag left to reopen
           </Text>
         </View>
       </View>
