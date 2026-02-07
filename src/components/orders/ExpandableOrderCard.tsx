@@ -241,38 +241,26 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      // Don't claim touch on start - let TouchableOpacity handle taps
+      onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Only claim horizontal drags (let vertical scrolling work)
-        return Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+        // Only claim significant horizontal drags (let taps and scrolling work)
+        return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
       },
       onPanResponderGrant: () => {
         startTime.current = Date.now();
-        isDragging.current = false;
+        isDragging.current = true;
         zIndex.setValue(999);
+        Vibration.vibrate(50);
         Animated.spring(scale, { toValue: 1.02, useNativeDriver: false }).start();
       },
       onPanResponderMove: (_, gestureState) => {
-        if (Math.abs(gestureState.dx) > 15) {
-          if (!isDragging.current) {
-            isDragging.current = true;
-            Vibration.vibrate(50);
-          }
-          pan.setValue({ x: gestureState.dx, y: 0 }); // Only horizontal movement
-        }
+        pan.setValue({ x: gestureState.dx, y: 0 }); // Only horizontal movement
       },
       onPanResponderRelease: (_, gestureState) => {
-        const dragDuration = Date.now() - startTime.current;
-        
         Animated.spring(scale, { toValue: 1, useNativeDriver: false }).start();
         zIndex.setValue(1);
-
-        // Quick tap without drag = toggle expand
-        if (dragDuration < 200 && Math.abs(gestureState.dx) < 15) {
-          pan.setValue({ x: 0, y: 0 });
-          onTap(order.id);
-          return;
-        }
+        isDragging.current = false;
 
         const threshold = containerWidth * 0.25;
         if (Math.abs(gestureState.dx) > threshold) {
@@ -287,6 +275,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
       },
       onPanResponderTerminate: () => {
         zIndex.setValue(1);
+        isDragging.current = false;
         Animated.parallel([
           Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }),
           Animated.spring(scale, { toValue: 1, useNativeDriver: false }),
@@ -361,44 +350,49 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     const collapsedMutedColor = isCompleteColumn ? 'rgba(255,255,255,0.9)' : colors.textMuted;
     
     return (
-      <Animated.View
-        style={[
-          styles.card,
-          {
-            backgroundColor: collapsedBg,
-            borderColor: isCompleteColumn ? '#DC2626' : borderColor,
-            borderLeftColor: accentColor,
-            zIndex: zIndex,
-            elevation: zIndex,
-            opacity: opacity,
-            transform: [
-              { translateX: pan.x },
-              { translateY: pan.y },
-              { scale: scale },
-            ],
-          },
-        ]}
-        {...panResponder.panHandlers}
+      <TouchableOpacity 
+        activeOpacity={0.9} 
+        onPress={() => onTap(order.id)}
       >
-        <View style={styles.collapsedContent}>
-          <View style={styles.collapsedLeft}>
-            <Text style={[styles.collapsedName, { color: collapsedTextColor }]} numberOfLines={1}>
-              {customerName}
-            </Text>
-            <Text style={[styles.collapsedType, { color: collapsedSecondaryColor }]}>
-              {getOrderTypeLabel(orderType)}
-            </Text>
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              backgroundColor: collapsedBg,
+              borderColor: isCompleteColumn ? '#DC2626' : borderColor,
+              borderLeftColor: accentColor,
+              zIndex: zIndex,
+              elevation: zIndex,
+              opacity: opacity,
+              transform: [
+                { translateX: pan.x },
+                { translateY: pan.y },
+                { scale: scale },
+              ],
+            },
+          ]}
+          {...panResponder.panHandlers}
+        >
+          <View style={styles.collapsedContent}>
+            <View style={styles.collapsedLeft}>
+              <Text style={[styles.collapsedName, { color: collapsedTextColor }]} numberOfLines={1}>
+                {customerName}
+              </Text>
+              <Text style={[styles.collapsedType, { color: collapsedSecondaryColor }]}>
+                {getOrderTypeLabel(orderType)}
+              </Text>
+            </View>
+            <View style={styles.collapsedRight}>
+              <Text style={[styles.collapsedTime, { color: collapsedMutedColor }]}>
+                {formatTime(order.created_at)}
+              </Text>
+              <Text style={[styles.collapsedOrder, { color: collapsedMutedColor }]}>
+                #{getShortOrderNumber(order.order_number)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.collapsedRight}>
-            <Text style={[styles.collapsedTime, { color: collapsedMutedColor }]}>
-              {formatTime(order.created_at)}
-            </Text>
-            <Text style={[styles.collapsedOrder, { color: collapsedMutedColor }]}>
-              #{getShortOrderNumber(order.order_number)}
-            </Text>
-          </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </TouchableOpacity>
     );
   }
 

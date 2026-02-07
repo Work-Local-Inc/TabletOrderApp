@@ -23,6 +23,7 @@ import {
   ensureConnected,
 } from '../services/printService';
 import { useTheme } from '../theme';
+import { tabletGetDeliveryConfig, tabletUpdateDeliveryEnabled } from '../api/supabaseRpc';
 
 // Request Bluetooth permissions for Android 12+
 const requestBluetoothPermissions = async (): Promise<boolean> => {
@@ -156,6 +157,62 @@ export const SettingsScreen: React.FC = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [discoveredPrinters, setDiscoveredPrinters] = useState<PrinterDevice[]>([]);
   const [showPrinterList, setShowPrinterList] = useState(false);
+  
+  // Restaurant service config state
+  const [deliveryEnabled, setDeliveryEnabled] = useState<boolean | null>(null);
+  const [isLoadingDeliveryConfig, setIsLoadingDeliveryConfig] = useState(false);
+  const [isUpdatingDelivery, setIsUpdatingDelivery] = useState(false);
+
+  // Fetch delivery config on mount
+  React.useEffect(() => {
+    const fetchDeliveryConfig = async () => {
+      if (!auth.restaurantId) return;
+      
+      setIsLoadingDeliveryConfig(true);
+      try {
+        const result = await tabletGetDeliveryConfig(auth.restaurantId);
+        if (result.success && result.data) {
+          setDeliveryEnabled(result.data.has_delivery_enabled);
+        }
+      } catch (error) {
+        console.error('[Settings] Failed to fetch delivery config:', error);
+      } finally {
+        setIsLoadingDeliveryConfig(false);
+      }
+    };
+    
+    fetchDeliveryConfig();
+  }, [auth.restaurantId]);
+
+  const handleToggleDelivery = useCallback(async (newValue: boolean) => {
+    if (!auth.restaurantId || isUpdatingDelivery) return;
+    
+    const previousValue = deliveryEnabled;
+    setDeliveryEnabled(newValue); // Optimistic update
+    setIsUpdatingDelivery(true);
+    
+    try {
+      const result = await tabletUpdateDeliveryEnabled(auth.restaurantId, newValue);
+      if (result.success) {
+        Alert.alert(
+          newValue ? '✓ Delivery Enabled' : '✓ Delivery Disabled',
+          newValue 
+            ? 'Customers can now order for delivery.' 
+            : 'Delivery orders are now disabled. Customers will only see pickup.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        // Revert on failure
+        setDeliveryEnabled(previousValue);
+        Alert.alert('Update Failed', result.error || 'Could not update delivery setting');
+      }
+    } catch (error) {
+      setDeliveryEnabled(previousValue);
+      Alert.alert('Error', 'Failed to update delivery setting');
+    } finally {
+      setIsUpdatingDelivery(false);
+    }
+  }, [auth.restaurantId, deliveryEnabled, isUpdatingDelivery]);
 
   const handleLogout = useCallback(() => {
     Alert.alert(
@@ -561,6 +618,53 @@ export const SettingsScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* Restaurant Settings Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🏪 Restaurant Settings</Text>
+          <View style={styles.card}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>🚗 Delivery Service</Text>
+                <Text style={styles.settingDescription}>
+                  Allow customers to order for delivery
+                </Text>
+              </View>
+              {isLoadingDeliveryConfig ? (
+                <ActivityIndicator size="small" color="#3b82f6" />
+              ) : deliveryEnabled === null ? (
+                <Text style={{ color: '#64748b', fontSize: 12 }}>N/A</Text>
+              ) : (
+                <Switch
+                  value={deliveryEnabled}
+                  onValueChange={handleToggleDelivery}
+                  disabled={isUpdatingDelivery}
+                  trackColor={{ false: '#374151', true: '#3b82f6' }}
+                  thumbColor={deliveryEnabled ? '#fff' : '#9ca3af'}
+                />
+              )}
+            </View>
+            {deliveryEnabled !== null && (
+              <View style={styles.serviceStatusRow}>
+                <View style={[
+                  styles.serviceStatusBadge,
+                  { backgroundColor: deliveryEnabled ? '#22c55e20' : '#ef444420' }
+                ]}>
+                  <View style={[
+                    styles.serviceStatusDot,
+                    { backgroundColor: deliveryEnabled ? '#22c55e' : '#ef4444' }
+                  ]} />
+                  <Text style={[
+                    styles.serviceStatusText,
+                    { color: deliveryEnabled ? '#22c55e' : '#ef4444' }
+                  ]}>
+                    {deliveryEnabled ? 'Delivery is ACTIVE' : 'Delivery is OFF'}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+
         {/* Device Info Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Device Information</Text>
@@ -921,6 +1025,29 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#22c55e',
     fontWeight: 'bold',
+  },
+  // Service Status
+  serviceStatusRow: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
+  serviceStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  serviceStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  serviceStatusText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   // Logout
   logoutButton: {

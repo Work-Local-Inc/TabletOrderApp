@@ -2,17 +2,8 @@
   "expo": {
     "name": "Menu.ca Orders",
     "slug": "TabletOrderApp",
-    "version": "1.4.0",
+    "version": "1.0.0",
     "orientation": "landscape",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
-    "updates": {
-      "enabled": true,
-      "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 5000,
-      "url": "https://u.expo.dev/a8b29fb9-0480-49fb-b993-b008bfb974bf"
-    },
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "menuca",
@@ -61,10 +52,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-secure-store",
-      "expo-updates"
-    ],
+    "plugins": [],
     "extra": {
       "eas": {
         "projectId": "a8b29fb9-0480-49fb-b993-b008bfb974bf"

@@ -39,6 +39,3 @@ yarn-error.*
 # generated native folders
 /ios
 /android
-
-# Release keystore - DO NOT COMMIT
-android/app/release.keystore

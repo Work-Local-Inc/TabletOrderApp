@@ -2,7 +2,6 @@ import React from 'react';
 import { LogBox } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useKeepAwake } from 'expo-keep-awake';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { useNetworkStatus, useOrderNotifications, useHeartbeat } from './src/hooks';
 import { ThemeProvider, useTheme } from './src/theme';
@@ -13,9 +12,6 @@ LogBox.ignoreAllLogs(true);
 // App wrapper component to use hooks
 const AppContent: React.FC = () => {
   const { themeMode } = useTheme();
-  
-  // Keep screen on at all times - prevents tablet from sleeping
-  useKeepAwake();
   
   // Initialize network monitoring
   useNetworkStatus();

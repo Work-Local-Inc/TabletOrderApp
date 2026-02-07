@@ -1,0 +1,100 @@
+---
+name: playstore-build
+description: Build Android AAB for Play Store upload. Use when user asks to build for Play Store, release build, or production build.
+category: android
+version: 1.0.0
+---
+
+# Play Store Build - TabletOrderApp
+
+## CRITICAL: DO NOT USE EAS BUILD QUEUE
+The EAS remote build queue takes 4+ hours on free tier. Always use local builds.
+
+## Prerequisites
+- Android folder must exist (run `npx expo prebuild` if missing)
+- local.properties must have correct SDK path
+- **release.keystore MUST exist** at `android/app/release.keystore`
+
+## CRITICAL: Keystore Setup
+
+The production keystore is stored in EAS. If missing, download it:
+
+```bash
+eas credentials --platform android
+# Select: production → Keystore → Download Keystore
+# Move to: android/app/release.keystore
+mv @brianworklocal__TabletOrderApp.jks android/app/release.keystore
+```
+
+**Keystore credentials:**
+- Password: `e8776c719709593b61cc3527d6d63471`
+- Key Alias: `259b2f59bf12013d2d63c3bef66dbe3d`
+- Key Password: `d8ecd45f91b947ba20f8bb927f566522`
+- SHA1: `C8:EC:BD:FB:00:8D:9C:C8:33:3D:AC:7A:4F:C8:45:B8:F2:35:04:F2`
+
+**NEVER run `npx expo prebuild --clean`** - it deletes the keystore!
+
+## Quick Build Commands
+
+### 1. Ensure local.properties exists
+```bash
+echo "sdk.dir=/opt/homebrew/share/android-commandlinetools" > android/local.properties
+```
+
+### 2. Build the release bundle
+```bash
+cd android && export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools && ./gradlew bundleRelease
+```
+
+### 3. Copy AAB to Desktop
+```bash
+cp android/app/build/outputs/bundle/release/app-release.aab ~/Desktop/MenuCaOrders-v{VERSION}.aab
+```
+
+## Full Process (Copy-Paste Ready)
+
+```bash
+# Set version (update VERSION as needed)
+VERSION="1.3.0"
+
+# Ensure local.properties
+echo "sdk.dir=/opt/homebrew/share/android-commandlinetools" > android/local.properties
+
+# Build
+cd android && export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools && ./gradlew bundleRelease
+
+# Copy to Desktop
+cp app/build/outputs/bundle/release/app-release.aab ~/Desktop/MenuCaOrders-v${VERSION}.aab
+
+# Verify
+ls -la ~/Desktop/MenuCaOrders-v${VERSION}.aab
+```
+
+## After Build
+1. User uploads AAB to Play Console manually
+2. Play Console: Release > Internal testing > Create new release
+3. Upload the AAB file from Desktop
+4. Add release notes and publish
+
+## Troubleshooting
+
+### "SDK location not found"
+```bash
+echo "sdk.dir=/opt/homebrew/share/android-commandlinetools" > android/local.properties
+```
+
+### "android folder doesn't exist"
+```bash
+npx expo prebuild --clean
+```
+
+### Build takes forever
+- First build after prebuild takes 5-10 min
+- Subsequent builds take 2-3 min
+- DO NOT use `--no-daemon` unless necessary (slower)
+
+## SDK Location
+The Android SDK on this machine is at:
+`/opt/homebrew/share/android-commandlinetools`
+
+NOT at the default `~/Library/Android/sdk`
