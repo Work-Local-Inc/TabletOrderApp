@@ -1,8 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 
-// Sentry DSN - Replace with your actual DSN from sentry.io
-// To get a DSN: Create a project at sentry.io > Settings > Client Keys (DSN)
-const SENTRY_DSN = 'YOUR_SENTRY_DSN_HERE';
+// Sentry DSN - Error reports go to sentry.io dashboard
+const SENTRY_DSN = 'https://c1fb47df3447243a3b83029ace70c69d@o4510845279010816.ingest.us.sentry.io/4510845293232128';
 
 /**
  * Initialize Sentry error tracking.

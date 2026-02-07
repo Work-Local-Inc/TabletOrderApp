@@ -31,10 +31,10 @@ todos:
     status: completed
   - id: native-rebuild
     content: Run prebuild and generate new AAB with version 1.4.0
-    status: in_progress
+    status: pending
   - id: create-audit-handoff
     content: Create detailed handoff document for audit agent review
-    status: pending
+    status: completed
 isProject: false
 ---
 
