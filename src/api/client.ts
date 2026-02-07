@@ -14,6 +14,7 @@ import {
   DispatchDriverResponse,
   DispatchDriverRequest,
 } from '../types';
+import { addBreadcrumb, captureException } from '../config/sentry';
 
 const BASE_URL = 'https://orders.menu.ca';
 
@@ -74,6 +75,13 @@ class ApiClient {
     // Request interceptor to add auth header
     this.client.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
+        // Add breadcrumb for API request tracking
+        addBreadcrumb(
+          `API ${config.method?.toUpperCase()} ${config.url}`,
+          'http',
+          { method: config.method, url: config.url }
+        );
+
         // Skip auth for login endpoint
         if (config.url?.includes('/auth/login')) {
           return config;
@@ -96,6 +104,16 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
+        // Capture API errors to Sentry (excluding expected errors like 401)
+        if (error.response?.status !== 401) {
+          captureException(error, {
+            endpoint: error.config?.url,
+            method: error.config?.method,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+          });
+        }
+
         if (error.response?.status === 401) {
           // Token expired, try to refresh
           const refreshed = await this.refreshToken();

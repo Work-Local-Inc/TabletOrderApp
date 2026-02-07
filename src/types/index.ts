@@ -88,6 +88,15 @@ export interface DeviceConfig {
   printer_connected: boolean;
 }
 
+// Stuck Order Detection Types
+export interface StuckOrderInfo {
+  order_id: string;
+  order_number: string;
+  status: OrderStatus;
+  minutes_stuck: number;
+  created_at: string;
+}
+
 // Heartbeat Types
 export interface HeartbeatPayload {
   battery_level?: number;
@@ -95,6 +104,8 @@ export interface HeartbeatPayload {
   printer_status?: 'connected' | 'disconnected' | 'error';
   app_version: string;
   last_order_received?: string;
+  // Stuck order detection - orders that haven't progressed
+  stuck_orders?: StuckOrderInfo[];
 }
 
 export interface HeartbeatResponse {

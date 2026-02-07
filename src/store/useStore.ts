@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Order, DeviceConfig, QueuedAction, OrderStatus } from '../types';
 import { apiClient } from '../api/client';
 import { tabletUpdateOrderStatus } from '../api/supabaseRpc';
+import { addBreadcrumb, captureException } from '../config/sentry';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -85,6 +86,7 @@ export const useStore = create<AppStore>()(
         set((state) => ({ auth: { ...state.auth, ...auth } })),
 
       login: async (deviceUuid, deviceKey) => {
+        addBreadcrumb('Login attempt', 'auth');
         set((state) => ({ auth: { ...state.auth, isLoading: true } }));
 
         const result = await apiClient.login({
@@ -165,6 +167,8 @@ export const useStore = create<AppStore>()(
           console.log('[Store] Skipping fetch - offline');
           return;
         }
+
+        addBreadcrumb('Fetching orders', 'store');
 
         set((state) => ({
           orders: { ...state.orders, isLoading: true, error: null },
@@ -280,6 +284,7 @@ export const useStore = create<AppStore>()(
 
       updateOrderStatus: async (orderId, status) => {
         console.log(`[Store] Updating order ${orderId} to ${status}`);
+        addBreadcrumb('Updating order status', 'store', { orderId, newStatus: status });
         const { offline, orders: currentOrdersState } = get();
         const previousOrders = currentOrdersState.orders;
         const previousSelected = currentOrdersState.selectedOrder;

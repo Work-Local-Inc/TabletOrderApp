@@ -2,16 +2,17 @@ import { useEffect, useRef, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useStore } from '../store/useStore';
 import { apiClient } from '../api/client';
+import { detectStuckOrders } from '../utils/stuckOrderDetection';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.4.0';
 const HEARTBEAT_INTERVAL = 60000; // 1 minute
 
 /**
  * Hook to send periodic heartbeat to the server
- * Reports device health and receives config updates
+ * Reports device health, stuck orders, and receives config updates
  */
 export const useHeartbeat = () => {
-  const { auth, offline, updateSettings, settings } = useStore();
+  const { auth, offline, updateSettings, settings, orders } = useStore();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastHeartbeatRef = useRef<string | null>(null);
 
@@ -21,12 +22,21 @@ export const useHeartbeat = () => {
       return;
     }
 
+    // Detect stuck orders from current order list
+    const stuckOrders = detectStuckOrders(orders.orders);
+    
+    if (stuckOrders.length > 0) {
+      console.log('[Heartbeat] Detected stuck orders:', stuckOrders.length);
+    }
+
     console.log('[Heartbeat] Sending heartbeat...');
     try {
       const response = await apiClient.sendHeartbeat({
         app_version: APP_VERSION,
         battery_level: 100, // TODO: Get actual battery level
-        printer_status: settings.printerConnected ? 'online' : 'offline',
+        printer_status: settings.printerConnected ? 'connected' : 'disconnected',
+        // Only include stuck_orders if there are any (avoid empty array in payload)
+        stuck_orders: stuckOrders.length > 0 ? stuckOrders : undefined,
       });
 
       console.log('[Heartbeat] Response:', response.success);
@@ -45,7 +55,7 @@ export const useHeartbeat = () => {
     } catch (error) {
       console.error('[Heartbeat] Failed:', error);
     }
-  }, [auth.isAuthenticated, offline.isOnline, settings, updateSettings]);
+  }, [auth.isAuthenticated, offline.isOnline, settings, updateSettings, orders.orders]);
 
   // Start/stop heartbeat based on auth and app state
   useEffect(() => {

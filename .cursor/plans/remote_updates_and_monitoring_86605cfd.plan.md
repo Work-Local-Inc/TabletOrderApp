@@ -19,19 +19,19 @@ todos:
     status: completed
   - id: integrate-app-tsx
     content: Update App.tsx with Sentry init, ErrorBoundary, useAppUpdates, and context setting
-    status: in_progress
+    status: completed
   - id: create-stuck-detection
     content: Create stuckOrderDetection utility with status-specific thresholds
-    status: pending
+    status: completed
   - id: update-heartbeat
     content: Update useHeartbeat to include stuck_orders in payload
-    status: pending
+    status: completed
   - id: add-breadcrumbs
     content: Add Sentry breadcrumbs to store actions and API client
-    status: pending
+    status: completed
   - id: native-rebuild
     content: Run prebuild and generate new AAB with version 1.4.0
-    status: pending
+    status: in_progress
   - id: create-audit-handoff
     content: Create detailed handoff document for audit agent review
     status: pending
