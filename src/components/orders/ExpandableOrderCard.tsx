@@ -381,7 +381,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
             borderColor: isCompleteColumn ? '#DC2626' : borderColor,
             borderLeftColor: accentColor,
             zIndex: zIndex,
-            elevation: 24,
+            elevation: 2,
             opacity: opacity,
             transform: [
               { translateX: pan.x },
@@ -427,7 +427,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
           borderColor: colors.borderExpanded,
           transform: [{ translateX: pan.x }],
           zIndex: 9999,
-          elevation: 9999,
+          elevation: 4,
         }
       ]}
       {...panResponder.panHandlers}
