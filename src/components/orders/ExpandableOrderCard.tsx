@@ -29,10 +29,30 @@ interface ExpandableOrderCardProps {
   column: 'new' | 'complete';
   isExpanded: boolean;
   onDragEnd: (orderId: string, translationX: number) => void;
+  onDragStart?: () => void;
+  onDragRelease?: () => void;
   onTap: (orderId: string) => void;
   onStatusChange: (orderId: string) => void;
   containerWidth: number;
 }
+
+/**
+ * Strip Twilio call log entries from order notes.
+ * These are injected by the backend and shouldn't show to restaurant staff.
+ */
+const stripTwilioLogs = (notes: string): string => {
+  if (!notes) return '';
+  // Remove lines containing TWILIO_FALLBACK_CALL and surrounding whitespace
+  const cleaned = notes
+    .split('\n')
+    .filter(line => !line.includes('TWILIO_FALLBACK_CALL'))
+    .join('\n')
+    .replace(/\|\s*\|/g, '|')  // Clean up double pipes left behind
+    .replace(/^\s*\|\s*/gm, '') // Clean up leading pipes
+    .replace(/\s*\|\s*$/gm, '') // Clean up trailing pipes
+    .trim();
+  return cleaned;
+};
 
 const formatTime = (dateString: string): string => {
   const date = new Date(dateString);
@@ -94,6 +114,8 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   column,
   isExpanded,
   onDragEnd,
+  onDragStart,
+  onDragRelease,
   onTap,
   onStatusChange,
   containerWidth,
@@ -101,7 +123,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const { theme, themeMode } = useTheme();
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
-  const zIndex = useRef(new Animated.Value(1)).current;
+  const zIndex = useRef(new Animated.Value(2)).current;
   const opacity = useRef(new Animated.Value(1)).current;
   const isDragging = useRef(false);
   const startTime = useRef(0);
@@ -241,27 +263,35 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
 
   const panResponder = useRef(
     PanResponder.create({
-      // Claim touch on start so we can detect taps vs drags
+      // Claim touch on start for tap detection
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Also claim if significant horizontal movement detected
         return Math.abs(gestureState.dx) > 10;
+      },
+      // CRITICAL: Allow native ScrollView to work on Android
+      onShouldBlockNativeResponder: () => false,
+      // Allow ScrollView to take over for vertical scrolling
+      onPanResponderTerminationRequest: (_, gestureState) => {
+        // If we're actively dragging horizontally, don't give up
+        if (isDragging.current) return false;
+        // Otherwise let ScrollView take over
+        return true;
       },
       onPanResponderGrant: () => {
         startTime.current = Date.now();
         isDragging.current = false;
       },
       onPanResponderMove: (_, gestureState) => {
-        // Only start visual drag after significant horizontal movement
-        if (Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)) {
-          if (!isDragging.current) {
-            isDragging.current = true;
-            // Max out zIndex and elevation so card is above everything
-            zIndex.setValue(9999);
-            opacity.setValue(0.92);
-            Vibration.vibrate(50);
-            Animated.spring(scale, { toValue: 1.08, useNativeDriver: false }).start();
-          }
+        // Only start drag after significant horizontal movement
+        if (!isDragging.current && Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)) {
+          isDragging.current = true;
+          zIndex.setValue(20);
+          opacity.setValue(0.92);
+          Vibration.vibrate(50);
+          Animated.spring(scale, { toValue: 1.08, useNativeDriver: false }).start();
+          onDragStart?.();
+        }
+        if (isDragging.current) {
           pan.setValue({ x: gestureState.dx, y: 0 });
         }
       },
@@ -271,32 +301,37 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
         // Reset visual state
         Animated.spring(scale, { toValue: 1, useNativeDriver: false }).start();
         opacity.setValue(1);
-        zIndex.setValue(1);
+        zIndex.setValue(2);
 
-        // Quick tap without significant drag = toggle expand
-        if (!isDragging.current && dragDuration < 300 && Math.abs(gestureState.dx) < 15) {
-          pan.setValue({ x: 0, y: 0 });
+        // Tap detection: short duration, small movement, wasn't dragging
+        if (!isDragging.current && dragDuration < 300 && Math.abs(gestureState.dx) < 10 && Math.abs(gestureState.dy) < 10) {
           isDragging.current = false;
           onTap(order.id);
           return;
         }
 
-        isDragging.current = false;
+        if (isDragging.current) {
+          onDragRelease?.();
+          isDragging.current = false;
 
-        const threshold = containerWidth * 0.25;
-        if (Math.abs(gestureState.dx) > threshold) {
-          // Successful drag - trigger update (optimistic UI handles the rest)
-          Vibration.vibrate(100);
-          pan.setValue({ x: 0, y: 0 });
-          onDragEnd(order.id, gestureState.dx);
+          const threshold = containerWidth * 0.25;
+          if (Math.abs(gestureState.dx) > threshold) {
+            Vibration.vibrate(100);
+            pan.setValue({ x: 0, y: 0 });
+            onDragEnd(order.id, gestureState.dx);
+          } else {
+            Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
+          }
         } else {
-          // Didn't meet threshold - spring back
-          Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
+          isDragging.current = false;
         }
       },
       onPanResponderTerminate: () => {
-        zIndex.setValue(1);
+        zIndex.setValue(2);
         opacity.setValue(1);
+        if (isDragging.current) {
+          onDragRelease?.();
+        }
         isDragging.current = false;
         Animated.parallel([
           Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }),
@@ -381,7 +416,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
             borderColor: isCompleteColumn ? '#DC2626' : borderColor,
             borderLeftColor: accentColor,
             zIndex: zIndex,
-            elevation: 2,
+            elevation: zIndex,
             opacity: opacity,
             transform: [
               { translateX: pan.x },
@@ -417,20 +452,16 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   // Detect if we're in narrow mode (4-column layout)
   const isNarrow = containerWidth < 300;
 
-  // Expanded card view - wrapped in Animated.View for dragging
+  // Expanded card view - no PanResponder (drag only on collapsed cards)
   return (
-    <Animated.View 
+    <View 
       style={[
         styles.expandedCard, 
         { 
           backgroundColor: contentBackground,
           borderColor: colors.borderExpanded,
-          transform: [{ translateX: pan.x }],
-          zIndex: 9999,
-          elevation: 4,
         }
       ]}
-      {...panResponder.panHandlers}
     >
       {/* Header with customer name - Soft red gradient - Tap anywhere to collapse */}
       <TouchableOpacity 
@@ -659,14 +690,14 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
         </View>
 
         {/* Order Notes */}
-        {order.notes && (
+        {order.notes && stripTwilioLogs(order.notes) !== '' && (
           <View style={[styles.notesSection, { backgroundColor: colors.border }]}>
             <Text style={[styles.notesTitle, { color: colors.text }]}>Order Notes</Text>
-            <Text style={[styles.notesText, { color: colors.textSecondary }]}>{order.notes}</Text>
+            <Text style={[styles.notesText, { color: colors.textSecondary }]}>{stripTwilioLogs(order.notes)}</Text>
           </View>
         )}
       </View>
-    </Animated.View>
+    </View>
   );
 };
 

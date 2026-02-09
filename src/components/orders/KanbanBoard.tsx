@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -49,6 +49,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     countBadge: themeMode === 'dark' ? '#334155' : '#e2e8f0',
   };
 
+  // Track which column has an active drag so we can raise it above the other
+  const [draggingColumn, setDraggingColumn] = useState<'new' | 'complete' | null>(null);
+
+  const handleDragStart = useCallback((fromColumn: 'new' | 'complete') => {
+    setDraggingColumn(fromColumn);
+  }, []);
+
+  const handleDragRelease = useCallback(() => {
+    setDraggingColumn(null);
+  }, []);
+
   const handleDragEnd = useCallback(
     (orderId: string, translationX: number, fromColumn: 'new' | 'complete') => {
       // Positive X = dragged right, Negative X = dragged left
@@ -91,7 +102,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       {/* New Orders Column */}
-      <View style={[styles.column, { borderRightColor: colors.border }]}>
+      <View style={[styles.column, { borderRightColor: colors.border, zIndex: draggingColumn === 'new' ? 10 : 1 }]}>
         <View style={[styles.columnHeader, { backgroundColor: colors.headerBg }]}>
           <View style={styles.headerLeft}>
             <View style={[styles.statusDot, { backgroundColor: colors.newDot }]} />
@@ -137,6 +148,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onDragEnd={(orderId, translationX) =>
                     handleDragEnd(orderId, translationX, 'new')
                   }
+                  onDragStart={() => handleDragStart('new')}
+                  onDragRelease={handleDragRelease}
                   onTap={handleOrderTap}
                   onStatusChange={() => handleStatusChange(order.id, 'new')}
                 />
@@ -153,7 +166,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       </View>
 
       {/* Complete Orders Column */}
-      <View style={styles.column}>
+      <View style={[styles.column, { zIndex: draggingColumn === 'complete' ? 10 : 1 }]}>
         <View style={[styles.columnHeader, { backgroundColor: colors.headerBg }]}>
           <View style={styles.headerLeft}>
             <View style={[styles.statusDot, { backgroundColor: colors.completeDot }]} />
@@ -189,6 +202,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onDragEnd={(orderId, translationX) =>
                     handleDragEnd(orderId, translationX, 'complete')
                   }
+                  onDragStart={() => handleDragStart('complete')}
+                  onDragRelease={handleDragRelease}
                   onTap={handleOrderTap}
                   onStatusChange={() => handleStatusChange(order.id, 'complete')}
                 />

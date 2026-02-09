@@ -595,11 +595,13 @@ export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
           </View>
         </View>
 
-        {/* Order Notes */}
-        {order.notes && (
+        {/* Order Notes (strip Twilio call logs) */}
+        {order.notes && order.notes.split('\n').filter(l => !l.includes('TWILIO_FALLBACK_CALL')).join('\n').trim() !== '' && (
           <View style={styles.notesSection}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Order Notes</Text>
-            <Text style={[styles.notesText, { color: colors.text }]}>{order.notes}</Text>
+            <Text style={[styles.notesText, { color: colors.text }]}>
+              {order.notes.split('\n').filter(l => !l.includes('TWILIO_FALLBACK_CALL')).join('\n').trim()}
+            </Text>
           </View>
         )}
 

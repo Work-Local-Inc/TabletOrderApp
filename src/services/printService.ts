@@ -35,6 +35,21 @@ try {
   console.warn('[PrintService] ✗ Printer library not installed. Run: npm install react-native-thermal-receipt-printer-image-qr');
 }
 
+/**
+ * Strip Twilio call log entries from order notes before printing.
+ */
+const stripTwilioLogs = (notes: string): string => {
+  if (!notes) return '';
+  return notes
+    .split('\n')
+    .filter(line => !line.includes('TWILIO_FALLBACK_CALL'))
+    .join('\n')
+    .replace(/\|\s*\|/g, '|')
+    .replace(/^\s*\|\s*/gm, '')
+    .replace(/\s*\|\s*$/gm, '')
+    .trim();
+};
+
 // ESC/POS Commands
 const ESC = '\x1B';
 const GS = '\x1D';
@@ -237,13 +252,14 @@ export const generateReceiptData = (order: Order): string => {
   receipt += COMMANDS.BOLD_OFF;
   receipt += COMMANDS.NORMAL_SIZE;
 
-  // Order Notes
-  if (order.notes) {
+  // Order Notes (strip Twilio call logs)
+  const cleanedNotes = order.notes ? stripTwilioLogs(order.notes) : '';
+  if (cleanedNotes) {
     receipt += '\n' + COMMANDS.LINE + '\n';
     receipt += COMMANDS.BOLD_ON;
     receipt += 'ORDER NOTES:\n';
     receipt += COMMANDS.BOLD_OFF;
-    receipt += order.notes + '\n';
+    receipt += cleanedNotes + '\n';
   }
 
   // Estimated Ready Time
@@ -1012,8 +1028,8 @@ const generateKitchenTicket = (order: Order): string => {
                                   order.notes?.toLowerCase().includes(deliveryInstructions.toLowerCase().substring(0, 20));
   
   if (order.notes && !orderHasAllergy && !notesAreSameAsDelivery) {
-    // Strip scheduled time from notes if we already displayed it prominently
-    let notesToDisplay = order.notes;
+    // Strip scheduled time and Twilio logs from notes
+    let notesToDisplay = stripTwilioLogs(order.notes);
     if (scheduledFromNotes) {
       // Remove "Scheduled for: ..." and any surrounding pipes/separators
       notesToDisplay = notesToDisplay
@@ -1315,8 +1331,8 @@ const generateReceiptText = (order: Order): string => {
                                       order.notes?.toLowerCase().includes(custDeliveryInstructions.toLowerCase().substring(0, 20));
   
   if (order.notes && !custNotesAreSameAsDelivery) {
-    // Strip scheduled time from notes if we already displayed it prominently
-    let notesToDisplayReceipt = order.notes;
+    // Strip scheduled time and Twilio logs from notes
+    let notesToDisplayReceipt = stripTwilioLogs(order.notes);
     if (scheduledFromNotesReceipt) {
       notesToDisplayReceipt = notesToDisplayReceipt
         .replace(/\|\s*Scheduled\s*for:\s*\d{4}-\d{2}-\d{2}T[\d:\.]+Z?\s*/gi, '')
