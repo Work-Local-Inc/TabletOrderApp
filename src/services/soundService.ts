@@ -1,6 +1,9 @@
 /**
  * Simple Sound Service for playing notification alerts
  * Uses expo-av Audio module
+ * 
+ * Creates a new Sound instance each time to avoid Android
+ * "player is accessed on the wrong thread" errors.
  */
 
 import { Audio } from 'expo-av';
@@ -8,68 +11,60 @@ import { Audio } from 'expo-av';
 // Pre-resolve the asset at module load time
 const NOTIFICATION_ASSET = require('../../assets/notification.mp3');
 
-let alertSound: Audio.Sound | null = null;
-let isLoading = false;
+let initialized = false;
 
 /**
- * Initialize the sound (call once on app start)
+ * Initialize audio mode (call once on app start)
  */
 export const initSound = async (): Promise<void> => {
-  if (alertSound || isLoading) return;
+  if (initialized) return;
   
-  isLoading = true;
   try {
-    console.log('[Sound] Loading notification sound...');
-    
-    // Set audio mode for playback
+    console.log('[Sound] Initializing audio mode...');
     await Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
       shouldDuckAndroid: true,
+      staysActiveInBackground: false,
     });
-    
-    const { sound } = await Audio.Sound.createAsync(
-      NOTIFICATION_ASSET,
-      { shouldPlay: false, volume: 1.0 }
-    );
-    alertSound = sound;
-    console.log('[Sound] ✓ Sound loaded successfully');
+    initialized = true;
+    console.log('[Sound] ✓ Audio mode initialized');
   } catch (error) {
-    console.error('[Sound] ✗ Failed to load sound:', error);
-  } finally {
-    isLoading = false;
+    console.error('[Sound] ✗ Failed to initialize audio:', error);
   }
 };
 
 /**
  * Play the alert sound
+ * Creates a fresh Sound instance each time to avoid Android threading issues.
  */
 export const playAlert = async (): Promise<void> => {
   try {
-    if (!alertSound) {
-      console.log('[Sound] Sound not loaded, initializing...');
+    if (!initialized) {
       await initSound();
     }
+
+    // Create a new sound instance each time (avoids threading errors on Android)
+    const { sound } = await Audio.Sound.createAsync(
+      NOTIFICATION_ASSET,
+      { shouldPlay: true, volume: 1.0 }
+    );
     
-    if (alertSound) {
-      // Reset to beginning and play
-      await alertSound.setPositionAsync(0);
-      await alertSound.playAsync();
-      console.log('[Sound] 🔔 Playing alert!');
-    } else {
-      console.warn('[Sound] No alert sound available');
-    }
+    console.log('[Sound] 🔔 Playing alert!');
+    
+    // Auto-cleanup after playback finishes
+    sound.setOnPlaybackStatusUpdate((status) => {
+      if (status.isLoaded && status.didJustFinish) {
+        sound.unloadAsync().catch(() => {});
+      }
+    });
   } catch (error) {
     console.error('[Sound] ✗ Failed to play sound:', error);
   }
 };
 
 /**
- * Cleanup sound on app unmount
+ * Cleanup (no-op now since each play self-cleans)
  */
 export const cleanupSound = async (): Promise<void> => {
-  if (alertSound) {
-    await alertSound.unloadAsync();
-    alertSound = null;
-  }
+  initialized = false;
 };
-

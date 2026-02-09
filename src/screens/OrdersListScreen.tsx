@@ -1186,7 +1186,7 @@ export const OrdersListScreen: React.FC = () => {
             }
             selectedOrderId={selectedOrderId}
             onMoveToComplete={(orderId) => handleKanbanStatusChange(orderId, 'ready')}
-            onMoveToNew={(orderId) => handleKanbanStatusChange(orderId, 'preparing')}
+            onMoveToNew={(orderId) => handleKanbanStatusChange(orderId, 'pending')}
             onOrderSelect={(orderId) => setSelectedOrderId(orderId)}
             onRefresh={handleRefresh}
             refreshing={refreshing}
