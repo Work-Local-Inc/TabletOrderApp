@@ -7,6 +7,7 @@ import {
   useWindowDimensions,
   Vibration,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { Order } from '../../types';
 import { useTheme } from '../../theme';
@@ -113,35 +114,37 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </View>
           </View>
         </View>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          scrollEventThrottle={16}
-        >
-          {newOrders.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                No new orders
-              </Text>
-            </View>
-          ) : (
-            newOrders.map((order) => (
-              <ExpandableOrderCard
-                key={order.id}
-                order={order}
-                column="new"
-                isExpanded={selectedOrderId === order.id}
-                containerWidth={columnWidth}
-                onDragEnd={(orderId, translationX) =>
-                  handleDragEnd(orderId, translationX, 'new')
-                }
-                onTap={handleOrderTap}
-                onStatusChange={() => handleStatusChange(order.id, 'new')}
-              />
-            ))
-          )}
-        </ScrollView>
+        <View style={styles.scrollWrapper}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            scrollEventThrottle={16}
+          >
+            {newOrders.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                  No new orders
+                </Text>
+              </View>
+            ) : (
+              newOrders.map((order) => (
+                <ExpandableOrderCard
+                  key={order.id}
+                  order={order}
+                  column="new"
+                  isExpanded={selectedOrderId === order.id}
+                  containerWidth={columnWidth}
+                  onDragEnd={(orderId, translationX) =>
+                    handleDragEnd(orderId, translationX, 'new')
+                  }
+                  onTap={handleOrderTap}
+                  onStatusChange={() => handleStatusChange(order.id, 'new')}
+                />
+              ))
+            )}
+          </ScrollView>
+        </View>
         {/* Drag hint */}
         <View style={[styles.dragHint, { borderTopColor: colors.border }]}>
           <Text style={[styles.dragHintText, { color: colors.textMuted }]}>
@@ -163,35 +166,37 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </Text>
           </View>
         </View>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          scrollEventThrottle={16}
-        >
-          {completeOrders.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                No completed orders
-              </Text>
-            </View>
-          ) : (
-            completeOrders.map((order) => (
-              <ExpandableOrderCard
-                key={order.id}
-                order={order}
-                column="complete"
-                isExpanded={selectedOrderId === order.id}
-                containerWidth={columnWidth}
-                onDragEnd={(orderId, translationX) =>
-                  handleDragEnd(orderId, translationX, 'complete')
-                }
-                onTap={handleOrderTap}
-                onStatusChange={() => handleStatusChange(order.id, 'complete')}
-              />
-            ))
-          )}
-        </ScrollView>
+        <View style={styles.scrollWrapper}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            scrollEventThrottle={16}
+          >
+            {completeOrders.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                  No completed orders
+                </Text>
+              </View>
+            ) : (
+              completeOrders.map((order) => (
+                <ExpandableOrderCard
+                  key={order.id}
+                  order={order}
+                  column="complete"
+                  isExpanded={selectedOrderId === order.id}
+                  containerWidth={columnWidth}
+                  onDragEnd={(orderId, translationX) =>
+                    handleDragEnd(orderId, translationX, 'complete')
+                  }
+                  onTap={handleOrderTap}
+                  onStatusChange={() => handleStatusChange(order.id, 'complete')}
+                />
+              ))
+            )}
+          </ScrollView>
+        </View>
         {/* Drag hint */}
         <View style={[styles.dragHint, { borderTopColor: colors.border }]}>
           <Text style={[styles.dragHintText, { color: colors.textMuted }]}>
@@ -207,11 +212,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'row',
+    overflow: 'visible',
   },
   column: {
     flex: 1,
     borderRightWidth: 1,
     overflow: 'visible',
+    zIndex: 1,
   },
   columnHeader: {
     flexDirection: 'row',
@@ -259,6 +266,11 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  scrollWrapper: {
+    flex: 1,
+    overflow: 'visible',
+    zIndex: 1,
   },
   scrollView: {
     flex: 1,

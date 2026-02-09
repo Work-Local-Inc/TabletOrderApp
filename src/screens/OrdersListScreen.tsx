@@ -917,10 +917,16 @@ export const OrdersListScreen: React.FC = () => {
 
   // Kanban status change - uses direct Supabase call for flexible transitions
   const handleKanbanStatusChange = useCallback(async (orderId: string, targetStatus: string) => {
+    // Read fresh state directly from store (avoids stale closure on rapid drags)
+    const freshOrders = useStore.getState().orders.orders;
+    const previousStatus = freshOrders.find(o => o.id === orderId)?.status;
+    
     // Optimistic update - immediately move the order to new column
-    const currentOrders = orders?.orders || [];
-    const updatedOrders = currentOrders.map(order => 
-      order.id === orderId ? { ...order, status: targetStatus as OrderStatus } : order
+    // Set updated_at to now so it appears at the top of the destination column
+    const updatedOrders = freshOrders.map(order => 
+      order.id === orderId 
+        ? { ...order, status: targetStatus as OrderStatus, updated_at: new Date().toISOString() } 
+        : order
     );
     setOrders({ orders: updatedOrders });
 
@@ -928,21 +934,31 @@ export const OrdersListScreen: React.FC = () => {
       // Use direct Supabase RPC call - bypasses PHP backend restrictions
       const result = await tabletUpdateOrderStatus(orderId, targetStatus);
       
-      if (result.success) {
-        // Refresh orders to confirm and get any other updates
-        await fetchOrders();
-      } else {
-        // Revert optimistic update on failure
-        setOrders({ orders: currentOrders });
+      if (!result.success) {
+        // Revert just this one order back to its previous status
+        const currentOrders = useStore.getState().orders.orders;
+        const revertedOrders = currentOrders.map(order =>
+          order.id === orderId && previousStatus
+            ? { ...order, status: previousStatus }
+            : order
+        );
+        setOrders({ orders: revertedOrders });
         Alert.alert('Status Update Failed', result.error || 'Unknown error');
       }
+      // On success: trust the optimistic update, normal polling will sync
     } catch (error) {
-      // Revert optimistic update on error
-      setOrders({ orders: currentOrders });
+      // Revert just this one order back to its previous status
+      const currentOrders = useStore.getState().orders.orders;
+      const revertedOrders = currentOrders.map(order =>
+        order.id === orderId && previousStatus
+          ? { ...order, status: previousStatus }
+          : order
+      );
+      setOrders({ orders: revertedOrders });
       console.error('[KanbanStatusChange] Error:', error);
       Alert.alert('Error', 'Failed to update order status');
     }
-  }, [fetchOrders, orders, setOrders]);
+  }, [setOrders]);
 
   // Mark as printed callback (used by detail panel)
   const handlePrinted = useCallback((orderId: string) => {
@@ -1164,9 +1180,10 @@ export const OrdersListScreen: React.FC = () => {
             newOrders={ordersList.filter(o => 
               o.status === 'pending' || o.status === 'confirmed' || o.status === 'preparing'
             )}
-            completeOrders={ordersList.filter(o => 
-              o.status === 'ready' || o.status === 'completed' || o.status === 'cancelled'
-            )}
+            completeOrders={ordersList
+              .filter(o => o.status === 'ready' || o.status === 'completed' || o.status === 'cancelled')
+              .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+            }
             selectedOrderId={selectedOrderId}
             onMoveToComplete={(orderId) => handleKanbanStatusChange(orderId, 'ready')}
             onMoveToNew={(orderId) => handleKanbanStatusChange(orderId, 'preparing')}
