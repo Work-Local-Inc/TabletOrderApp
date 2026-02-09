@@ -63,8 +63,16 @@ export const playAlert = async (): Promise<void> => {
 };
 
 /**
- * Cleanup (no-op now since each play self-cleans)
+ * Cleanup all active sounds on app unmount
  */
 export const cleanupSound = async (): Promise<void> => {
+  for (const sound of activeSounds) {
+    try {
+      await sound.unloadAsync();
+    } catch {
+      // Ignore errors during cleanup
+    }
+  }
+  activeSounds = [];
   initialized = false;
 };
