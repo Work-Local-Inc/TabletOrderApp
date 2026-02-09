@@ -34,9 +34,8 @@ export const useHeartbeat = () => {
       const response = await apiClient.sendHeartbeat({
         app_version: APP_VERSION,
         battery_level: 100, // TODO: Get actual battery level
-        printer_status: settings.printerConnected ? 'online' : 'offline',
-        // NOTE: stuck_orders detection is ready but not sent until backend supports it
-        // stuck_orders: stuckOrders.length > 0 ? stuckOrders : undefined,
+        printer_status: settings.printerConnected ? 'connected' : 'disconnected',
+        stuck_orders: stuckOrders.length > 0 ? stuckOrders : undefined,
       });
 
       console.log('[Heartbeat] Response:', response.success);
