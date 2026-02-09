@@ -257,7 +257,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
           if (!isDragging.current) {
             isDragging.current = true;
             // Max out zIndex and elevation so card is above everything
-            zIndex.setValue(99999);
+            zIndex.setValue(9999);
             opacity.setValue(0.92);
             Vibration.vibrate(50);
             Animated.spring(scale, { toValue: 1.08, useNativeDriver: false }).start();
@@ -381,7 +381,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
             borderColor: isCompleteColumn ? '#DC2626' : borderColor,
             borderLeftColor: accentColor,
             zIndex: zIndex,
-            elevation: zIndex,
+            elevation: 24,
             opacity: opacity,
             transform: [
               { translateX: pan.x },

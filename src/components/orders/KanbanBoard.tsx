@@ -7,7 +7,6 @@ import {
   useWindowDimensions,
   Vibration,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { Order } from '../../types';
 import { useTheme } from '../../theme';
