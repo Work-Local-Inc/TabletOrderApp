@@ -441,6 +441,10 @@ export const useStore = create<AppStore>()(
 
           if (success) {
             get().removeFromQueue(action.id);
+          } else if (action.retry_count >= 5) {
+            // Max retries reached - drop the action to prevent infinite loops
+            console.error(`[Store] processQueue: Dropping action ${action.id} after ${action.retry_count} retries (order ${action.order_id})`);
+            get().removeFromQueue(action.id);
           } else {
             // Increment retry count
             set((state) => ({

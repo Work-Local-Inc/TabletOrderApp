@@ -13,20 +13,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Order } from '../../types';
 import { useTheme } from '../../theme';
-
-/** Strip Twilio call log entries from order notes */
-const stripTwilioLogs = (notes: string): string => {
-  if (!notes) return '';
-  return notes
-    .split('\n')
-    .filter(line => !line.includes('TWILIO_FALLBACK_CALL'))
-    .join('\n')
-    .replace(/\|\s*\|/g, '|')
-    .replace(/^\s*\|\s*/gm, '')
-    .replace(/\s*\|\s*$/gm, '')
-    .trim();
-};
-
 import {
   printKitchenTicket,
   printCustomerReceipt,

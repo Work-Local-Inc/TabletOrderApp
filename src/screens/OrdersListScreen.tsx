@@ -943,15 +943,24 @@ export const OrdersListScreen: React.FC = () => {
       const result = await tabletUpdateOrderStatus(numericId, targetStatus);
       
       if (!result.success) {
-        // Revert just this one order back to its previous status
-        const currentOrders = useStore.getState().orders.orders;
-        const revertedOrders = currentOrders.map(order =>
-          order.id === orderId && previousStatus
-            ? { ...order, status: previousStatus }
-            : order
-        );
-        setOrders({ orders: revertedOrders });
-        Alert.alert('Status Update Failed', result.error || 'Unknown error');
+        // Check if the order was deleted from the database
+        if (result.error?.includes('Order not found') || result.error?.includes('not found')) {
+          console.warn(`[KanbanStatusChange] ⚠️ Order ${orderId} no longer exists - removing from local state`);
+          const currentOrders = useStore.getState().orders.orders;
+          setOrders({ orders: currentOrders.filter(o => o.id !== orderId) });
+          if (selectedOrderId === orderId) setSelectedOrderId(null);
+          Alert.alert('Order Removed', 'This order no longer exists and has been removed from the list.');
+        } else {
+          // Revert just this one order back to its previous status
+          const currentOrders = useStore.getState().orders.orders;
+          const revertedOrders = currentOrders.map(order =>
+            order.id === orderId && previousStatus
+              ? { ...order, status: previousStatus }
+              : order
+          );
+          setOrders({ orders: revertedOrders });
+          Alert.alert('Status Update Failed', result.error || 'Unknown error');
+        }
       }
       // On success: trust the optimistic update, normal polling will sync
     } catch (error) {

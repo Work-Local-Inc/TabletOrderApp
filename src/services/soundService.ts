@@ -12,6 +12,7 @@ import { Audio } from 'expo-av';
 const NOTIFICATION_ASSET = require('../../assets/notification.mp3');
 
 let initialized = false;
+let activeSounds: Audio.Sound[] = [];
 
 /**
  * Initialize audio mode (call once on app start)
@@ -50,11 +51,13 @@ export const playAlert = async (): Promise<void> => {
     );
     
     console.log('[Sound] 🔔 Playing alert!');
+    activeSounds.push(sound);
     
     // Auto-cleanup after playback finishes
     sound.setOnPlaybackStatusUpdate((status) => {
       if (status.isLoaded && status.didJustFinish) {
         sound.unloadAsync().catch(() => {});
+        activeSounds = activeSounds.filter((s) => s !== sound);
       }
     });
   } catch (error) {
