@@ -181,3 +181,49 @@ export async function tabletUpdateDeliveryEnabled(
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
+
+/**
+ * Get valid order IDs directly from Supabase for a restaurant.
+ * The Next.js API at orders.menu.ca may serve cached/stale orders.
+ * This checks what actually exists in Supabase so the tablet can filter out ghosts.
+ */
+export async function tabletGetValidOrderIds(
+  restaurantId: string
+): Promise<{ success: boolean; ids: string[] }> {
+  try {
+    const rid = parseInt(restaurantId, 10);
+    if (isNaN(rid)) {
+      console.error(`[SupabaseRPC] Invalid restaurantId: "${restaurantId}"`);
+      return { success: false, ids: [] };
+    }
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/rpc/tablet_get_valid_order_ids`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Accept-Profile': 'menuca_v3',
+          'Content-Profile': 'menuca_v3',
+        },
+        body: JSON.stringify({ p_restaurant_id: rid }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error(`[SupabaseRPC] Failed to get valid order IDs: ${response.status}`);
+      return { success: false, ids: [] };
+    }
+
+    const rows: { order_id: number }[] = await response.json();
+    const validIds = rows
+      .filter(r => r.order_id != null)
+      .map(r => r.order_id.toString());
+    console.log(`[SupabaseRPC] ✓ ${validIds.length} valid orders in Supabase`);
+    return { success: true, ids: validIds };
+  } catch (error) {
+    console.error(`[SupabaseRPC] Exception getting valid IDs:`, error);
+    return { success: false, ids: [] };
+  }
+}

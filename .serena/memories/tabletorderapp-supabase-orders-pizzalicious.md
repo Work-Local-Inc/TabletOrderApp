@@ -1,0 +1,13 @@
+## Pizzalicious queue cleanup (Supabase)
+- Schema: `menuca_v3`
+- Restaurant record: `menuca_v3.restaurants` where `name='Pizzalicious'` -> `id=829`, `slug='pizzalicious-829'`
+- Orders table: `menuca_v3.orders` (key columns: `id` bigint, `created_at` timestamptz, `restaurant_id` bigint, `order_status` varchar)
+- FK dependents (must delete first):
+  - `menuca_v3.order_status_history` references `orders(id, created_at)` via `(order_id, order_created_at)`
+  - `menuca_v3.payment_transactions` references `orders(id, created_at)` via `(order_id, order_created_at)`
+- Safe delete pattern used:
+  - CTE `target_orders` = orders filtered by `restaurant_id=829`
+  - Delete from `order_status_history` and `payment_transactions` using `(order_id, order_created_at)` join
+  - Delete from `order_items` by `order_id` (no FK detected)
+  - Delete from `orders`
+- Verification query: `select count(*) from menuca_v3.orders where restaurant_id=829;` should be 0 after cleanup.

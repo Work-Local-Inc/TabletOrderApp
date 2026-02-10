@@ -287,14 +287,17 @@ export const useStore = create<AppStore>()(
         console.log(`[Store] Updating order ${orderId} to ${status}`);
         addBreadcrumb('Updating order status', 'store', { orderId, newStatus: status });
         const { offline, orders: currentOrdersState } = get();
-        const previousOrders = currentOrdersState.orders;
-        const previousSelected = currentOrdersState.selectedOrder;
         
-        // Look up the numeric_id needed for the RPC call
+        // Look up the order — bail early if it doesn't exist in state
         const targetOrder = currentOrdersState.orders.find(o => o.id === orderId);
-        const numericId = targetOrder?.numeric_id;
+        if (!targetOrder) {
+          console.error(`[Store] Order ${orderId} not found in local state — skipping update`);
+          return false;
+        }
+        const numericId = targetOrder.numeric_id;
+        const previousStatus = targetOrder.status;
 
-        // ALWAYS update local state immediately (optimistic update)
+        // Optimistic update
         set((state) => ({
           orders: {
             ...state.orders,
@@ -320,7 +323,20 @@ export const useStore = create<AppStore>()(
         }
 
         if (!numericId) {
-          console.error(`[Store] No numeric_id found for order ${orderId}`);
+          console.error(`[Store] No numeric_id found for order ${orderId} — reverting optimistic update`);
+          // Revert only this order, not the entire array
+          set((state) => ({
+            orders: {
+              ...state.orders,
+              orders: state.orders.orders.map((o) =>
+                o.id === orderId ? { ...o, status: previousStatus } : o
+              ),
+              selectedOrder:
+                state.orders.selectedOrder?.id === orderId
+                  ? { ...state.orders.selectedOrder, status: previousStatus }
+                  : state.orders.selectedOrder,
+            },
+          }));
           return false;
         }
 
@@ -332,15 +348,19 @@ export const useStore = create<AppStore>()(
           console.log(`[Store] ✓ Backend updated to ${status}`);
           return true;
         } else {
-          // Revert optimistic update on failure
+          // Revert only this order — preserves concurrent updates to other orders
           set((state) => ({
             orders: {
               ...state.orders,
-              orders: previousOrders,
-              selectedOrder: previousSelected,
+              orders: state.orders.orders.map((o) =>
+                o.id === orderId ? { ...o, status: previousStatus } : o
+              ),
+              selectedOrder:
+                state.orders.selectedOrder?.id === orderId
+                  ? { ...state.orders.selectedOrder, status: previousStatus }
+                  : state.orders.selectedOrder,
             },
           }));
-          // SHOW ERROR ON SCREEN so user can see what's wrong
           const { Alert } = require('react-native');
           Alert.alert(
             'Status Update Failed',
