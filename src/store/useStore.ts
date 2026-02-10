@@ -179,22 +179,23 @@ export const useStore = create<AppStore>()(
         console.log('[Store] API result:', result.success, 'orders:', result.data?.orders?.length || 0);
 
         if (result.success && result.data) {
-          const existingOrders = currentState.orders;
           const newOrders = result.data.orders;
 
-          // Merge orders, updating existing ones and adding new ones
-          const orderMap = new Map(existingOrders.map((o) => [o.id, o]));
-          newOrders.forEach((order) => orderMap.set(order.id, order));
-
+          // Use server response as source of truth - removes deleted orders
           // Sort by created_at descending (newest first)
-          const mergedOrders = Array.from(orderMap.values()).sort(
+          const mergedOrders = newOrders.sort(
             (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
+
+          // Clear selectedOrder if it no longer exists in the fetched data
+          const selectedStillExists = currentState.selectedOrder
+            ? mergedOrders.some(o => o.id === currentState.selectedOrder?.id)
+            : false;
 
           set({
             orders: {
               orders: mergedOrders,
-              selectedOrder: currentState.selectedOrder,
+              selectedOrder: selectedStillExists ? currentState.selectedOrder : null,
               isLoading: false,
               lastFetchTime: new Date().toISOString(),
               error: null,
