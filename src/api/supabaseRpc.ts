@@ -30,11 +30,11 @@ interface DeliveryUpdateResult {
  * Bypasses PHP backend restrictions for simplified view
  */
 export async function tabletUpdateOrderStatus(
-  orderId: string,
+  numericId: number,
   newStatus: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log(`[SupabaseRPC] Updating order ${orderId} to ${newStatus}`);
+    console.log(`[SupabaseRPC] Updating order (numeric_id=${numericId}) to ${newStatus}`);
     
     const response = await fetch(
       `${SUPABASE_URL}/rest/v1/rpc/tablet_update_order_status`,
@@ -48,7 +48,7 @@ export async function tabletUpdateOrderStatus(
           'Content-Profile': 'menuca_v3',
         },
         body: JSON.stringify({
-          p_order_id: parseInt(orderId, 10),
+          p_order_id: numericId,
           p_new_status: newStatus,
         }),
       }

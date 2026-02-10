@@ -919,7 +919,15 @@ export const OrdersListScreen: React.FC = () => {
   const handleKanbanStatusChange = useCallback(async (orderId: string, targetStatus: string) => {
     // Read fresh state directly from store (avoids stale closure on rapid drags)
     const freshOrders = useStore.getState().orders.orders;
-    const previousStatus = freshOrders.find(o => o.id === orderId)?.status;
+    const targetOrder = freshOrders.find(o => o.id === orderId);
+    const previousStatus = targetOrder?.status;
+    const numericId = targetOrder?.numeric_id;
+    
+    if (!numericId) {
+      console.error(`[KanbanStatusChange] No numeric_id found for order ${orderId}`);
+      Alert.alert('Error', 'Could not identify order. Please refresh and try again.');
+      return;
+    }
     
     // Optimistic update - immediately move the order to new column
     // Set updated_at to now so it appears at the top of the destination column
@@ -932,7 +940,7 @@ export const OrdersListScreen: React.FC = () => {
 
     try {
       // Use direct Supabase RPC call - bypasses PHP backend restrictions
-      const result = await tabletUpdateOrderStatus(orderId, targetStatus);
+      const result = await tabletUpdateOrderStatus(numericId, targetStatus);
       
       if (!result.success) {
         // Revert just this one order back to its previous status

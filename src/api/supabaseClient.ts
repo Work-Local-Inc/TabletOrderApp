@@ -493,6 +493,7 @@ class SupabaseApiClient {
   private transformOrder(dbOrder: any): Order {
     return {
       id: dbOrder.uuid,
+      numeric_id: dbOrder.id,
       order_number: dbOrder.order_number,
       status: dbOrder.order_status as OrderStatus,
       type: dbOrder.order_type,

@@ -288,6 +288,10 @@ export const useStore = create<AppStore>()(
         const { offline, orders: currentOrdersState } = get();
         const previousOrders = currentOrdersState.orders;
         const previousSelected = currentOrdersState.selectedOrder;
+        
+        // Look up the numeric_id needed for the RPC call
+        const targetOrder = currentOrdersState.orders.find(o => o.id === orderId);
+        const numericId = targetOrder?.numeric_id;
 
         // ALWAYS update local state immediately (optimistic update)
         set((state) => ({
@@ -309,13 +313,18 @@ export const useStore = create<AppStore>()(
           get().addToQueue({
             type: 'status_update',
             order_id: orderId,
-            payload: { status },
+            payload: { status, numeric_id: numericId },
           });
           return true;
         }
 
+        if (!numericId) {
+          console.error(`[Store] No numeric_id found for order ${orderId}`);
+          return false;
+        }
+
         // Try to update on backend via Supabase RPC (bypasses PHP restrictions)
-        const result = await tabletUpdateOrderStatus(orderId, status);
+        const result = await tabletUpdateOrderStatus(numericId, status);
         console.log(`[Store] Supabase RPC result:`, result.success, result.error || 'OK');
         
         if (result.success) {
@@ -412,11 +421,18 @@ export const useStore = create<AppStore>()(
               const result = await apiClient.acknowledgeOrder(action.order_id);
               success = result.success;
             } else if (action.type === 'status_update') {
-              const result = await tabletUpdateOrderStatus(
-                action.order_id,
-                action.payload.status
-              );
-              success = result.success;
+              // Use stored numeric_id, or look it up from current orders
+              const numericId = action.payload.numeric_id 
+                || get().orders.orders.find(o => o.id === action.order_id)?.numeric_id;
+              if (numericId) {
+                const result = await tabletUpdateOrderStatus(
+                  numericId,
+                  action.payload.status
+                );
+                success = result.success;
+              } else {
+                console.error(`[Store] processQueue: No numeric_id for order ${action.order_id}`);
+              }
             }
           } catch (error) {
             console.error('Failed to process queued action:', error);

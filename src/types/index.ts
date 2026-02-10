@@ -47,6 +47,7 @@ export type OrderType = 'pickup' | 'delivery' | 'dine_in';
 
 export interface Order {
   id: string;
+  numeric_id: number;
   order_number: string;
   restaurant_id: string;
   status: OrderStatus;
