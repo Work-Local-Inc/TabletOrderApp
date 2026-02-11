@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -51,6 +51,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
   // Track which column has an active drag so we can raise it above the other
   const [draggingColumn, setDraggingColumn] = useState<'new' | 'complete' | null>(null);
+
+  // ScrollView refs for instant native-level scroll lock via setNativeProps
+  const newScrollRef = useRef<ScrollView>(null);
+  const completeScrollRef = useRef<ScrollView>(null);
 
   const handleDragStart = useCallback((fromColumn: 'new' | 'complete') => {
     setDraggingColumn(fromColumn);
@@ -126,11 +130,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         </View>
         <View style={styles.scrollWrapper}>
           <ScrollView
+            ref={newScrollRef}
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={16}
-            scrollEnabled={draggingColumn !== 'new'}
           >
             {newOrders.length === 0 ? (
               <View style={styles.emptyState}>
@@ -153,6 +157,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onDragRelease={handleDragRelease}
                   onTap={handleOrderTap}
                   onStatusChange={() => handleStatusChange(order.id, 'new')}
+                  onScrollLock={() => {
+                    newScrollRef.current?.setNativeProps({ scrollEnabled: false });
+                  }}
+                  onScrollUnlock={() => {
+                    newScrollRef.current?.setNativeProps({ scrollEnabled: true });
+                  }}
                 />
               ))
             )}
@@ -181,11 +191,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         </View>
         <View style={styles.scrollWrapper}>
           <ScrollView
+            ref={completeScrollRef}
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={16}
-            scrollEnabled={draggingColumn !== 'complete'}
           >
             {completeOrders.length === 0 ? (
               <View style={styles.emptyState}>
@@ -208,6 +218,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onDragRelease={handleDragRelease}
                   onTap={handleOrderTap}
                   onStatusChange={() => handleStatusChange(order.id, 'complete')}
+                  onScrollLock={() => {
+                    completeScrollRef.current?.setNativeProps({ scrollEnabled: false });
+                  }}
+                  onScrollUnlock={() => {
+                    completeScrollRef.current?.setNativeProps({ scrollEnabled: true });
+                  }}
                 />
               ))
             )}

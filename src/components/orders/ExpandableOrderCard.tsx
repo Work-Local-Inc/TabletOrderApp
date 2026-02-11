@@ -34,6 +34,10 @@ interface ExpandableOrderCardProps {
   onTap: (orderId: string) => void;
   onStatusChange: (orderId: string) => void;
   containerWidth: number;
+  // Scroll lock: disable parent ScrollView the instant a card is touched
+  // so native Android ScrollView can't steal horizontal gestures
+  onScrollLock?: () => void;
+  onScrollUnlock?: () => void;
 }
 
 /**
@@ -119,6 +123,8 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   onTap,
   onStatusChange,
   containerWidth,
+  onScrollLock,
+  onScrollUnlock,
 }) => {
   const { theme, themeMode } = useTheme();
   const pan = useRef(new Animated.ValueXY()).current;
@@ -127,6 +133,29 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const opacity = useRef(new Animated.Value(1)).current;
   const isDragging = useRef(false);
   const startTime = useRef(0);
+
+  // ── "Latest refs" pattern ──────────────────────────────────────────
+  // PanResponder is created once in useRef and captures a stale closure.
+  // These refs are updated every render so the PanResponder always reads
+  // the current callback / value without needing to be recreated.
+  const onDragEndRef = useRef(onDragEnd);
+  const onDragStartRef = useRef(onDragStart);
+  const onDragReleaseRef = useRef(onDragRelease);
+  const onTapRef = useRef(onTap);
+  const onScrollLockRef = useRef(onScrollLock);
+  const onScrollUnlockRef = useRef(onScrollUnlock);
+  const containerWidthRef = useRef(containerWidth);
+  const orderIdRef = useRef(order.id);
+
+  // Update refs on every render (synchronous, no useEffect delay)
+  onDragEndRef.current = onDragEnd;
+  onDragStartRef.current = onDragStart;
+  onDragReleaseRef.current = onDragRelease;
+  onTapRef.current = onTap;
+  onScrollLockRef.current = onScrollLock;
+  onScrollUnlockRef.current = onScrollUnlock;
+  containerWidthRef.current = containerWidth;
+  orderIdRef.current = order.id;
 
   const customerName = order.customer?.name || 'Walk-in';
   const customerPhone = order.customer?.phone;
@@ -264,29 +293,18 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const panResponder = useRef(
     PanResponder.create({
       // Claim touch on start so native Android ScrollView doesn't grab it first.
-      // Native ScrollView operates at the native level and will win if we don't claim.
-      // We'll give up to ScrollView only when vertical movement is clearly established.
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Also claim on move if horizontal movement dominates (reclaim after termination)
         return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
       },
-      // Capture phase: intercept horizontal moves before ScrollView can claim them
       onMoveShouldSetPanResponderCapture: (_, gestureState) => {
         return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
       },
-      // CRITICAL: Allow native ScrollView to work on Android
       onShouldBlockNativeResponder: () => false,
-      // Smart termination: only give up when vertical scroll intent is clear.
-      // Default to KEEPING the touch so horizontal drags aren't stolen.
       onPanResponderTerminationRequest: (_, gestureState) => {
-        // Active drag: never give up
         if (isDragging.current) return false;
-        // Horizontal movement started: keep the touch
         if (Math.abs(gestureState.dx) > 5 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)) return false;
-        // Only give up when vertical movement clearly dominates (user is scrolling)
         if (Math.abs(gestureState.dy) > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5) return true;
-        // No clear direction yet: hold the touch (don't give up prematurely)
         return false;
       },
       onPanResponderGrant: () => {
@@ -294,34 +312,33 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
         isDragging.current = false;
       },
       onPanResponderMove: (_, gestureState) => {
-        // Only start drag after significant horizontal movement
         if (!isDragging.current && Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)) {
           isDragging.current = true;
           zIndex.setValue(20);
           opacity.setValue(0.92);
           Vibration.vibrate(50);
           Animated.spring(scale, { toValue: 1.08, useNativeDriver: false }).start();
-          onDragStart?.();
+          onDragStartRef.current?.();
         }
         if (isDragging.current) {
           pan.setValue({ x: gestureState.dx, y: 0 });
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        // Reset visual state
         Animated.spring(scale, { toValue: 1, useNativeDriver: false }).start();
         opacity.setValue(1);
         zIndex.setValue(2);
+        onScrollUnlockRef.current?.();
 
         if (isDragging.current) {
-          onDragRelease?.();
+          onDragReleaseRef.current?.();
           isDragging.current = false;
 
-          const threshold = containerWidth * 0.25;
+          const threshold = Math.min(containerWidthRef.current * 0.25, 80);
           if (Math.abs(gestureState.dx) > threshold) {
             Vibration.vibrate(100);
             pan.setValue({ x: 0, y: 0 });
-            onDragEnd(order.id, gestureState.dx);
+            onDragEndRef.current(orderIdRef.current, gestureState.dx);
           } else {
             Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
           }
@@ -332,8 +349,9 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
       onPanResponderTerminate: () => {
         zIndex.setValue(2);
         opacity.setValue(1);
+        onScrollUnlockRef.current?.();
         if (isDragging.current) {
-          onDragRelease?.();
+          onDragReleaseRef.current?.();
         }
         isDragging.current = false;
         Animated.parallel([
@@ -428,16 +446,18 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
             ],
           },
         ]}
-        // Tap detection via native touch events — lightweight, doesn't claim
-        // the responder, so it coexists with PanResponder without conflict.
+        // CRITICAL: Lock parent ScrollView the INSTANT a card is touched.
+        // Uses refs so we always call the current (non-stale) callbacks.
         onTouchStart={() => {
           startTime.current = Date.now();
+          onScrollLockRef.current?.();
         }}
         onTouchEnd={() => {
           const duration = Date.now() - startTime.current;
           if (!isDragging.current && duration < 300) {
-            onTap(order.id);
+            onTapRef.current(orderIdRef.current);
           }
+          onScrollUnlockRef.current?.();
         }}
         {...panResponder.panHandlers}
       >
