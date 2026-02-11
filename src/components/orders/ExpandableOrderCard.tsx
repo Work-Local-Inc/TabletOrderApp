@@ -5,7 +5,6 @@ import {
   View,
   Vibration,
   Animated,
-  PanResponder,
   TouchableOpacity,
   LayoutAnimation,
   Platform,
@@ -14,6 +13,12 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import {
+  PanGestureHandler,
+  PanGestureHandlerGestureEvent,
+  PanGestureHandlerStateChangeEvent,
+  State,
+} from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Order } from '../../types';
 import { useTheme } from '../../theme';
@@ -38,6 +43,8 @@ interface ExpandableOrderCardProps {
   // so native Android ScrollView can't steal horizontal gestures
   onScrollLock?: () => void;
   onScrollUnlock?: () => void;
+  // Allow coordination with parent ScrollView gesture handler
+  simultaneousHandlers?: any;
 }
 
 /**
@@ -125,6 +132,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   containerWidth,
   onScrollLock,
   onScrollUnlock,
+  simultaneousHandlers,
 }) => {
   const { theme, themeMode } = useTheme();
   const pan = useRef(new Animated.ValueXY()).current;
@@ -290,77 +298,79 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const borderColor = isExpanded ? colors.borderExpanded : colors.border;
   const accentColor = column === 'new' ? colors.newAccent : colors.completeAccent;
 
-  const panResponder = useRef(
-    PanResponder.create({
-      // Claim touch on start so native Android ScrollView doesn't grab it first.
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-      },
-      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-      },
-      onShouldBlockNativeResponder: () => false,
-      onPanResponderTerminationRequest: (_, gestureState) => {
-        if (isDragging.current) return false;
-        if (Math.abs(gestureState.dx) > 5 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)) return false;
-        if (Math.abs(gestureState.dy) > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5) return true;
-        return false;
-      },
-      onPanResponderGrant: () => {
-        startTime.current = Date.now();
+  const resetVisuals = () => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: false }).start();
+    opacity.setValue(1);
+    zIndex.setValue(2);
+  };
+
+  const handlePanGestureEvent = (event: PanGestureHandlerGestureEvent) => {
+    const { translationX, translationY } = event.nativeEvent;
+
+    if (!isDragging.current && Math.abs(translationX) > 15 && Math.abs(translationX) > Math.abs(translationY)) {
+      isDragging.current = true;
+      zIndex.setValue(20);
+      opacity.setValue(0.92);
+      Vibration.vibrate(50);
+      Animated.spring(scale, { toValue: 1.08, useNativeDriver: false }).start();
+      onDragStartRef.current?.();
+      onScrollLockRef.current?.();
+    }
+
+    if (isDragging.current) {
+      pan.setValue({ x: translationX, y: 0 });
+    }
+  };
+
+  const handlePanStateChange = (event: PanGestureHandlerStateChangeEvent) => {
+    const { state, translationX, translationY } = event.nativeEvent;
+
+    if (state === State.BEGAN) {
+      startTime.current = Date.now();
+      isDragging.current = false;
+      return;
+    }
+
+    if (state === State.END) {
+      const dragDuration = Date.now() - startTime.current;
+      resetVisuals();
+      onScrollUnlockRef.current?.();
+
+      if (isDragging.current) {
+        onDragReleaseRef.current?.();
         isDragging.current = false;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (!isDragging.current && Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)) {
-          isDragging.current = true;
-          zIndex.setValue(20);
-          opacity.setValue(0.92);
-          Vibration.vibrate(50);
-          Animated.spring(scale, { toValue: 1.08, useNativeDriver: false }).start();
-          onDragStartRef.current?.();
-        }
-        if (isDragging.current) {
-          pan.setValue({ x: gestureState.dx, y: 0 });
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        Animated.spring(scale, { toValue: 1, useNativeDriver: false }).start();
-        opacity.setValue(1);
-        zIndex.setValue(2);
-        onScrollUnlockRef.current?.();
 
-        if (isDragging.current) {
-          onDragReleaseRef.current?.();
-          isDragging.current = false;
-
-          const threshold = Math.min(containerWidthRef.current * 0.25, 80);
-          if (Math.abs(gestureState.dx) > threshold) {
-            Vibration.vibrate(100);
-            pan.setValue({ x: 0, y: 0 });
-            onDragEndRef.current(orderIdRef.current, gestureState.dx);
-          } else {
-            Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
-          }
+        const threshold = Math.min(containerWidthRef.current * 0.25, 80);
+        if (Math.abs(translationX) > threshold) {
+          Vibration.vibrate(100);
+          pan.setValue({ x: 0, y: 0 });
+          onDragEndRef.current(orderIdRef.current, translationX);
         } else {
-          isDragging.current = false;
+          Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
         }
-      },
-      onPanResponderTerminate: () => {
-        zIndex.setValue(2);
-        opacity.setValue(1);
-        onScrollUnlockRef.current?.();
-        if (isDragging.current) {
-          onDragReleaseRef.current?.();
+      } else {
+        if (dragDuration < 300 && Math.abs(translationX) < 10 && Math.abs(translationY) < 10) {
+          onTapRef.current(orderIdRef.current);
         }
+        Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
         isDragging.current = false;
-        Animated.parallel([
-          Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }),
-          Animated.spring(scale, { toValue: 1, useNativeDriver: false }),
-        ]).start();
-      },
-    })
-  ).current;
+      }
+      return;
+    }
+
+    if (state === State.CANCELLED || state === State.FAILED) {
+      resetVisuals();
+      onScrollUnlockRef.current?.();
+      if (isDragging.current) {
+        onDragReleaseRef.current?.();
+      }
+      isDragging.current = false;
+      Animated.parallel([
+        Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }),
+        Animated.spring(scale, { toValue: 1, useNativeDriver: false }),
+      ]).start();
+    }
+  };
 
   const handlePhonePress = () => {
     if (customerPhone) {
@@ -428,58 +438,52 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     const collapsedMutedColor = isCompleteColumn ? 'rgba(255,255,255,0.9)' : colors.textMuted;
     
     return (
-      <Animated.View
-        renderToHardwareTextureAndroid
-        style={[
-          styles.card,
-          {
-            backgroundColor: collapsedBg,
-            borderColor: isCompleteColumn ? '#DC2626' : borderColor,
-            borderLeftColor: accentColor,
-            zIndex: zIndex,
-            elevation: zIndex,
-            opacity: opacity,
-            transform: [
-              { translateX: pan.x },
-              { translateY: pan.y },
-              { scale: scale },
-            ],
-          },
-        ]}
-        // CRITICAL: Lock parent ScrollView the INSTANT a card is touched.
-        // Uses refs so we always call the current (non-stale) callbacks.
-        onTouchStart={() => {
-          startTime.current = Date.now();
-          onScrollLockRef.current?.();
-        }}
-        onTouchEnd={() => {
-          const duration = Date.now() - startTime.current;
-          if (!isDragging.current && duration < 300) {
-            onTapRef.current(orderIdRef.current);
-          }
-          onScrollUnlockRef.current?.();
-        }}
-        {...panResponder.panHandlers}
+      <PanGestureHandler
+        onGestureEvent={handlePanGestureEvent}
+        onHandlerStateChange={handlePanStateChange}
+        activeOffsetX={[-10, 10]}
+        failOffsetY={[-10, 10]}
+        simultaneousHandlers={simultaneousHandlers}
       >
-        <View style={styles.collapsedContent}>
-          <View style={styles.collapsedLeft}>
-            <Text style={[styles.collapsedName, { color: collapsedTextColor }]} numberOfLines={1}>
-              {customerName}
-            </Text>
-            <Text style={[styles.collapsedType, { color: collapsedSecondaryColor }]}>
-              {getOrderTypeLabel(orderType)}
-            </Text>
+        <Animated.View
+          renderToHardwareTextureAndroid
+          style={[
+            styles.card,
+            {
+              backgroundColor: collapsedBg,
+              borderColor: isCompleteColumn ? '#DC2626' : borderColor,
+              borderLeftColor: accentColor,
+              zIndex: zIndex,
+              elevation: zIndex,
+              opacity: opacity,
+              transform: [
+                { translateX: pan.x },
+                { translateY: pan.y },
+                { scale: scale },
+              ],
+            },
+          ]}
+        >
+          <View style={styles.collapsedContent}>
+            <View style={styles.collapsedLeft}>
+              <Text style={[styles.collapsedName, { color: collapsedTextColor }]} numberOfLines={1}>
+                {customerName}
+              </Text>
+              <Text style={[styles.collapsedType, { color: collapsedSecondaryColor }]}>
+                {getOrderTypeLabel(orderType)}
+              </Text>
+            </View>
+            <View style={styles.collapsedRight}>
+              <Text style={[styles.collapsedTime, { color: collapsedMutedColor }]}>
+                {formatTime(order.created_at)}
+              </Text>
+              <Text style={[styles.collapsedOrder, { color: collapsedMutedColor }]}>
+                #{getShortOrderNumber(order.order_number)}
+              </Text>
+            </View>
           </View>
-          <View style={styles.collapsedRight}>
-            <Text style={[styles.collapsedTime, { color: collapsedMutedColor }]}>
-              {formatTime(order.created_at)}
-            </Text>
-            <Text style={[styles.collapsedOrder, { color: collapsedMutedColor }]}>
-              #{getShortOrderNumber(order.order_number)}
-            </Text>
-          </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </PanGestureHandler>
     );
   }
 

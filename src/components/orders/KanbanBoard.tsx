@@ -2,12 +2,12 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   useWindowDimensions,
   Vibration,
   TouchableOpacity,
 } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import { Order } from '../../types';
 import { useTheme } from '../../theme';
 import { ExpandableOrderCard } from './ExpandableOrderCard';
@@ -163,6 +163,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onScrollUnlock={() => {
                     newScrollRef.current?.setNativeProps({ scrollEnabled: true });
                   }}
+                  simultaneousHandlers={newScrollRef.current || undefined}
                 />
               ))
             )}
@@ -224,6 +225,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onScrollUnlock={() => {
                     completeScrollRef.current?.setNativeProps({ scrollEnabled: true });
                   }}
+                  simultaneousHandlers={completeScrollRef.current || undefined}
                 />
               ))
             )}

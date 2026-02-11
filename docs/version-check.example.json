@@ -1,0 +1,7 @@
+{
+  "min_version": "1.4.1",
+  "latest_version": "1.4.5",
+  "required": true,
+  "message": "Update required to keep receiving orders.",
+  "update_url": "market://details?id=ca.menu.orders"
+}

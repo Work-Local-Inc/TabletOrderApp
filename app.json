@@ -2,7 +2,7 @@
   "expo": {
     "name": "Menu.ca Orders",
     "slug": "TabletOrderApp",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "orientation": "landscape",
     "runtimeVersion": {
       "policy": "appVersion"
