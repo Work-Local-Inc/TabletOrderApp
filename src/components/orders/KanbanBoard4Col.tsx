@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -47,6 +47,17 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
   const { themeMode } = useTheme();
   const { width } = useWindowDimensions();
   const columnWidth = width / 4;
+
+  // Track which column has an active drag so we can disable scroll during drag
+  const [draggingColumn, setDraggingColumn] = useState<ColumnType | null>(null);
+
+  const handleDragStart = useCallback((fromColumn: ColumnType) => {
+    setDraggingColumn(fromColumn);
+  }, []);
+
+  const handleDragRelease = useCallback(() => {
+    setDraggingColumn(null);
+  }, []);
 
   const colors = {
     bg: themeMode === 'dark' ? '#0f172a' : '#f8fafc',
@@ -183,6 +194,7 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
+          scrollEnabled={draggingColumn !== config.key}
         >
           {orders.length === 0 ? (
             <View style={styles.emptyState}>
@@ -201,6 +213,8 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
                 onDragEnd={(orderId, translationX) =>
                   handleDragEnd(orderId, translationX, config.key)
                 }
+                onDragStart={() => handleDragStart(config.key)}
+                onDragRelease={handleDragRelease}
                 onTap={handleOrderTap}
                 onStatusChange={() => handleStatusButtonPress(order.id, config.key)}
               />

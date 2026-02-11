@@ -130,6 +130,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={16}
+            scrollEnabled={draggingColumn !== 'new'}
           >
             {newOrders.length === 0 ? (
               <View style={styles.emptyState}>
@@ -184,6 +185,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={16}
+            scrollEnabled={draggingColumn !== 'complete'}
           >
             {completeOrders.length === 0 ? (
               <View style={styles.emptyState}>

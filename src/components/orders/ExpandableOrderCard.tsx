@@ -263,19 +263,31 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
 
   const panResponder = useRef(
     PanResponder.create({
-      // Claim touch on start for tap detection
+      // Claim touch on start so native Android ScrollView doesn't grab it first.
+      // Native ScrollView operates at the native level and will win if we don't claim.
+      // We'll give up to ScrollView only when vertical movement is clearly established.
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10;
+        // Also claim on move if horizontal movement dominates (reclaim after termination)
+        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      },
+      // Capture phase: intercept horizontal moves before ScrollView can claim them
+      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
       },
       // CRITICAL: Allow native ScrollView to work on Android
       onShouldBlockNativeResponder: () => false,
-      // Allow ScrollView to take over for vertical scrolling
+      // Smart termination: only give up when vertical scroll intent is clear.
+      // Default to KEEPING the touch so horizontal drags aren't stolen.
       onPanResponderTerminationRequest: (_, gestureState) => {
-        // If we're actively dragging horizontally, don't give up
+        // Active drag: never give up
         if (isDragging.current) return false;
-        // Otherwise let ScrollView take over
-        return true;
+        // Horizontal movement started: keep the touch
+        if (Math.abs(gestureState.dx) > 5 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)) return false;
+        // Only give up when vertical movement clearly dominates (user is scrolling)
+        if (Math.abs(gestureState.dy) > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5) return true;
+        // No clear direction yet: hold the touch (don't give up prematurely)
+        return false;
       },
       onPanResponderGrant: () => {
         startTime.current = Date.now();
@@ -296,19 +308,10 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        const dragDuration = Date.now() - startTime.current;
-
         // Reset visual state
         Animated.spring(scale, { toValue: 1, useNativeDriver: false }).start();
         opacity.setValue(1);
         zIndex.setValue(2);
-
-        // Tap detection: short duration, small movement, wasn't dragging
-        if (!isDragging.current && dragDuration < 300 && Math.abs(gestureState.dx) < 10 && Math.abs(gestureState.dy) < 10) {
-          isDragging.current = false;
-          onTap(order.id);
-          return;
-        }
 
         if (isDragging.current) {
           onDragRelease?.();
@@ -425,6 +428,17 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
             ],
           },
         ]}
+        // Tap detection via native touch events — lightweight, doesn't claim
+        // the responder, so it coexists with PanResponder without conflict.
+        onTouchStart={() => {
+          startTime.current = Date.now();
+        }}
+        onTouchEnd={() => {
+          const duration = Date.now() - startTime.current;
+          if (!isDragging.current && duration < 300) {
+            onTap(order.id);
+          }
+        }}
         {...panResponder.panHandlers}
       >
         <View style={styles.collapsedContent}>
