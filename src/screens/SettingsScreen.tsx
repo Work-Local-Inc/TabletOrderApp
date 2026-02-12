@@ -538,6 +538,8 @@ export const SettingsScreen: React.FC = () => {
             <TouchableOpacity
               style={[styles.settingRowTouchable, { borderTopWidth: 1, borderTopColor: '#334155' }]}
               onPress={() => setShowViewModeSelector(!showViewModeSelector)}
+              testID="settings-view-mode"
+              nativeID="settings-view-mode"
             >
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>📋 Workflow View</Text>
@@ -561,6 +563,8 @@ export const SettingsScreen: React.FC = () => {
                       updateSettings({ viewMode: mode.value });
                       setShowViewModeSelector(false);
                     }}
+                    testID={`settings-view-mode-${mode.value}`}
+                    nativeID={`settings-view-mode-${mode.value}`}
                   >
                     <View style={{ flex: 1 }}>
                       <Text style={styles.selectorOptionLabel}>{mode.label}</Text>
@@ -588,15 +592,21 @@ export const SettingsScreen: React.FC = () => {
                   onPress={() => adjustArchiveLimit(-10)}
                   onLongPress={() => adjustArchiveLimit(-50)}
                   delayLongPress={250}
+                  testID="settings-archive-limit-decrease"
+                  nativeID="settings-archive-limit-decrease"
                 >
                   <Text style={styles.stepperButtonText}>-</Text>
                 </TouchableOpacity>
-                <Text style={styles.stepperValue}>{completedArchiveLimit}</Text>
+                <Text style={styles.stepperValue} testID="settings-archive-limit-value" nativeID="settings-archive-limit-value">
+                  {completedArchiveLimit}
+                </Text>
                 <TouchableOpacity
                   style={styles.stepperButton}
                   onPress={() => adjustArchiveLimit(10)}
                   onLongPress={() => adjustArchiveLimit(50)}
                   delayLongPress={250}
+                  testID="settings-archive-limit-increase"
+                  nativeID="settings-archive-limit-increase"
                 >
                   <Text style={styles.stepperButtonText}>+</Text>
                 </TouchableOpacity>

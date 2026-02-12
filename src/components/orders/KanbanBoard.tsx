@@ -198,6 +198,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               <TouchableOpacity
                 style={[styles.recallBtn, { backgroundColor: colors.countBadge }]}
                 onPress={() => setShowRecall((prev) => !prev)}
+                testID="completed-recall-button"
+                nativeID="completed-recall-button"
               >
                 <Text style={[styles.recallBtnText, { color: colors.textMuted }]}>
                   {showRecall ? 'Back' : `Recall (${archivedCompleteOrders.length})`}
@@ -228,7 +230,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             ) : (
               <>
                 {showRecall && (
-                  <View style={styles.recallBanner}>
+                  <View style={styles.recallBanner} testID="completed-recall-banner" nativeID="completed-recall-banner">
                     <Text style={[styles.recallBannerText, { color: colors.textMuted }]}>
                       Recall mode — tap an order to reopen
                     </Text>

@@ -117,12 +117,25 @@ export const useOrderNotifications = () => {
         !order.acknowledged_at
     );
 
-    if (settings.ringUntilAccepted && hasUnacceptedPending) {
+    const ringEnabled = settings.ringUntilAccepted && settings.soundEnabled;
+    if (!ringEnabled) {
+      stopRinging();
+      return;
+    }
+
+    if (hasUnacceptedPending) {
       startRinging();
     } else {
       stopRinging();
     }
-  }, [orders.orders, settings.ringUntilAccepted, startRinging, stopRinging]);
+  }, [orders.orders, settings.ringUntilAccepted, settings.soundEnabled, startRinging, stopRinging]);
+
+  // Hard-stop ring loop whenever toggle or sound is disabled
+  useEffect(() => {
+    if (!settings.ringUntilAccepted || !settings.soundEnabled) {
+      stopRinging();
+    }
+  }, [settings.ringUntilAccepted, settings.soundEnabled, stopRinging]);
 
   useEffect(() => {
     return () => {

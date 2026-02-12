@@ -3,13 +3,23 @@ appId: ca.menu.orders
 # Preconditions:
 # - Device is logged in
 # - Orders screen is visible
-# - At least one pending, unacknowledged order is visible (Accept button shown)
 - tapOn: { text: "OK", optional: true }
 - tapOn: { text: "Print Now", optional: true }
 - tapOn: { text: "Connect Printer", optional: true }
 - tapOn: { text: "CONNECT PRINTER", optional: true }
 - tapOn: { text: "Refresh", optional: true }
 - waitForAnimationToEnd: { timeout: 3000 }
-- assertVisible: { id: "order-accept-button" }
-- tapOn: { id: "order-accept-button" }
+
+# Open Settings
+- tapOn: { id: "orders-settings-button" }
 - waitForAnimationToEnd: { timeout: 2000 }
+
+# Open view mode selector and choose 3 columns
+- tapOn: { id: "settings-view-mode" }
+- tapOn: { id: "settings-view-mode-three" }
+
+# Back to orders and confirm 3-column header text
+- back
+- waitForAnimationToEnd: { timeout: 2000 }
+- assertVisible: { text: "Active" }
+- assertVisible: { text: "Complete" }

@@ -52,6 +52,8 @@ interface AppStore {
   login: (deviceUuid: string, deviceKey: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  hasHydrated: boolean;
+  setHasHydrated: (value: boolean) => void;
 
   // Orders
   orders: OrdersState;
@@ -88,6 +90,8 @@ export const useStore = create<AppStore>()(
         restaurantName: null,
         deviceName: null,
       },
+      hasHydrated: false,
+      setHasHydrated: (value) => set({ hasHydrated: value }),
 
       setAuth: (auth) =>
         set((state) => ({ auth: { ...state.auth, ...auth } })),
@@ -135,6 +139,7 @@ export const useStore = create<AppStore>()(
             lastFetchTime: null,
             error: null,
           },
+          acceptedOrderMap: {},
         });
       },
 
@@ -167,6 +172,10 @@ export const useStore = create<AppStore>()(
 
       fetchOrders: async () => {
         const { orders: currentState, offline } = get();
+        const hydrated = get().hasHydrated;
+        if (!hydrated) {
+          console.log('[Store] fetchOrders called before hydration - continuing');
+        }
         console.log('[Store] fetchOrders called, isOnline:', offline.isOnline);
 
         // Don't fetch if offline
@@ -196,19 +205,23 @@ export const useStore = create<AppStore>()(
           const newishIds = new Set(
             newOrders.filter(o => isNewishStatus(o.status)).map(o => o.id)
           );
-          const cleanedAcceptedMap = Object.fromEntries(
-            Object.entries(acceptedOrderMap).filter(([id]) => newishIds.has(id))
-          );
+          const cleanedAcceptedMap = hydrated
+            ? Object.fromEntries(
+                Object.entries(acceptedOrderMap).filter(([id]) => newishIds.has(id))
+              )
+            : {};
 
           // Override acknowledged_at locally for new-ish orders based on local accept state
           // NOTE: We intentionally ignore server acknowledged_at because backend auto-acks on fetch.
-          const normalizedOrders = newOrders.map((order) => {
-            if (isNewishStatus(order.status)) {
-              const acceptedAt = cleanedAcceptedMap[order.id] || null;
-              return { ...order, acknowledged_at: acceptedAt };
-            }
-            return order;
-          });
+          const normalizedOrders = hydrated
+            ? newOrders.map((order) => {
+                if (isNewishStatus(order.status)) {
+                  const acceptedAt = cleanedAcceptedMap[order.id] || null;
+                  return { ...order, acknowledged_at: acceptedAt };
+                }
+                return order;
+              })
+            : newOrders;
 
           // Use server response as source of truth - removes deleted orders
           // Sort by created_at descending (newest first)
@@ -222,7 +235,7 @@ export const useStore = create<AppStore>()(
             : false;
 
           set({
-            acceptedOrderMap: cleanedAcceptedMap,
+            acceptedOrderMap: hydrated ? cleanedAcceptedMap : acceptedOrderMap,
             orders: {
               orders: mergedOrders,
               selectedOrder: selectedStillExists ? currentState.selectedOrder : null,
@@ -563,8 +576,23 @@ export const useStore = create<AppStore>()(
     {
       name: 'tablet-order-app-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: () => (_state, error) => {
+        if (error) {
+          console.warn('[Store] Rehydrate error:', error);
+        }
+        _state?.setHasHydrated(true);
+        // Re-fetch after hydration so accept state can be re-applied
+        setTimeout(() => {
+          try {
+            _state?.fetchOrders?.();
+          } catch (err) {
+            console.warn('[Store] fetchOrders after hydration failed:', err);
+          }
+        }, 0);
+      },
       partialize: (state) => ({
         settings: state.settings,
+        acceptedOrderMap: state.acceptedOrderMap,
         offline: { queuedActions: state.offline.queuedActions, isOnline: true },
       }),
     }

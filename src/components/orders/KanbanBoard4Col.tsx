@@ -182,7 +182,8 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
         key={config.key} 
         style={[
           styles.column, 
-          !isLastColumn && { borderRightColor: colors.border, borderRightWidth: 1 }
+          !isLastColumn && { borderRightColor: colors.border, borderRightWidth: 1 },
+          draggingColumn === config.key ? styles.columnDragging : styles.columnIdle,
         ]}
       >
         <View style={[styles.columnHeader, { backgroundColor: colors.headerBg }]}>
@@ -203,6 +204,8 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
               <TouchableOpacity
                 style={[styles.recallBtn, { backgroundColor: colors.countBadge }]}
                 onPress={() => setShowRecall((prev) => !prev)}
+                testID="completed-recall-button"
+                nativeID="completed-recall-button"
               >
                 <Text style={[styles.recallBtnText, { color: colors.textMuted }]}>
                   {showRecall ? 'Back' : `Recall (${recallCount})`}
@@ -232,7 +235,7 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
           ) : (
             <>
               {showRecall && isCompleteColumn && (
-                <View style={styles.recallBanner}>
+                <View style={styles.recallBanner} testID="completed-recall-banner" nativeID="completed-recall-banner">
                   <Text style={[styles.recallBannerText, { color: colors.textMuted }]}>
                     Recall mode — tap an order to reopen
                   </Text>
@@ -285,10 +288,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'row',
+    overflow: 'visible',
   },
   column: {
     flex: 1,
     overflow: 'visible',
+    position: 'relative',
+  },
+  columnIdle: {
+    zIndex: 1,
+    elevation: 0,
+  },
+  columnDragging: {
+    zIndex: 10,
+    elevation: 0,
   },
   columnHeader: {
     flexDirection: 'row',

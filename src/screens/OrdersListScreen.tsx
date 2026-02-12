@@ -680,6 +680,8 @@ export const OrdersListScreen: React.FC = () => {
     const currentCount = unprintedPendingOrders.length;
     // IMPORTANT: Default to TRUE if setting is undefined (defensive coding)
     const alertsEnabled = settings?.printerAlertsEnabled !== false;
+    const soundEnabled = settings?.soundEnabled !== false;
+    const canAlert = alertsEnabled && soundEnabled;
     
     console.log(`[ALERT-CHECK] Unprinted: ${currentCount}, AlertsEnabled: ${alertsEnabled}, Setting value: ${settings?.printerAlertsEnabled}`);
     
@@ -689,7 +691,7 @@ export const OrdersListScreen: React.FC = () => {
     const shouldPlayImmediate = currentCount > 0 && 
       (currentCount > lastUnprintedCount.current || !initialAlertPlayed.current);
     
-    if (shouldPlayImmediate && alertsEnabled) {
+    if (shouldPlayImmediate && canAlert) {
       console.log(`[ALERT] 🚨 NEW unprinted order! Count: ${currentCount}`);
       playAlertSound();
       Vibration.vibrate([0, 800, 200, 800, 200, 800]);
@@ -707,7 +709,7 @@ export const OrdersListScreen: React.FC = () => {
     
     if (currentCount > 0) {
       // Show popup ONCE per session - only if alerts enabled
-      if (!alertPopupShown.current && alertsEnabled) {
+      if (!alertPopupShown.current && canAlert) {
         alertPopupShown.current = true;
         
         // Different buttons based on printer connection status
@@ -743,7 +745,7 @@ export const OrdersListScreen: React.FC = () => {
       }
       
       // Keep alerting every 60 seconds until handled (only if alerts enabled)
-      if (alertsEnabled) {
+      if (canAlert) {
         backlogAlertInterval.current = setInterval(() => {
           console.log(`[ALERT] 🔔 REMINDER: ${currentCount} unprinted orders!`);
           playAlertSound();
@@ -756,13 +758,23 @@ export const OrdersListScreen: React.FC = () => {
       initialAlertPlayed.current = false;
     }
     
+    if (!canAlert) {
+      if (backlogAlertInterval.current) {
+        clearInterval(backlogAlertInterval.current);
+        backlogAlertInterval.current = null;
+      }
+      // Reset alert gating so re-enabling alerts will behave correctly
+      alertPopupShown.current = false;
+      initialAlertPlayed.current = false;
+    }
+
     return () => {
       if (backlogAlertInterval.current) {
         clearInterval(backlogAlertInterval.current);
         backlogAlertInterval.current = null;
       }
     };
-  }, [ordersList, printedOrderIds, playAlertSound, settings?.printerAlertsEnabled, settings?.printerMacAddress, navigation]);
+  }, [ordersList, printedOrderIds, playAlertSound, settings?.printerAlertsEnabled, settings?.soundEnabled, settings?.printerMacAddress, navigation]);
 
   // Sync printed orders to Active status on load
   // Direct: pending → preparing (backend now allows this)
@@ -1226,6 +1238,8 @@ export const OrdersListScreen: React.FC = () => {
           <TouchableOpacity
           style={[styles.settingsButton, { backgroundColor: theme.surface }]}
             onPress={() => navigation.navigate('Settings')}
+            testID="orders-settings-button"
+            nativeID="orders-settings-button"
           >
             <Ionicons name="settings-outline" size={24} color={theme.textSecondary} />
           </TouchableOpacity>
