@@ -589,8 +589,8 @@ export const SettingsScreen: React.FC = () => {
               <View style={styles.stepper}>
                 <TouchableOpacity
                   style={styles.stepperButton}
-                  onPress={() => adjustArchiveLimit(-10)}
-                  onLongPress={() => adjustArchiveLimit(-50)}
+                  onPress={() => adjustArchiveLimit(-1)}
+                  onLongPress={() => adjustArchiveLimit(-10)}
                   delayLongPress={250}
                   testID="settings-archive-limit-decrease"
                   nativeID="settings-archive-limit-decrease"
@@ -602,8 +602,8 @@ export const SettingsScreen: React.FC = () => {
                 </Text>
                 <TouchableOpacity
                   style={styles.stepperButton}
-                  onPress={() => adjustArchiveLimit(10)}
-                  onLongPress={() => adjustArchiveLimit(50)}
+                  onPress={() => adjustArchiveLimit(1)}
+                  onLongPress={() => adjustArchiveLimit(10)}
                   delayLongPress={250}
                   testID="settings-archive-limit-increase"
                   nativeID="settings-archive-limit-increase"

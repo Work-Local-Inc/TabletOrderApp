@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -108,8 +108,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   );
 
   const [showRecall, setShowRecall] = useState(false);
+  useEffect(() => {
+    if (showRecall && archivedCompleteOrders.length === 0) {
+      setShowRecall(false);
+    }
+  }, [showRecall, archivedCompleteOrders.length]);
   const completeOrdersToRender = showRecall ? archivedCompleteOrders : completeOrders;
   const completeCount = completeOrdersToRender.length;
+  const showRecallToggle = showRecall || archivedCompleteOrders.length > 0;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -194,7 +200,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             <Text style={[styles.columnTitle, { color: colors.text }]}>Complete</Text>
           </View>
           <View style={styles.headerRight}>
-            {archivedCompleteOrders.length > 0 && (
+            {showRecallToggle && (
               <TouchableOpacity
                 style={[styles.recallBtn, { backgroundColor: colors.countBadge }]}
                 onPress={() => setShowRecall((prev) => !prev)}

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -171,11 +171,18 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
     [onStatusChange, onOrderSelect]
   );
 
+  useEffect(() => {
+    if (showRecall && archivedCompleteOrders.length === 0) {
+      setShowRecall(false);
+    }
+  }, [showRecall, archivedCompleteOrders.length]);
+
   const renderColumn = (config: typeof COLUMN_CONFIG[0], index: number) => {
     const orders = getOrdersForColumn(config.key);
     const isLastColumn = index === COLUMN_CONFIG.length - 1;
     const isCompleteColumn = config.key === 'complete';
     const recallCount = archivedCompleteOrders.length;
+    const showRecallToggle = isCompleteColumn && (showRecall || recallCount > 0);
 
     return (
       <View 
@@ -200,7 +207,7 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
                 <Text style={[styles.refreshBtnText, { color: colors.textMuted }]}>↻</Text>
               </TouchableOpacity>
             )}
-            {isCompleteColumn && recallCount > 0 && (
+            {showRecallToggle && (
               <TouchableOpacity
                 style={[styles.recallBtn, { backgroundColor: colors.countBadge }]}
                 onPress={() => setShowRecall((prev) => !prev)}
