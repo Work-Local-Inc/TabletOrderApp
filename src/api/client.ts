@@ -326,10 +326,19 @@ class ApiClient {
         // Transform orders to match our internal format
         const transformedOrders = rawData.orders.map((order: any) => ({
           id: order.id?.toString() || '',
+          numeric_id: typeof order.numeric_id === 'number'
+            ? order.numeric_id
+            : typeof order.numeric_id === 'string'
+              ? parseInt(order.numeric_id, 10) || 0
+              : typeof order.id === 'number'
+                ? order.id
+                : parseInt(order.id, 10) || 0,
           order_number: order.order_number || '',
           status: order.order_status || order.status || 'pending',
           order_type: order.order_type || 'pickup',
           created_at: order.created_at || new Date().toISOString(),
+          acknowledged_at:
+            order.acknowledged_at || order.acknowledgedAt || null,
           customer: order.customer || {},
           items: (order.items || []).map((item: any) => ({
             name: item.name || '',

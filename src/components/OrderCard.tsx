@@ -46,7 +46,11 @@ export const OrderCard: React.FC<OrderCardProps> = ({
   onAcknowledge,
 }) => {
   const isPending = order.status === 'pending';
-  const isNew = !order.acknowledged_at && order.status === 'pending';
+  const isNew =
+    !order.acknowledged_at &&
+    (order.status === 'pending' ||
+      order.status === 'confirmed' ||
+      order.status === 'preparing');
 
   return (
     <TouchableOpacity

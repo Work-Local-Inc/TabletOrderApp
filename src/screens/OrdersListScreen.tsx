@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useStore } from '../store/useStore';
+import { useOrderNotifications } from '../hooks';
 import { Order, OrderStatus } from '../types';
 import { 
   printKitchenTicket, 
@@ -33,6 +34,7 @@ import {
 } from '../services/printService';
 import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus, KanbanBoard } from '../components/orders';
 import { KanbanBoard4Col } from '../components/orders/KanbanBoard4Col';
+import { KanbanBoard3Col } from '../components/orders/KanbanBoard3Col';
 import { useTheme } from '../theme';
 import { tabletUpdateOrderStatus } from '../api/supabaseRpc';
 // useHeartbeat removed - already running at app root (App.tsx)
@@ -75,6 +77,8 @@ export const OrdersListScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastKnownOrderIds = useRef<Set<string>>(new Set());
+  // Enable new-order notifications + ring-until-accepted logic
+  useOrderNotifications();
   
   // NOTE: Heartbeat removed - already running at app root (App.tsx)
   // Having it here caused duplicate heartbeats (2x network, 2x battery drain)
@@ -297,6 +301,7 @@ export const OrdersListScreen: React.FC = () => {
     orders,
     setOrders,
     fetchOrders,
+    acknowledgeOrder,
     updateOrderStatus,
     settings,
     updateSettings,
@@ -304,8 +309,33 @@ export const OrdersListScreen: React.FC = () => {
   } = useStore();
 
   const printerConnected = settings?.printerConnected ?? false;
-  const simplifiedView = settings?.simplifiedView ?? false;
+  const viewMode = settings?.viewMode ?? 'three';
+  const simplifiedView = viewMode === 'two';
+  const threeColumnView = viewMode === 'three';
   const ordersList = orders?.orders || [];
+  const completedArchiveLimit = Math.max(1, settings?.completedArchiveLimit ?? 50);
+
+  const completedOrdersBase = ordersList
+    .filter(o => o.status === 'ready' || o.status === 'completed' || o.status === 'cancelled')
+    .sort((a, b) => {
+      const aTime = new Date(a.updated_at || a.created_at).getTime();
+      const bTime = new Date(b.updated_at || b.created_at).getTime();
+      return bTime - aTime;
+    });
+
+  const completedOrdersVisible = completedOrdersBase.slice(0, completedArchiveLimit);
+  const completedOrdersArchived = completedOrdersBase.slice(completedArchiveLimit);
+
+  const completedOnlyBase = ordersList
+    .filter(o => o.status === 'completed' || o.status === 'cancelled')
+    .sort((a, b) => {
+      const aTime = new Date(a.updated_at || a.created_at).getTime();
+      const bTime = new Date(b.updated_at || b.created_at).getTime();
+      return bTime - aTime;
+    });
+
+  const completedOnlyVisible = completedOnlyBase.slice(0, completedArchiveLimit);
+  const completedOnlyArchived = completedOnlyBase.slice(completedArchiveLimit);
   
   // Find selected order
   const selectedOrder = selectedOrderId 
@@ -635,12 +665,16 @@ export const OrdersListScreen: React.FC = () => {
   const initialAlertPlayed = useRef(false);
   const lastUnprintedCount = useRef(0);
   
-  // SIMPLE ALERT: Any pending order that hasn't been printed = ALERT
+  // SIMPLE ALERT: Any new-ish order that hasn't been printed = ALERT
   // Doesn't matter why it wasn't printed - just alert!
   useEffect(() => {
-    // Find ALL pending orders that haven't been printed
+    // Find ALL new-ish orders that haven't been printed
     const unprintedPendingOrders = ordersList.filter(
-      order => order.status === 'pending' && !printedOrderIds.has(order.id)
+      order =>
+        (order.status === 'pending' ||
+          order.status === 'confirmed' ||
+          order.status === 'preparing') &&
+        !printedOrderIds.has(order.id)
     );
     
     const currentCount = unprintedPendingOrders.length;
@@ -766,10 +800,10 @@ export const OrdersListScreen: React.FC = () => {
 
   // Clear selection when entering simplified view (cards should start collapsed)
   useEffect(() => {
-    if (simplifiedView) {
+    if (viewMode === 'two') {
       setSelectedOrderId(null);
     }
-  }, [simplifiedView]);
+  }, [viewMode]);
 
   // Auto-select disabled - both views now use Kanban with cards that start collapsed
   // Users tap to expand whichever order they want to work with
@@ -891,12 +925,12 @@ export const OrdersListScreen: React.FC = () => {
 
   // Reset filter when switching between simplified and standard view
   useEffect(() => {
-    if (simplifiedView) {
+    if (viewMode === 'two') {
       setActiveFilter('simplified_new');
     } else {
       setActiveFilter('new');
     }
-  }, [simplifiedView]);
+  }, [viewMode]);
 
   // Refresh handler
   const handleRefresh = useCallback(async () => {
@@ -914,6 +948,14 @@ export const OrdersListScreen: React.FC = () => {
       Alert.alert('Error', 'Failed to update order status');
     }
   }, [updateOrderStatus]);
+
+  const handleAcceptOrder = useCallback(async (orderId: string) => {
+    try {
+      await acknowledgeOrder(orderId);
+    } catch (error) {
+      console.error('[Accept] Error:', error);
+    }
+  }, [acknowledgeOrder]);
 
   // Kanban status change - uses direct Supabase call for flexible transitions
   const handleKanbanStatusChange = useCallback(async (orderId: string, targetStatus: string) => {
@@ -1197,14 +1239,27 @@ export const OrdersListScreen: React.FC = () => {
             newOrders={ordersList.filter(o => 
               o.status === 'pending' || o.status === 'confirmed' || o.status === 'preparing'
             )}
-            completeOrders={ordersList
-              .filter(o => o.status === 'ready' || o.status === 'completed' || o.status === 'cancelled')
-              .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-            }
+            completeOrders={completedOrdersVisible}
+            archivedCompleteOrders={completedOrdersArchived}
             selectedOrderId={selectedOrderId}
             onMoveToComplete={(orderId) => handleKanbanStatusChange(orderId, 'ready')}
             onMoveToNew={(orderId) => handleKanbanStatusChange(orderId, 'pending')}
             onOrderSelect={(orderId) => setSelectedOrderId(orderId)}
+            onAccept={handleAcceptOrder}
+            onRefresh={handleRefresh}
+            refreshing={refreshing}
+          />
+        ) : threeColumnView ? (
+          /* 3-Column Kanban Board */
+          <KanbanBoard3Col
+            newOrders={ordersList.filter(o => o.status === 'pending')}
+            activeOrders={ordersList.filter(o => o.status === 'confirmed' || o.status === 'preparing')}
+            completeOrders={completedOrdersVisible}
+            archivedCompleteOrders={completedOrdersArchived}
+            selectedOrderId={selectedOrderId}
+            onStatusChange={handleKanbanStatusChange}
+            onOrderSelect={(orderId) => setSelectedOrderId(orderId)}
+            onAccept={handleAcceptOrder}
             onRefresh={handleRefresh}
             refreshing={refreshing}
           />
@@ -1214,10 +1269,12 @@ export const OrdersListScreen: React.FC = () => {
             newOrders={ordersList.filter(o => o.status === 'pending')}
             activeOrders={ordersList.filter(o => o.status === 'confirmed' || o.status === 'preparing')}
             readyOrders={ordersList.filter(o => o.status === 'ready')}
-            completeOrders={ordersList.filter(o => o.status === 'completed')}
+            completeOrders={completedOnlyVisible}
+            archivedCompleteOrders={completedOnlyArchived}
             selectedOrderId={selectedOrderId}
             onStatusChange={handleKanbanStatusChange}
             onOrderSelect={(orderId) => setSelectedOrderId(orderId)}
+            onAccept={handleAcceptOrder}
             onRefresh={handleRefresh}
             refreshing={refreshing}
           />

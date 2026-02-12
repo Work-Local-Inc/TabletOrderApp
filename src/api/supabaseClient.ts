@@ -499,7 +499,7 @@ class SupabaseApiClient {
       type: dbOrder.order_type,
       created_at: dbOrder.created_at,
       estimated_ready_time: dbOrder.estimated_ready_time,
-      acknowledged_at: dbOrder.confirmed_at,
+      acknowledged_at: dbOrder.acknowledged_at || dbOrder.acknowledgedAt || null,
       customer: {
         name: dbOrder.customer_name || 'Guest',
         phone: dbOrder.customer_phone,

@@ -145,12 +145,39 @@ const PRINT_TYPES = [
   { value: 'both', label: '🖨️ Both Tickets', description: 'Print kitchen ticket + customer receipt' },
 ] as const;
 
+const VIEW_MODES = [
+  { value: 'two', label: '2 Columns', description: 'New / Completed' },
+  { value: 'three', label: '3 Columns', description: 'New / Active / Completed' },
+  { value: 'four', label: '4 Columns', description: 'New / Active / Ready / Completed' },
+] as const;
+
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { settings, updateSettings, logout, auth, offline } = useStore();
   const { themeMode, toggleTheme } = useTheme();
   const [showIntervalSelector, setShowIntervalSelector] = useState(false);
   const [showPrintTypeSelector, setShowPrintTypeSelector] = useState(false);
+  const [showViewModeSelector, setShowViewModeSelector] = useState(false);
+
+  const yellowMin = Math.max(1, settings.orderAgingYellowMin ?? 5);
+  const redMin = Math.max(yellowMin + 1, settings.orderAgingRedMin ?? 10);
+  const completedArchiveLimit = Math.max(1, settings.completedArchiveLimit ?? 50);
+  const agingControlsDisabled = !settings.orderAgingEnabled;
+
+  const adjustYellow = (delta: number) => {
+    const next = Math.max(1, Math.min(yellowMin + delta, redMin - 1));
+    updateSettings({ orderAgingYellowMin: next });
+  };
+
+  const adjustRed = (delta: number) => {
+    const next = Math.max(yellowMin + 1, redMin + delta);
+    updateSettings({ orderAgingRedMin: next });
+  };
+
+  const adjustArchiveLimit = (delta: number) => {
+    const next = Math.max(1, Math.min(completedArchiveLimit + delta, 200));
+    updateSettings({ completedArchiveLimit: next });
+  };
   
   // Printer state
   const [isScanning, setIsScanning] = useState(false);
@@ -507,20 +534,73 @@ export const SettingsScreen: React.FC = () => {
               />
             </View>
 
-            {/* Simplified View Toggle */}
-            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+            {/* Workflow View Selector */}
+            <TouchableOpacity
+              style={[styles.settingRowTouchable, { borderTopWidth: 1, borderTopColor: '#334155' }]}
+              onPress={() => setShowViewModeSelector(!showViewModeSelector)}
+            >
               <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>📋 Simplified View</Text>
+                <Text style={styles.settingLabel}>📋 Workflow View</Text>
                 <Text style={styles.settingDescription}>
-                  2 columns: "New Orders" → "Ready" (faster workflow)
+                  {VIEW_MODES.find(mode => mode.value === (settings.viewMode ?? 'three'))?.label || '3 Columns'}
                 </Text>
               </View>
-              <Switch
-                value={settings.simplifiedView ?? false}
-                onValueChange={(value) => updateSettings({ simplifiedView: value })}
-                trackColor={{ false: '#374151', true: '#8b5cf6' }}
-                thumbColor={settings.simplifiedView ? '#fff' : '#9ca3af'}
-              />
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+
+            {showViewModeSelector && (
+              <View style={styles.selectorContainer}>
+                {VIEW_MODES.map((mode) => (
+                  <TouchableOpacity
+                    key={mode.value}
+                    style={[
+                      styles.selectorOption,
+                      (settings.viewMode ?? 'three') === mode.value && styles.selectorOptionSelected,
+                    ]}
+                    onPress={() => {
+                      updateSettings({ viewMode: mode.value });
+                      setShowViewModeSelector(false);
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.selectorOptionLabel}>{mode.label}</Text>
+                      <Text style={[styles.settingDescription, { marginTop: 2 }]}>{mode.description}</Text>
+                    </View>
+                    {(settings.viewMode ?? 'three') === mode.value && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Completed Archive Limit */}
+            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>✅ Completed Archive Limit</Text>
+                <Text style={styles.settingDescription}>
+                  Show last {completedArchiveLimit} completed orders (older go to Recall)
+                </Text>
+              </View>
+              <View style={styles.stepper}>
+                <TouchableOpacity
+                  style={styles.stepperButton}
+                  onPress={() => adjustArchiveLimit(-10)}
+                  onLongPress={() => adjustArchiveLimit(-50)}
+                  delayLongPress={250}
+                >
+                  <Text style={styles.stepperButtonText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.stepperValue}>{completedArchiveLimit}</Text>
+                <TouchableOpacity
+                  style={styles.stepperButton}
+                  onPress={() => adjustArchiveLimit(10)}
+                  onLongPress={() => adjustArchiveLimit(50)}
+                  delayLongPress={250}
+                >
+                  <Text style={styles.stepperButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -541,6 +621,22 @@ export const SettingsScreen: React.FC = () => {
                 onValueChange={(value) => updateSettings({ autoPrint: value })}
                 trackColor={{ false: '#374151', true: '#22c55e' }}
                 thumbColor={settings.autoPrint ? '#fff' : '#9ca3af'}
+              />
+            </View>
+
+            {/* Ring Until Accepted Toggle */}
+            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>🔔 Ring Until Accepted</Text>
+                <Text style={styles.settingDescription}>
+                  Repeat alerts every 15s until order is accepted
+                </Text>
+              </View>
+              <Switch
+                value={settings.ringUntilAccepted ?? false}
+                onValueChange={(value) => updateSettings({ ringUntilAccepted: value })}
+                trackColor={{ false: '#374151', true: '#10b981' }}
+                thumbColor={settings.ringUntilAccepted ? '#fff' : '#9ca3af'}
               />
             </View>
 
@@ -565,7 +661,7 @@ export const SettingsScreen: React.FC = () => {
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>🎨 Order Aging Colors</Text>
                 <Text style={styles.settingDescription}>
-                  Orders turn yellow (5min) → red (10min)
+                  Orders turn yellow ({yellowMin}m) → red ({redMin}m)
                 </Text>
               </View>
               <Switch
@@ -574,6 +670,73 @@ export const SettingsScreen: React.FC = () => {
                 trackColor={{ false: '#374151', true: '#10b981' }}
                 thumbColor={settings.orderAgingEnabled ? '#fff' : '#9ca3af'}
               />
+            </View>
+
+            {/* Aging Thresholds */}
+            <View
+              style={[
+                styles.settingRow,
+                { borderTopWidth: 1, borderTopColor: '#334155' },
+                agingControlsDisabled && { opacity: 0.5 },
+              ]}
+              pointerEvents={agingControlsDisabled ? 'none' : 'auto'}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Yellow After</Text>
+                <Text style={styles.settingDescription}>Minutes before warning</Text>
+              </View>
+              <View style={styles.stepper}>
+                <TouchableOpacity
+                  style={styles.stepperButton}
+                  onPress={() => adjustYellow(-1)}
+                  onLongPress={() => adjustYellow(-5)}
+                  delayLongPress={250}
+                >
+                  <Text style={styles.stepperButtonText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.stepperValue}>{yellowMin}m</Text>
+                <TouchableOpacity
+                  style={styles.stepperButton}
+                  onPress={() => adjustYellow(1)}
+                  onLongPress={() => adjustYellow(5)}
+                  delayLongPress={250}
+                >
+                  <Text style={styles.stepperButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View
+              style={[
+                styles.settingRow,
+                { borderTopWidth: 1, borderTopColor: '#334155' },
+                agingControlsDisabled && { opacity: 0.5 },
+              ]}
+              pointerEvents={agingControlsDisabled ? 'none' : 'auto'}
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Red After</Text>
+                <Text style={styles.settingDescription}>Minutes before critical</Text>
+              </View>
+              <View style={styles.stepper}>
+                <TouchableOpacity
+                  style={styles.stepperButton}
+                  onPress={() => adjustRed(-1)}
+                  onLongPress={() => adjustRed(-5)}
+                  delayLongPress={250}
+                >
+                  <Text style={styles.stepperButtonText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.stepperValue}>{redMin}m</Text>
+                <TouchableOpacity
+                  style={styles.stepperButton}
+                  onPress={() => adjustRed(1)}
+                  onLongPress={() => adjustRed(5)}
+                  delayLongPress={250}
+                >
+                  <Text style={styles.stepperButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Default Print Type Selector */}
@@ -961,6 +1124,31 @@ const styles = StyleSheet.create({
   settingDescription: {
     fontSize: 14,
     color: '#94a3b8',
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stepperButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#1f2937',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  stepperValue: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+    marginHorizontal: 10,
+    minWidth: 40,
+    textAlign: 'center',
   },
   chevron: {
     fontSize: 24,

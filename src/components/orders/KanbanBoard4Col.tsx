@@ -19,9 +19,11 @@ interface KanbanBoard4ColProps {
   activeOrders: Order[];    // confirmed, preparing
   readyOrders: Order[];     // ready
   completeOrders: Order[];  // completed
+  archivedCompleteOrders: Order[];
   selectedOrderId: string | null;
   onStatusChange: (orderId: string, newStatus: string) => void;
   onOrderSelect: (orderId: string | null) => void;
+  onAccept: (orderId: string) => void;
   onRefresh?: () => void;
   refreshing?: boolean;
 }
@@ -38,9 +40,11 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
   activeOrders,
   readyOrders,
   completeOrders,
+  archivedCompleteOrders,
   selectedOrderId,
   onStatusChange,
   onOrderSelect,
+  onAccept,
   onRefresh,
   refreshing = false,
 }) => {
@@ -50,6 +54,7 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
 
   // Track which column has an active drag (for zIndex only)
   const [draggingColumn, setDraggingColumn] = useState<ColumnType | null>(null);
+  const [showRecall, setShowRecall] = useState(false);
 
   // ScrollView refs for instant native-level scroll lock via setNativeProps.
   // State-based scrollEnabled is too slow — Android's native ScrollView grabs
@@ -79,7 +84,7 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
       case 'new': return newOrders;
       case 'active': return activeOrders;
       case 'ready': return readyOrders;
-      case 'complete': return completeOrders;
+      case 'complete': return showRecall ? archivedCompleteOrders : completeOrders;
     }
   };
 
@@ -142,6 +147,11 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
 
   const handleStatusButtonPress = useCallback(
     (orderId: string, column: ColumnType) => {
+      if (column === 'complete') {
+        onStatusChange(orderId, 'ready');
+        onOrderSelect(null);
+        return;
+      }
       // Status button moves to next stage
       const columnIndex = COLUMN_CONFIG.findIndex(c => c.key === column);
       if (columnIndex < COLUMN_CONFIG.length - 1) {
@@ -164,6 +174,8 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
   const renderColumn = (config: typeof COLUMN_CONFIG[0], index: number) => {
     const orders = getOrdersForColumn(config.key);
     const isLastColumn = index === COLUMN_CONFIG.length - 1;
+    const isCompleteColumn = config.key === 'complete';
+    const recallCount = archivedCompleteOrders.length;
 
     return (
       <View 
@@ -187,6 +199,16 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
                 <Text style={[styles.refreshBtnText, { color: colors.textMuted }]}>↻</Text>
               </TouchableOpacity>
             )}
+            {isCompleteColumn && recallCount > 0 && (
+              <TouchableOpacity
+                style={[styles.recallBtn, { backgroundColor: colors.countBadge }]}
+                onPress={() => setShowRecall((prev) => !prev)}
+              >
+                <Text style={[styles.recallBtnText, { color: colors.textMuted }]}>
+                  {showRecall ? 'Back' : `Recall (${recallCount})`}
+                </Text>
+              </TouchableOpacity>
+            )}
             <View style={[styles.countBadge, { backgroundColor: colors.countBadge }]}>
               <Text style={[styles.countText, { color: colors.textMuted }]}>
                 {orders.length}
@@ -204,11 +226,19 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
           {orders.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                Empty
+                {showRecall && isCompleteColumn ? 'No archived orders' : 'Empty'}
               </Text>
             </View>
           ) : (
-            orders.map((order) => (
+            <>
+              {showRecall && isCompleteColumn && (
+                <View style={styles.recallBanner}>
+                  <Text style={[styles.recallBannerText, { color: colors.textMuted }]}>
+                    Recall mode — tap an order to reopen
+                  </Text>
+                </View>
+              )}
+              {orders.map((order) => (
               <ExpandableOrderCard
                 key={order.id}
                 order={order}
@@ -222,6 +252,7 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
                 onDragRelease={handleDragRelease}
                 onTap={handleOrderTap}
                 onStatusChange={() => handleStatusButtonPress(order.id, config.key)}
+                onAccept={onAccept}
                 onScrollLock={() => {
                   scrollRefs.current[config.key]?.setNativeProps({ scrollEnabled: false });
                 }}
@@ -230,7 +261,8 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
                 }}
                 simultaneousHandlers={scrollRefs.current[config.key] || undefined}
               />
-            ))
+            ))}
+            </>
           )}
         </ScrollView>
         <View style={[styles.dragHint, { borderTopColor: colors.border }]}>
@@ -285,6 +317,15 @@ const styles = StyleSheet.create({
   refreshBtnText: {
     fontSize: 16,
   },
+  recallBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  recallBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
   statusDot: {
     width: 8,
     height: 8,
@@ -321,6 +362,15 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
+    fontStyle: 'italic',
+  },
+  recallBanner: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 4,
+  },
+  recallBannerText: {
+    fontSize: 11,
     fontStyle: 'italic',
   },
   dragHint: {

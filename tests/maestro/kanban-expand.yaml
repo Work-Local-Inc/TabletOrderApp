@@ -1,0 +1,15 @@
+appId: ca.menu.orders
+---
+# Preconditions:
+# - Device is logged in
+# - Orders screen is visible
+# - At least one collapsed order card is visible
+- tapOn: { text: "OK", optional: true }
+- tapOn: { text: "Print Now", optional: true }
+- tapOn: { text: "Connect Printer", optional: true }
+- tapOn: { text: "CONNECT PRINTER", optional: true }
+- assertVisible: { id: "order-card-collapsed" }
+- tapOn: { id: "order-card-collapsed" }
+- assertVisible: { id: "order-card-expanded" }
+- tapOn: { id: "order-card-header" }
+- assertVisible: { id: "order-card-collapsed" }

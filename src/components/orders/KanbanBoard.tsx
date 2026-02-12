@@ -15,10 +15,12 @@ import { ExpandableOrderCard } from './ExpandableOrderCard';
 interface KanbanBoardProps {
   newOrders: Order[];
   completeOrders: Order[];
+  archivedCompleteOrders?: Order[];
   selectedOrderId: string | null;
   onMoveToComplete: (orderId: string) => void;
   onMoveToNew: (orderId: string) => void;
   onOrderSelect: (orderId: string | null) => void;
+  onAccept: (orderId: string) => void;
   onRefresh?: () => void;
   refreshing?: boolean;
 }
@@ -26,10 +28,12 @@ interface KanbanBoardProps {
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   newOrders,
   completeOrders,
+  archivedCompleteOrders = [],
   selectedOrderId,
   onMoveToComplete,
   onMoveToNew,
   onOrderSelect,
+  onAccept,
   onRefresh,
   refreshing = false,
 }) => {
@@ -103,6 +107,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     [onMoveToComplete, onMoveToNew, onOrderSelect]
   );
 
+  const [showRecall, setShowRecall] = useState(false);
+  const completeOrdersToRender = showRecall ? archivedCompleteOrders : completeOrders;
+  const completeCount = completeOrdersToRender.length;
+
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
       {/* New Orders Column */}
@@ -157,6 +165,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onDragRelease={handleDragRelease}
                   onTap={handleOrderTap}
                   onStatusChange={() => handleStatusChange(order.id, 'new')}
+                  onAccept={onAccept}
                   onScrollLock={() => {
                     newScrollRef.current?.setNativeProps({ scrollEnabled: false });
                   }}
@@ -184,10 +193,22 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             <View style={[styles.statusDot, { backgroundColor: colors.completeDot }]} />
             <Text style={[styles.columnTitle, { color: colors.text }]}>Complete</Text>
           </View>
-          <View style={[styles.countBadge, { backgroundColor: colors.countBadge }]}>
-            <Text style={[styles.countText, { color: colors.textMuted }]}>
-              {completeOrders.length}
-            </Text>
+          <View style={styles.headerRight}>
+            {archivedCompleteOrders.length > 0 && (
+              <TouchableOpacity
+                style={[styles.recallBtn, { backgroundColor: colors.countBadge }]}
+                onPress={() => setShowRecall((prev) => !prev)}
+              >
+                <Text style={[styles.recallBtnText, { color: colors.textMuted }]}>
+                  {showRecall ? 'Back' : `Recall (${archivedCompleteOrders.length})`}
+                </Text>
+              </TouchableOpacity>
+            )}
+            <View style={[styles.countBadge, { backgroundColor: colors.countBadge }]}>
+              <Text style={[styles.countText, { color: colors.textMuted }]}>
+                {completeCount}
+              </Text>
+            </View>
           </View>
         </View>
         <View style={styles.scrollWrapper}>
@@ -198,14 +219,22 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={16}
           >
-            {completeOrders.length === 0 ? (
+            {completeOrdersToRender.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                  No completed orders
+                  {showRecall ? 'No archived orders' : 'No completed orders'}
                 </Text>
               </View>
             ) : (
-              completeOrders.map((order) => (
+              <>
+                {showRecall && (
+                  <View style={styles.recallBanner}>
+                    <Text style={[styles.recallBannerText, { color: colors.textMuted }]}>
+                      Recall mode — tap an order to reopen
+                    </Text>
+                  </View>
+                )}
+                {completeOrdersToRender.map((order) => (
                 <ExpandableOrderCard
                   key={order.id}
                   order={order}
@@ -219,6 +248,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onDragRelease={handleDragRelease}
                   onTap={handleOrderTap}
                   onStatusChange={() => handleStatusChange(order.id, 'complete')}
+                  onAccept={onAccept}
                   onScrollLock={() => {
                     completeScrollRef.current?.setNativeProps({ scrollEnabled: false });
                   }}
@@ -227,7 +257,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   }}
                   simultaneousHandlers={completeScrollRef.current || undefined}
                 />
-              ))
+              ))}
+              </>
             )}
           </ScrollView>
         </View>
@@ -280,6 +311,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
   },
+  recallBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  recallBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   statusDot: {
     width: 10,
     height: 10,
@@ -320,6 +360,15 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
+    fontStyle: 'italic',
+  },
+  recallBanner: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 4,
+  },
+  recallBannerText: {
+    fontSize: 12,
     fontStyle: 'italic',
   },
   dragHint: {

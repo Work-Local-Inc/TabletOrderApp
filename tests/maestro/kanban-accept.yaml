@@ -1,0 +1,18 @@
+appId: ca.menu.orders
+---
+# Preconditions:
+# - Device is logged in
+# - Orders screen is visible
+# - At least one pending, unacknowledged order is visible (Accept button shown)
+- tapOn: { text: "OK", optional: true }
+- tapOn: { text: "Print Now", optional: true }
+- tapOn: { text: "Connect Printer", optional: true }
+- tapOn: { text: "CONNECT PRINTER", optional: true }
+- tapOn: { text: "Refresh", optional: true }
+- waitForAnimationToEnd: { timeout: 3000 }
+- runFlow:
+    when:
+      visible: { id: "order-accept-button" }
+    commands:
+      - tapOn: { id: "order-accept-button" }
+      - assertNotVisible: { id: "order-accept-button" }

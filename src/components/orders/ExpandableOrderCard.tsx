@@ -17,12 +17,15 @@ import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
   PanGestureHandlerStateChangeEvent,
+  TapGestureHandler,
+  TapGestureHandlerStateChangeEvent,
   State,
 } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Order } from '../../types';
 import { useTheme } from '../../theme';
 import { apiClient } from '../../api/client';
+import { useStore } from '../../store/useStore';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -38,6 +41,7 @@ interface ExpandableOrderCardProps {
   onDragRelease?: () => void;
   onTap: (orderId: string) => void;
   onStatusChange: (orderId: string) => void;
+  onAccept?: (orderId: string) => void;
   containerWidth: number;
   // Scroll lock: disable parent ScrollView the instant a card is touched
   // so native Android ScrollView can't steal horizontal gestures
@@ -107,6 +111,18 @@ const getShortOrderNumber = (orderNumber: string): string => {
   return orderNumber.slice(-4).toUpperCase();
 };
 
+const getOrderAgeMinutes = (createdAt: string): number => {
+  const created = new Date(createdAt);
+  const now = new Date();
+  return Math.floor((now.getTime() - created.getTime()) / (1000 * 60));
+};
+
+const getAgingAccent = (ageMinutes: number, yellowMin: number, redMin: number): string | null => {
+  if (ageMinutes >= redMin) return '#ef4444';
+  if (ageMinutes >= yellowMin) return '#eab308';
+  return null;
+};
+
 const formatPrice = (price: number): string => {
   return `$${(price || 0).toFixed(2)}`;
 };
@@ -129,18 +145,25 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   onDragRelease,
   onTap,
   onStatusChange,
+  onAccept,
   containerWidth,
   onScrollLock,
   onScrollUnlock,
   simultaneousHandlers,
 }) => {
   const { theme, themeMode } = useTheme();
+  const orderAgingEnabled = useStore((state) => state.settings.orderAgingEnabled);
+  const orderAgingYellowMin = useStore((state) => state.settings.orderAgingYellowMin);
+  const orderAgingRedMin = useStore((state) => state.settings.orderAgingRedMin);
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
   const zIndex = useRef(new Animated.Value(2)).current;
   const opacity = useRef(new Animated.Value(1)).current;
   const isDragging = useRef(false);
   const startTime = useRef(0);
+  const panRef = useRef<PanGestureHandler | null>(null);
+  const tapRef = useRef<TapGestureHandler | null>(null);
+  const ignoreTapRef = useRef(false);
 
   // ── "Latest refs" pattern ──────────────────────────────────────────
   // PanResponder is created once in useRef and captures a stale closure.
@@ -169,6 +192,16 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const customerPhone = order.customer?.phone;
   const orderType = order.order_type || 'pickup';
   const items = order.items || [];
+  const showAcceptButton = order.status === 'pending' && !order.acknowledged_at;
+  const agingYellowMin = Math.max(1, orderAgingYellowMin ?? 5);
+  const agingRedMin = Math.max(agingYellowMin + 1, orderAgingRedMin ?? 10);
+  const isAgingEligible =
+    order.status !== 'completed' && order.status !== 'cancelled';
+  const orderAgeMinutes = getOrderAgeMinutes(order.created_at);
+  const agingAccent =
+    orderAgingEnabled && isAgingEligible
+      ? getAgingAccent(orderAgeMinutes, agingYellowMin, agingRedMin)
+      : null;
 
   // Driver dispatch state
   const [dispatchInfo, setDispatchInfo] = useState<{
@@ -296,7 +329,8 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const cardBackground = themeMode === 'dark' ? colors.cardBgDark : colors.cardBg;
   const contentBackground = themeMode === 'dark' ? colors.contentBgDark : colors.contentBg;
   const borderColor = isExpanded ? colors.borderExpanded : colors.border;
-  const accentColor = column === 'new' ? colors.newAccent : colors.completeAccent;
+  const baseAccentColor = column === 'new' ? colors.newAccent : colors.completeAccent;
+  const accentColor = agingAccent ?? baseAccentColor;
 
   const resetVisuals = () => {
     Animated.spring(scale, { toValue: 1, useNativeDriver: false }).start();
@@ -332,7 +366,6 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     }
 
     if (state === State.END) {
-      const dragDuration = Date.now() - startTime.current;
       resetVisuals();
       onScrollUnlockRef.current?.();
 
@@ -349,9 +382,6 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
           Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
         }
       } else {
-        if (dragDuration < 300 && Math.abs(translationX) < 10 && Math.abs(translationY) < 10) {
-          onTapRef.current(orderIdRef.current);
-        }
         Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }).start();
         isDragging.current = false;
       }
@@ -369,6 +399,13 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
         Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }),
         Animated.spring(scale, { toValue: 1, useNativeDriver: false }),
       ]).start();
+    }
+  };
+
+  const handleTapStateChange = (event: TapGestureHandlerStateChangeEvent) => {
+    if (event.nativeEvent.state === State.END) {
+      if (ignoreTapRef.current) return;
+      onTapRef.current(orderIdRef.current);
     }
   };
 
@@ -438,52 +475,80 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     const collapsedMutedColor = isCompleteColumn ? 'rgba(255,255,255,0.9)' : colors.textMuted;
     
     return (
-      <PanGestureHandler
-        onGestureEvent={handlePanGestureEvent}
-        onHandlerStateChange={handlePanStateChange}
-        activeOffsetX={[-10, 10]}
-        failOffsetY={[-10, 10]}
+      <TapGestureHandler
+        ref={tapRef}
+        onHandlerStateChange={handleTapStateChange}
+        waitFor={panRef}
         simultaneousHandlers={simultaneousHandlers}
+        maxDeltaX={10}
+        maxDeltaY={10}
       >
-        <Animated.View
-          renderToHardwareTextureAndroid
-          style={[
-            styles.card,
-            {
-              backgroundColor: collapsedBg,
-              borderColor: isCompleteColumn ? '#DC2626' : borderColor,
-              borderLeftColor: accentColor,
-              zIndex: zIndex,
-              elevation: zIndex,
-              opacity: opacity,
-              transform: [
-                { translateX: pan.x },
-                { translateY: pan.y },
-                { scale: scale },
-              ],
-            },
-          ]}
+        <PanGestureHandler
+          ref={panRef}
+          onGestureEvent={handlePanGestureEvent}
+          onHandlerStateChange={handlePanStateChange}
+          activeOffsetX={[-10, 10]}
+          failOffsetY={[-10, 10]}
+          simultaneousHandlers={simultaneousHandlers}
         >
-          <View style={styles.collapsedContent}>
-            <View style={styles.collapsedLeft}>
-              <Text style={[styles.collapsedName, { color: collapsedTextColor }]} numberOfLines={1}>
-                {customerName}
-              </Text>
-              <Text style={[styles.collapsedType, { color: collapsedSecondaryColor }]}>
-                {getOrderTypeLabel(orderType)}
-              </Text>
+          <Animated.View
+            renderToHardwareTextureAndroid
+            style={[
+              styles.card,
+              {
+                backgroundColor: collapsedBg,
+                borderColor: isCompleteColumn ? '#DC2626' : borderColor,
+                borderLeftColor: accentColor,
+                zIndex: zIndex,
+                elevation: zIndex,
+                opacity: opacity,
+                transform: [
+                  { translateX: pan.x },
+                  { translateY: pan.y },
+                  { scale: scale },
+                ],
+              },
+            ]}
+            testID="order-card-collapsed"
+            nativeID="order-card-collapsed"
+          >
+            <View style={styles.collapsedContent}>
+              <View style={styles.collapsedLeft}>
+                <Text style={[styles.collapsedName, { color: collapsedTextColor }]} numberOfLines={1}>
+                  {customerName}
+                </Text>
+                <Text style={[styles.collapsedType, { color: collapsedSecondaryColor }]}>
+                  {getOrderTypeLabel(orderType)}
+                </Text>
+              </View>
+              <View style={styles.collapsedRight}>
+                <View style={styles.collapsedMeta}>
+                  <Text style={[styles.collapsedTime, { color: collapsedMutedColor }]}>
+                    {formatTime(order.created_at)}
+                  </Text>
+                  <Text style={[styles.collapsedOrder, { color: collapsedMutedColor }]}>
+                    #{getShortOrderNumber(order.order_number)}
+                  </Text>
+                </View>
+                {showAcceptButton && (
+                  <TouchableOpacity
+                    style={styles.acceptButton}
+                    onPress={() => onAccept?.(order.id)}
+                    onPressIn={() => { ignoreTapRef.current = true; }}
+                    onPressOut={() => { ignoreTapRef.current = false; }}
+                    activeOpacity={0.85}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    testID="order-accept-button"
+                    nativeID="order-accept-button"
+                  >
+                    <Text style={styles.acceptButtonText}>Accept</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
-            <View style={styles.collapsedRight}>
-              <Text style={[styles.collapsedTime, { color: collapsedMutedColor }]}>
-                {formatTime(order.created_at)}
-              </Text>
-              <Text style={[styles.collapsedOrder, { color: collapsedMutedColor }]}>
-                #{getShortOrderNumber(order.order_number)}
-              </Text>
-            </View>
-          </View>
-        </Animated.View>
-      </PanGestureHandler>
+          </Animated.View>
+        </PanGestureHandler>
+      </TapGestureHandler>
     );
   }
 
@@ -500,12 +565,16 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
           borderColor: colors.borderExpanded,
         }
       ]}
+      testID="order-card-expanded"
+      nativeID="order-card-expanded"
     >
       {/* Header with customer name - Soft red gradient - Tap anywhere to collapse */}
       <TouchableOpacity 
         activeOpacity={0.9} 
         onPress={() => onTap(order.id)}
         style={styles.headerTouchable}
+        testID="order-card-header"
+        nativeID="order-card-header"
       >
         <LinearGradient
           colors={['#DC2626', '#B91C1C']}
@@ -760,7 +829,13 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   collapsedRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  collapsedMeta: {
     alignItems: 'flex-end',
+    marginRight: 8,
   },
   collapsedName: {
     fontSize: 16,
@@ -777,6 +852,17 @@ const styles = StyleSheet.create({
   },
   collapsedOrder: {
     fontSize: 14,
+    fontWeight: '700',
+  },
+  acceptButton: {
+    backgroundColor: '#22c55e',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  acceptButtonText: {
+    color: '#0f172a',
+    fontSize: 12,
     fontWeight: '700',
   },
 

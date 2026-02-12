@@ -32,8 +32,12 @@ interface SettingsState {
   printerMacAddress: string | null;
   defaultPrintType: 'kitchen' | 'receipt' | 'both';
   printerAlertsEnabled: boolean; // Sound + vibration alerts for unprinted orders
+  ringUntilAccepted: boolean; // Repeat new order alerts until accepted
   orderAgingEnabled: boolean; // Color-coded order aging (green → yellow → red)
-  simplifiedView: boolean; // 2-column view: "New Orders" + "Ready" instead of 4 columns
+  orderAgingYellowMin: number; // Minutes before yellow warning
+  orderAgingRedMin: number; // Minutes before red critical
+  completedArchiveLimit: number; // Max completed orders shown before archiving
+  viewMode: 'two' | 'three' | 'four'; // Kanban view mode
 }
 
 interface OfflineState {
@@ -61,6 +65,9 @@ interface AppStore {
   // Settings
   settings: SettingsState;
   updateSettings: (settings: Partial<SettingsState>) => void;
+
+  // Local Accept state (client-side only)
+  acceptedOrderMap: Record<string, string>;
 
   // Offline
   offline: OfflineState;
@@ -179,11 +186,33 @@ export const useStore = create<AppStore>()(
         console.log('[Store] API result:', result.success, 'orders:', result.data?.orders?.length || 0);
 
         if (result.success && result.data) {
+          const { acceptedOrderMap } = get();
           const newOrders = result.data.orders;
+
+          const isNewishStatus = (status: string) =>
+            status === 'pending' || status === 'confirmed' || status === 'preparing';
+
+          // Keep local accept state only for orders still in "new-ish" statuses
+          const newishIds = new Set(
+            newOrders.filter(o => isNewishStatus(o.status)).map(o => o.id)
+          );
+          const cleanedAcceptedMap = Object.fromEntries(
+            Object.entries(acceptedOrderMap).filter(([id]) => newishIds.has(id))
+          );
+
+          // Override acknowledged_at locally for new-ish orders based on local accept state
+          // NOTE: We intentionally ignore server acknowledged_at because backend auto-acks on fetch.
+          const normalizedOrders = newOrders.map((order) => {
+            if (isNewishStatus(order.status)) {
+              const acceptedAt = cleanedAcceptedMap[order.id] || null;
+              return { ...order, acknowledged_at: acceptedAt };
+            }
+            return order;
+          });
 
           // Use server response as source of truth - removes deleted orders
           // Sort by created_at descending (newest first)
-          const mergedOrders = newOrders.sort(
+          const mergedOrders = normalizedOrders.sort(
             (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
 
@@ -193,6 +222,7 @@ export const useStore = create<AppStore>()(
             : false;
 
           set({
+            acceptedOrderMap: cleanedAcceptedMap,
             orders: {
               orders: mergedOrders,
               selectedOrder: selectedStillExists ? currentState.selectedOrder : null,
@@ -253,7 +283,29 @@ export const useStore = create<AppStore>()(
       },
 
       acknowledgeOrder: async (orderId) => {
-        const { offline } = get();
+        const { offline, acceptedOrderMap } = get();
+
+        const acknowledgedAt = new Date().toISOString();
+        // Optimistically mark as acknowledged so alerts stop immediately
+        set((state) => ({
+          acceptedOrderMap: { ...acceptedOrderMap, [orderId]: acknowledgedAt },
+          orders: {
+            ...state.orders,
+            orders: state.orders.orders.map((o) =>
+              o.id === orderId
+                ? { ...o, acknowledged_at: o.acknowledged_at || acknowledgedAt }
+                : o
+            ),
+            selectedOrder:
+              state.orders.selectedOrder?.id === orderId
+                ? {
+                    ...state.orders.selectedOrder,
+                    acknowledged_at:
+                      state.orders.selectedOrder.acknowledged_at || acknowledgedAt,
+                  }
+                : state.orders.selectedOrder,
+          },
+        }));
 
         if (!offline.isOnline) {
           get().addToQueue({
@@ -270,11 +322,23 @@ export const useStore = create<AppStore>()(
             orders: {
               ...state.orders,
               orders: state.orders.orders.map((o) =>
-                o.id === orderId ? result.data! : o
+                o.id === orderId
+                  ? {
+                      ...o,
+                      ...result.data!,
+                      numeric_id: o.numeric_id ?? (result.data as any).numeric_id,
+                    }
+                  : o
               ),
               selectedOrder:
                 state.orders.selectedOrder?.id === orderId
-                  ? result.data!
+                  ? {
+                      ...state.orders.selectedOrder,
+                      ...result.data!,
+                      numeric_id:
+                        state.orders.selectedOrder.numeric_id ??
+                        (result.data as any).numeric_id,
+                    }
                   : state.orders.selectedOrder,
             },
           }));
@@ -388,12 +452,19 @@ export const useStore = create<AppStore>()(
         printerMacAddress: null,
         defaultPrintType: 'kitchen', // Default to kitchen tickets
         printerAlertsEnabled: true, // Alert when orders can't print
+        ringUntilAccepted: false, // Repeat alert until accepted (off by default)
         orderAgingEnabled: false, // Color-coded aging OFF by default
-        simplifiedView: true, // Simplified 2-column Kanban view by default
+        orderAgingYellowMin: 5, // Yellow after 5 minutes
+        orderAgingRedMin: 10, // Red after 10 minutes
+        completedArchiveLimit: 50, // Show last 50 completed orders before archive
+        viewMode: 'three', // Default to 3-column view (New / Active / Completed)
       },
 
       updateSettings: (settings) =>
         set((state) => ({ settings: { ...state.settings, ...settings } })),
+
+      // Local Accept state
+      acceptedOrderMap: {},
 
       // ==================== Offline State ====================
       offline: {
