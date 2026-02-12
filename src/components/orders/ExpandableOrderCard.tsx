@@ -155,6 +155,8 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const orderAgingEnabled = useStore((state) => state.settings.orderAgingEnabled);
   const orderAgingYellowMin = useStore((state) => state.settings.orderAgingYellowMin);
   const orderAgingRedMin = useStore((state) => state.settings.orderAgingRedMin);
+  const viewMode = useStore((state) => state.settings.viewMode ?? 'three');
+  const isTwoColView = viewMode === 'two';
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
   const zIndex = useRef(new Animated.Value(2)).current;
@@ -425,6 +427,13 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     }
   };
 
+  const handleAcceptPress = () => {
+    onAccept?.(order.id);
+    if (!isTwoColView) {
+      onStatusChange(order.id);
+    }
+  };
+
   const handleCompleteOnly = () => {
     setShowCompleteOptions(false);
     onStatusChange(order.id);
@@ -473,6 +482,12 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     const collapsedTextColor = isCompleteColumn ? '#ffffff' : colors.text;
     const collapsedSecondaryColor = isCompleteColumn ? 'rgba(255,255,255,0.8)' : colors.textSecondary;
     const collapsedMutedColor = isCompleteColumn ? 'rgba(255,255,255,0.9)' : colors.textMuted;
+    const itemCount = (order.items || []).reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const primaryItemName = order.items && order.items.length > 0 ? order.items[0].name : '';
+    const collapsedSummary =
+      itemCount > 0
+        ? `${itemCount} item${itemCount !== 1 ? 's' : ''} • ${primaryItemName}`
+        : getOrderTypeLabel(orderType);
     
     return (
       <TapGestureHandler
@@ -517,8 +532,8 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                 <Text style={[styles.collapsedName, { color: collapsedTextColor }]} numberOfLines={1}>
                   {customerName}
                 </Text>
-                <Text style={[styles.collapsedType, { color: collapsedSecondaryColor }]}>
-                  {getOrderTypeLabel(orderType)}
+                <Text style={[styles.collapsedType, { color: collapsedSecondaryColor }]} numberOfLines={1}>
+                  {collapsedSummary}
                 </Text>
               </View>
               <View style={styles.collapsedRight}>
@@ -533,7 +548,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                 {showAcceptButton && (
                   <TouchableOpacity
                     style={styles.acceptButton}
-                    onPress={() => onAccept?.(order.id)}
+                    onPress={() => handleAcceptPress()}
                     onPressIn={() => { ignoreTapRef.current = true; }}
                     onPressOut={() => { ignoreTapRef.current = false; }}
                     activeOpacity={0.85}
@@ -618,7 +633,11 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                     style={styles.headerActionBtnCompact}
                     onPress={(e) => {
                       e.stopPropagation();
-                      onStatusChange(order.id);
+                      if (column === 'new' && !isTwoColView) {
+                        handleAcceptPress();
+                      } else {
+                        onStatusChange(order.id);
+                      }
                     }}
                     activeOpacity={0.7}
                   >
@@ -686,10 +705,17 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
               ) : (
                 <TouchableOpacity 
                   style={styles.headerActionBtn}
-                  onPress={(e) => { e.stopPropagation(); handleStatusPress(); }}
+                  onPress={(e) => { 
+                    e.stopPropagation(); 
+                    if (column === 'new' && !isTwoColView) {
+                      handleAcceptPress();
+                    } else {
+                      handleStatusPress();
+                    }
+                  }}
                 >
                   <Text style={styles.headerActionText}>
-                    {column === 'new' ? 'Complete' : 'Reopen'}
+                    {column === 'new' ? (isTwoColView ? 'Complete' : 'Accept') : 'Reopen'}
                   </Text>
                 </TouchableOpacity>
               )}

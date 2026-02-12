@@ -400,10 +400,12 @@ class ApiClient {
     }
   }
 
-  async acknowledgeOrder(orderId: string): Promise<ApiResponse<Order>> {
+  async acknowledgeOrder(orderId: string, acknowledgedAt?: string): Promise<ApiResponse<Order>> {
     try {
+      const payload = acknowledgedAt ? { acknowledged_at: acknowledgedAt } : undefined;
       const response = await this.client.post<ApiResponse<Order>>(
-        `/api/tablet/orders/${orderId}`
+        `/api/tablet/orders/${orderId}`,
+        payload
       );
       return response.data;
     } catch (error) {

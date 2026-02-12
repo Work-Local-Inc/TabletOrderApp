@@ -296,7 +296,9 @@ export const useStore = create<AppStore>()(
       },
 
       acknowledgeOrder: async (orderId) => {
-        const { offline, acceptedOrderMap } = get();
+        const { offline, acceptedOrderMap, orders: currentOrdersState } = get();
+        const targetOrder = currentOrdersState.orders.find(o => o.id === orderId);
+        const numericId = targetOrder?.numeric_id;
 
         const acknowledgedAt = new Date().toISOString();
         // Optimistically mark as acknowledged so alerts stop immediately
@@ -324,12 +326,13 @@ export const useStore = create<AppStore>()(
           get().addToQueue({
             type: 'acknowledge',
             order_id: orderId,
-            payload: {},
+            payload: { numeric_id: numericId },
           });
           return true;
         }
 
-        const result = await apiClient.acknowledgeOrder(orderId);
+        const ackId = numericId ? String(numericId) : orderId;
+        const result = await apiClient.acknowledgeOrder(ackId, acknowledgedAt);
         if (result.success && result.data) {
           set((state) => ({
             orders: {
@@ -523,7 +526,10 @@ export const useStore = create<AppStore>()(
 
           try {
             if (action.type === 'acknowledge') {
-              const result = await apiClient.acknowledgeOrder(action.order_id);
+              const ackId = action.payload?.numeric_id
+                ? String(action.payload.numeric_id)
+                : action.order_id;
+              const result = await apiClient.acknowledgeOrder(ackId);
               success = result.success;
             } else if (action.type === 'status_update') {
               // Use stored numeric_id, or look it up from current orders
