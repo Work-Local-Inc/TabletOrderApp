@@ -666,6 +666,38 @@ export const SettingsScreen: React.FC = () => {
               />
             </View>
 
+            {/* Expanded View Prices Toggle */}
+            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>💲 Show Prices In Expanded View</Text>
+                <Text style={styles.settingDescription}>
+                  Include item + modifier prices when an order is expanded
+                </Text>
+              </View>
+              <Switch
+                value={settings.showPricesInExpanded ?? false}
+                onValueChange={(value) => updateSettings({ showPricesInExpanded: value })}
+                trackColor={{ false: '#374151', true: '#10b981' }}
+                thumbColor={settings.showPricesInExpanded ? '#fff' : '#9ca3af'}
+              />
+            </View>
+
+            {/* Auto-show prices when no printer */}
+            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>Auto-Show Prices (No Printer)</Text>
+                <Text style={styles.settingDescription}>
+                  If no printer is connected, show prices automatically
+                </Text>
+              </View>
+              <Switch
+                value={settings.autoShowPricesWhenNoPrinter ?? true}
+                onValueChange={(value) => updateSettings({ autoShowPricesWhenNoPrinter: value })}
+                trackColor={{ false: '#374151', true: '#10b981' }}
+                thumbColor={(settings.autoShowPricesWhenNoPrinter ?? true) ? '#fff' : '#9ca3af'}
+              />
+            </View>
+
             {/* Order Aging Colors Toggle */}
             <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
               <View style={styles.settingInfo}>

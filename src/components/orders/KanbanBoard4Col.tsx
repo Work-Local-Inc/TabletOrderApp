@@ -24,6 +24,7 @@ interface KanbanBoard4ColProps {
   onStatusChange: (orderId: string, newStatus: string) => void;
   onOrderSelect: (orderId: string | null) => void;
   onAccept: (orderId: string) => void;
+  onPrint?: (order: Order) => void;
   onRefresh?: () => void;
   refreshing?: boolean;
 }
@@ -45,6 +46,7 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
   onStatusChange,
   onOrderSelect,
   onAccept,
+  onPrint,
   onRefresh,
   refreshing = false,
 }) => {
@@ -55,6 +57,7 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
   // Track which column has an active drag (for zIndex only)
   const [draggingColumn, setDraggingColumn] = useState<ColumnType | null>(null);
   const [showRecall, setShowRecall] = useState(false);
+  const [scrollHeights, setScrollHeights] = useState<Record<ColumnType, number>>({});
 
   // ScrollView refs for instant native-level scroll lock via setNativeProps.
   // State-based scrollEnabled is too slow — Android's native ScrollView grabs
@@ -232,6 +235,12 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
+          onLayout={(event) => {
+            const height = event.nativeEvent.layout.height;
+            setScrollHeights((prev) => (
+              prev[config.key] === height ? prev : { ...prev, [config.key]: height }
+            ));
+          }}
         >
           {orders.length === 0 ? (
             <View style={styles.emptyState}>
@@ -252,9 +261,10 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
               <ExpandableOrderCard
                 key={order.id}
                 order={order}
-                column={config.key === 'complete' ? 'complete' : 'new'}
+                column={config.key}
                 isExpanded={selectedOrderId === order.id}
                 containerWidth={columnWidth}
+                containerHeight={scrollHeights[config.key]}
                 onDragEnd={(orderId, translationX) =>
                   handleDragEnd(orderId, translationX, config.key)
                 }
@@ -263,6 +273,7 @@ export const KanbanBoard4Col: React.FC<KanbanBoard4ColProps> = ({
                 onTap={handleOrderTap}
                 onStatusChange={() => handleStatusButtonPress(order.id, config.key)}
                 onAccept={onAccept}
+                onPrint={onPrint}
                 onScrollLock={() => {
                   scrollRefs.current[config.key]?.setNativeProps({ scrollEnabled: false });
                 }}
@@ -295,20 +306,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'row',
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   column: {
     flex: 1,
-    overflow: 'visible',
+    overflow: 'hidden',
     position: 'relative',
   },
   columnIdle: {
     zIndex: 1,
     elevation: 0,
+    overflow: 'hidden',
   },
   columnDragging: {
     zIndex: 10,
     elevation: 0,
+    overflow: 'visible',
   },
   columnHeader: {
     flexDirection: 'row',
@@ -369,12 +382,12 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   scrollContent: {
     paddingVertical: 4,
     paddingBottom: 16,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   emptyState: {
     padding: 20,

@@ -21,6 +21,7 @@ interface KanbanBoardProps {
   onMoveToNew: (orderId: string) => void;
   onOrderSelect: (orderId: string | null) => void;
   onAccept: (orderId: string) => void;
+  onPrint?: (order: Order) => void;
   onRefresh?: () => void;
   refreshing?: boolean;
 }
@@ -34,6 +35,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onMoveToNew,
   onOrderSelect,
   onAccept,
+  onPrint,
   onRefresh,
   refreshing = false,
 }) => {
@@ -108,6 +110,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   );
 
   const [showRecall, setShowRecall] = useState(false);
+  const [scrollHeights, setScrollHeights] = useState<{ new?: number; complete?: number }>({});
   useEffect(() => {
     if (showRecall && archivedCompleteOrders.length === 0) {
       setShowRecall(false);
@@ -149,6 +152,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={16}
+            onLayout={(event) => {
+              const height = event.nativeEvent.layout.height;
+              setScrollHeights((prev) => (
+                prev.new === height ? prev : { ...prev, new: height }
+              ));
+            }}
           >
             {newOrders.length === 0 ? (
               <View style={styles.emptyState}>
@@ -162,16 +171,18 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   key={order.id}
                   order={order}
                   column="new"
-                  isExpanded={selectedOrderId === order.id}
-                  containerWidth={columnWidth}
-                  onDragEnd={(orderId, translationX) =>
-                    handleDragEnd(orderId, translationX, 'new')
-                  }
+                isExpanded={selectedOrderId === order.id}
+                containerWidth={columnWidth}
+                containerHeight={scrollHeights.new}
+                onDragEnd={(orderId, translationX) =>
+                  handleDragEnd(orderId, translationX, 'new')
+                }
                   onDragStart={() => handleDragStart('new')}
                   onDragRelease={handleDragRelease}
                   onTap={handleOrderTap}
                   onStatusChange={() => handleStatusChange(order.id, 'new')}
                   onAccept={onAccept}
+                  onPrint={onPrint}
                   onScrollLock={() => {
                     newScrollRef.current?.setNativeProps({ scrollEnabled: false });
                   }}
@@ -226,6 +237,12 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             scrollEventThrottle={16}
+            onLayout={(event) => {
+              const height = event.nativeEvent.layout.height;
+              setScrollHeights((prev) => (
+                prev.complete === height ? prev : { ...prev, complete: height }
+              ));
+            }}
           >
             {completeOrdersToRender.length === 0 ? (
               <View style={styles.emptyState}>
@@ -247,16 +264,18 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   key={order.id}
                   order={order}
                   column="complete"
-                  isExpanded={selectedOrderId === order.id}
-                  containerWidth={columnWidth}
-                  onDragEnd={(orderId, translationX) =>
-                    handleDragEnd(orderId, translationX, 'complete')
-                  }
+                isExpanded={selectedOrderId === order.id}
+                containerWidth={columnWidth}
+                containerHeight={scrollHeights.complete}
+                onDragEnd={(orderId, translationX) =>
+                  handleDragEnd(orderId, translationX, 'complete')
+                }
                   onDragStart={() => handleDragStart('complete')}
                   onDragRelease={handleDragRelease}
                   onTap={handleOrderTap}
                   onStatusChange={() => handleStatusChange(order.id, 'complete')}
                   onAccept={onAccept}
+                  onPrint={onPrint}
                   onScrollLock={() => {
                     completeScrollRef.current?.setNativeProps({ scrollEnabled: false });
                   }}
@@ -285,12 +304,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'row',
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   column: {
     flex: 1,
     borderRightWidth: 1,
-    overflow: 'visible',
+    overflow: 'hidden',
     zIndex: 1,
   },
   columnHeader: {
@@ -351,12 +370,12 @@ const styles = StyleSheet.create({
   },
   scrollWrapper: {
     flex: 1,
-    overflow: 'visible',
+    overflow: 'hidden',
     zIndex: 1,
   },
   scrollView: {
     flex: 1,
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   scrollContent: {
     paddingVertical: 8,

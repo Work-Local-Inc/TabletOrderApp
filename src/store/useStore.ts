@@ -38,6 +38,8 @@ interface SettingsState {
   orderAgingRedMin: number; // Minutes before red critical
   completedArchiveLimit: number; // Max completed orders shown before archiving
   viewMode: 'two' | 'three' | 'four'; // Kanban view mode
+  showPricesInExpanded: boolean; // Show prices in expanded order view
+  autoShowPricesWhenNoPrinter: boolean; // Auto-enable prices when no printer connected
 }
 
 interface OfflineState {
@@ -474,6 +476,8 @@ export const useStore = create<AppStore>()(
         orderAgingRedMin: 10, // Red after 10 minutes
         completedArchiveLimit: 50, // Show last 50 completed orders before archive
         viewMode: 'three', // Default to 3-column view (New / Active / Completed)
+        showPricesInExpanded: false, // Default OFF for kitchen speed
+        autoShowPricesWhenNoPrinter: true, // Auto-enable when no printer connected
       },
 
       updateSettings: (settings) =>

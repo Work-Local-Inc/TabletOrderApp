@@ -14,6 +14,7 @@ export interface OrderModifier {
   price: number;
   quantity?: number; // Quantity of this modifier (e.g., "extra cheese x2")
   placement?: 'whole' | 'left' | 'right' | null;
+  group_name?: string | null; // Modifier group label (e.g., "CHOOSE YOUR SIZE", "Extra Sauce")
 }
 
 export interface CustomerInfo {

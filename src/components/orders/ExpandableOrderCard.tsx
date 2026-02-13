@@ -6,6 +6,7 @@ import {
   Vibration,
   Animated,
   TouchableOpacity,
+  ScrollView,
   LayoutAnimation,
   Platform,
   UIManager,
@@ -27,6 +28,8 @@ import { useTheme } from '../../theme';
 import { apiClient } from '../../api/client';
 import { useStore } from '../../store/useStore';
 
+const BRAND_PURPLE = '#7c3aed';
+
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -34,7 +37,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 interface ExpandableOrderCardProps {
   order: Order;
-  column: 'new' | 'complete';
+  column: 'new' | 'active' | 'ready' | 'complete';
   isExpanded: boolean;
   onDragEnd: (orderId: string, translationX: number) => void;
   onDragStart?: () => void;
@@ -42,7 +45,9 @@ interface ExpandableOrderCardProps {
   onTap: (orderId: string) => void;
   onStatusChange: (orderId: string) => void;
   onAccept?: (orderId: string) => void;
+  onPrint?: (order: Order) => void;
   containerWidth: number;
+  containerHeight?: number;
   // Scroll lock: disable parent ScrollView the instant a card is touched
   // so native Android ScrollView can't steal horizontal gestures
   onScrollLock?: () => void;
@@ -146,7 +151,9 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   onTap,
   onStatusChange,
   onAccept,
+  onPrint,
   containerWidth,
+  containerHeight,
   onScrollLock,
   onScrollUnlock,
   simultaneousHandlers,
@@ -156,7 +163,38 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const orderAgingYellowMin = useStore((state) => state.settings.orderAgingYellowMin);
   const orderAgingRedMin = useStore((state) => state.settings.orderAgingRedMin);
   const viewMode = useStore((state) => state.settings.viewMode ?? 'three');
+  const printerConnected = useStore((state) => state.settings.printerConnected ?? false);
+  const showPricesInExpanded = useStore((state) => state.settings.showPricesInExpanded ?? false);
+  const autoShowPricesWhenNoPrinter = useStore((state) => state.settings.autoShowPricesWhenNoPrinter ?? true);
   const isTwoColView = viewMode === 'two';
+  const showPricesEffective = showPricesInExpanded || (autoShowPricesWhenNoPrinter && !printerConnected);
+
+  const nextAction = (() => {
+    if (column === 'complete') return 'reopen';
+    if (viewMode === 'two') return 'complete';
+    if (viewMode === 'three') return column === 'new' ? 'accept' : 'complete';
+    if (viewMode === 'four') {
+      if (column === 'new') return 'accept';
+      if (column === 'active') return 'ready';
+      if (column === 'ready') return 'complete';
+    }
+    return 'complete';
+  })();
+
+  const nextActionLabel = (() => {
+    switch (nextAction) {
+      case 'accept':
+        return 'Accept';
+      case 'ready':
+        return 'Ready';
+      case 'complete':
+        return 'Complete';
+      case 'reopen':
+        return 'Reopen';
+      default:
+        return 'Complete';
+    }
+  })();
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
   const zIndex = useRef(new Animated.Value(2)).current;
@@ -194,7 +232,8 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const customerPhone = order.customer?.phone;
   const orderType = order.order_type || 'pickup';
   const items = order.items || [];
-  const showAcceptButton = order.status === 'pending' && !order.acknowledged_at;
+  const showAcceptButton =
+    nextAction === 'accept' && order.status === 'pending' && !order.acknowledged_at;
   const agingYellowMin = Math.max(1, orderAgingYellowMin ?? 5);
   const agingRedMin = Math.max(agingYellowMin + 1, orderAgingRedMin ?? 10);
   const isAgingEligible =
@@ -297,6 +336,18 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   }, [isExpanded]);
 
+  // Lock parent column scroll while expanded to prevent outer scroll fighting inner scroll
+  useEffect(() => {
+    if (isExpanded) {
+      onScrollLockRef.current?.();
+    } else {
+      onScrollUnlockRef.current?.();
+    }
+    return () => {
+      onScrollUnlockRef.current?.();
+    };
+  }, [isExpanded]);
+
   // Design system colors
   const colors = {
     // Card backgrounds
@@ -315,23 +366,25 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     // Borders
     border: themeMode === 'dark' ? '#334155' : '#e2e8f0',
     borderExpanded: themeMode === 'dark' ? '#475569' : '#cbd5e1',
-    // Accents - New = Green, Complete = Red
+    // Accents
     newAccent: '#22c55e',
+    activeAccent: BRAND_PURPLE,
+    readyAccent: '#22c55e',
     completeAccent: '#DC2626',
     // Interactive
-    link: '#3b82f6',
+    link: BRAND_PURPLE,
     // Status badges
     badgeBg: 'rgba(255,255,255,0.15)',
     // Items
     itemBg: '#293A4A',
     // Action button
-    actionBg: column === 'new' ? '#22c55e' : '#3b82f6',
+    actionBg: column === 'new' ? '#22c55e' : BRAND_PURPLE,
   };
 
   const cardBackground = themeMode === 'dark' ? colors.cardBgDark : colors.cardBg;
   const contentBackground = themeMode === 'dark' ? colors.contentBgDark : colors.contentBg;
   const borderColor = isExpanded ? colors.borderExpanded : colors.border;
-  const baseAccentColor = column === 'new' ? colors.newAccent : colors.completeAccent;
+  const baseAccentColor = column === 'complete' ? colors.completeAccent : colors.newAccent;
   const accentColor = agingAccent ?? baseAccentColor;
 
   const resetVisuals = () => {
@@ -418,24 +471,32 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     }
   };
 
-  const handleStatusPress = () => {
-    // For delivery orders with dispatch available in the "new" column, show options
-    if (column === 'new' && orderType === 'delivery' && dispatchInfo?.dispatch_available && !driverDispatched) {
-      setShowCompleteOptions(!showCompleteOptions);
-    } else {
-      onStatusChange(order.id);
-    }
-  };
-
   const handleAcceptPress = () => {
     onAccept?.(order.id);
-    if (!isTwoColView) {
-      onStatusChange(order.id);
+    onStatusChange(order.id);
+  };
+
+  const handleAdvancePress = () => {
+    if (column === 'new') {
+      onAccept?.(order.id);
     }
+    const shouldShowDispatchOptions =
+      nextAction === 'complete' &&
+      orderType === 'delivery' &&
+      dispatchInfo?.dispatch_available &&
+      !driverDispatched;
+    if (shouldShowDispatchOptions) {
+      setShowCompleteOptions(!showCompleteOptions);
+      return;
+    }
+    onStatusChange(order.id);
   };
 
   const handleCompleteOnly = () => {
     setShowCompleteOptions(false);
+    if (column === 'new') {
+      onAccept?.(order.id);
+    }
     onStatusChange(order.id);
   };
 
@@ -443,6 +504,9 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     setShowCompleteOptions(false);
     setDispatchingDriver(true);
     
+    if (column === 'new') {
+      onAccept?.(order.id);
+    }
     // First complete the order
     onStatusChange(order.id);
     
@@ -571,6 +635,8 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const isNarrow = containerWidth < 300;
 
   // Expanded card view - no PanResponder (drag only on collapsed cards)
+  const expandedMaxHeight = containerHeight ? Math.max(240, containerHeight - 8) : undefined;
+
   return (
     <View 
       style={[
@@ -578,6 +644,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
         { 
           backgroundColor: contentBackground,
           borderColor: colors.borderExpanded,
+          ...(expandedMaxHeight ? { maxHeight: expandedMaxHeight } : null),
         }
       ]}
       testID="order-card-expanded"
@@ -605,12 +672,15 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                   {customerName}
                 </Text>
                 {/* Show dispatch options for delivery orders with dispatch available */}
-                {column === 'new' && orderType === 'delivery' && dispatchInfo?.dispatch_available && !driverDispatched ? (
+                {nextAction === 'complete' && orderType === 'delivery' && dispatchInfo?.dispatch_available && !driverDispatched ? (
                   <View style={styles.headerCompactBtnGroup}>
                     <TouchableOpacity 
                       style={styles.headerActionBtnCompact}
                       onPress={(e) => {
                         e.stopPropagation();
+                        if (column === 'new') {
+                          onAccept?.(order.id);
+                        }
                         onStatusChange(order.id);
                       }}
                       activeOpacity={0.7}
@@ -633,16 +703,12 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                     style={styles.headerActionBtnCompact}
                     onPress={(e) => {
                       e.stopPropagation();
-                      if (column === 'new' && !isTwoColView) {
-                        handleAcceptPress();
-                      } else {
-                        onStatusChange(order.id);
-                      }
+                      handleAdvancePress();
                     }}
                     activeOpacity={0.7}
                   >
                     <Text style={styles.headerActionTextCompact}>
-                      {column === 'new' ? '→' : '←'}
+                      {column === 'complete' ? '←' : '→'}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -707,15 +773,11 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                   style={styles.headerActionBtn}
                   onPress={(e) => { 
                     e.stopPropagation(); 
-                    if (column === 'new' && !isTwoColView) {
-                      handleAcceptPress();
-                    } else {
-                      handleStatusPress();
-                    }
+                    handleAdvancePress();
                   }}
                 >
                   <Text style={styles.headerActionText}>
-                    {column === 'new' ? (isTwoColView ? 'Complete' : 'Accept') : 'Reopen'}
+                    {nextActionLabel}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -725,7 +787,12 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
       </TouchableOpacity>
 
       {/* Content */}
-      <View style={[styles.expandedBody, { backgroundColor: contentBackground }]}>
+      <ScrollView
+        style={[styles.expandedBodyScroll, { backgroundColor: contentBackground }]}
+        contentContainerStyle={styles.expandedBodyContent}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+      >
         {/* Order Details */}
         <View style={styles.detailsSection}>
           <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
@@ -776,7 +843,19 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
             Items ({items.length})
           </Text>
 
-          {items.map((item, index) => (
+          {items.map((item, index) => {
+            const modifiers = item.modifiers || [];
+            const hasModifiers = modifiers.length > 0;
+            const groupedModifiers = showPricesEffective
+              ? modifiers.reduce<Record<string, typeof modifiers>>((acc, mod) => {
+                  const group = mod.group_name || '';
+                  if (!acc[group]) acc[group] = [];
+                  acc[group].push(mod);
+                  return acc;
+                }, {})
+              : null;
+
+            return (
             <View key={index} style={[styles.itemRow, { borderBottomColor: colors.border }]}>
               <View style={[styles.itemIcon, { backgroundColor: colors.itemBg }]}>
                 <Text style={styles.itemInitials}>{getInitials(item.name)}</Text>
@@ -785,10 +864,34 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                 <Text style={[styles.itemName, { color: colors.text }]}>
                   {item.name}
                 </Text>
-                {item.modifiers && item.modifiers.length > 0 && (
+                {hasModifiers && !showPricesEffective && (
                   <Text style={[styles.itemMods, { color: colors.textMuted }]}>
-                    {item.modifiers.map(m => m.name).join(', ')}
+                    {modifiers.map(m => m.name).join(', ')}
                   </Text>
+                )}
+                {hasModifiers && showPricesEffective && groupedModifiers && (
+                  <View style={styles.modifierGroups}>
+                    {Object.entries(groupedModifiers).map(([groupName, groupMods]) => (
+                      <View key={groupName || 'modifiers'} style={styles.modifierGroup}>
+                        {groupName ? (
+                          <Text style={[styles.modifierGroupLabel, { color: colors.textMuted }]}>
+                            {groupName.toUpperCase()}
+                          </Text>
+                        ) : null}
+                        {groupMods.map((mod, modIndex) => (
+                          <View key={`${mod.id ?? modIndex}-${modIndex}`} style={styles.modifierRow}>
+                            <Text style={[styles.modifierName, { color: colors.textMuted }]}>
+                              {mod.quantity && mod.quantity > 1 ? `${mod.quantity}x ` : ''}
+                              {mod.name}
+                            </Text>
+                            <Text style={[styles.modifierPrice, { color: colors.textMuted }]}>
+                              {formatPrice((mod.price || 0) * (mod.quantity || 1))}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    ))}
+                  </View>
                 )}
                 {item.notes && (
                   <Text style={[styles.itemNotes, { color: colors.textSecondary }]}>
@@ -798,29 +901,34 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
               </View>
               <View style={styles.itemPricing}>
                 <Text style={[styles.itemQty, { color: colors.textMuted }]}>x{item.quantity}</Text>
-                <Text style={[styles.itemPrice, { color: colors.text }]}>
-                  {formatPrice((item.price || 0) * (item.quantity || 1))}
-                </Text>
+                {showPricesEffective && (
+                  <Text style={[styles.itemPrice, { color: colors.text }]}>
+                    {formatPrice((item.price || 0) * (item.quantity || 1))}
+                  </Text>
+                )}
               </View>
             </View>
-          ))}
+          );
+          })}
         </View>
 
         {/* Totals */}
-        <View style={[styles.totalsSection, { borderTopColor: colors.border }]}>
-          <View style={styles.totalRow}>
-            <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Subtotal</Text>
-            <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(order.subtotal || 0)}</Text>
+        {showPricesEffective && (
+          <View style={[styles.totalsSection, { borderTopColor: colors.border }]}>
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Subtotal</Text>
+              <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(order.subtotal || 0)}</Text>
+            </View>
+            <View style={styles.totalRow}>
+              <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Tax</Text>
+              <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(order.tax || 0)}</Text>
+            </View>
+            <View style={[styles.totalRow, styles.grandTotal]}>
+              <Text style={[styles.grandTotalLabel, { color: colors.text }]}>Total</Text>
+              <Text style={styles.grandTotalValue}>{formatPrice(order.total || order.total_amount || 0)}</Text>
+            </View>
           </View>
-          <View style={styles.totalRow}>
-            <Text style={[styles.totalLabel, { color: colors.textMuted }]}>Tax</Text>
-            <Text style={[styles.totalValue, { color: colors.text }]}>{formatPrice(order.tax || 0)}</Text>
-          </View>
-          <View style={[styles.totalRow, styles.grandTotal]}>
-            <Text style={[styles.grandTotalLabel, { color: colors.text }]}>Total</Text>
-            <Text style={styles.grandTotalValue}>{formatPrice(order.total || order.total_amount || 0)}</Text>
-          </View>
-        </View>
+        )}
 
         {/* Order Notes */}
         {order.notes && stripTwilioLogs(order.notes) !== '' && (
@@ -829,7 +937,22 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
             <Text style={[styles.notesText, { color: colors.textSecondary }]}>{stripTwilioLogs(order.notes)}</Text>
           </View>
         )}
-      </View>
+
+        {/* Footer Actions */}
+        {printerConnected && onPrint && (
+          <View style={styles.footerActions}>
+            <TouchableOpacity
+              style={styles.reprintButton}
+              onPress={() => onPrint(order)}
+              activeOpacity={0.8}
+              testID="order-reprint-button"
+              nativeID="order-reprint-button"
+            >
+              <Text style={styles.reprintButtonText}>Reprint</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -881,13 +1004,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   acceptButton: {
-    backgroundColor: '#22c55e',
+    backgroundColor: BRAND_PURPLE,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
   },
   acceptButtonText: {
-    color: '#0f172a',
+    color: '#ffffff',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -898,7 +1021,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     borderRadius: 10,
     borderWidth: 1,
-    overflow: 'visible',
+    overflow: 'hidden',
     position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -936,7 +1059,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.8)',
   },
   headerActionBtn: {
-    backgroundColor: '#60a5fa',
+    backgroundColor: BRAND_PURPLE,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
@@ -951,7 +1074,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerActionBtnSmall: {
-    backgroundColor: '#60a5fa',
+    backgroundColor: BRAND_PURPLE,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 8,
@@ -1007,7 +1130,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   headerActionBtnCompact: {
-    backgroundColor: '#60a5fa',
+    backgroundColor: BRAND_PURPLE,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -1042,7 +1165,10 @@ const styles = StyleSheet.create({
   },
 
   // Body styles
-  expandedBody: {
+  expandedBodyScroll: {
+    flex: 1,
+  },
+  expandedBodyContent: {
     padding: 16,
   },
   detailsSection: {
@@ -1119,6 +1245,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
+  modifierGroups: {
+    marginTop: 6,
+  },
+  modifierGroup: {
+    marginTop: 4,
+  },
+  modifierGroupLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  modifierRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  modifierName: {
+    flex: 1,
+    fontSize: 13,
+    marginRight: 8,
+  },
+  modifierPrice: {
+    fontSize: 13,
+    textAlign: 'right',
+  },
   itemNotes: {
     fontSize: 13,
     marginTop: 4,
@@ -1181,6 +1333,22 @@ const styles = StyleSheet.create({
   notesText: {
     fontSize: 14,
     lineHeight: 20,
+  },
+  footerActions: {
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  reprintButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: BRAND_PURPLE,
+  },
+  reprintButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '600',
   },
 
 

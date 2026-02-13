@@ -114,7 +114,12 @@ class ApiClient {
           });
         }
 
-        if (error.response?.status === 401) {
+        const isAuthEndpoint =
+          error.config?.url?.includes('/api/tablet/auth/login') ||
+          error.config?.url?.includes('/api/tablet/auth/refresh') ||
+          (error.config?.headers as any)?.['x-skip-auth-refresh'] === '1';
+
+        if (error.response?.status === 401 && !isAuthEndpoint) {
           // Token expired, try to refresh
           const refreshed = await this.refreshToken();
           if (refreshed && error.config) {
@@ -122,9 +127,15 @@ class ApiClient {
             error.config.headers.Authorization = `Bearer ${this.sessionToken}`;
             return this.client.request(error.config);
           } else {
-            // Refresh failed - clear all stored data to force re-login
-            console.log('[API] Token refresh failed, clearing stored credentials');
-            await this.clearAllStoredData();
+            // Refresh failed - try auto re-login with stored device credentials
+            const relogged = await this.reloginWithStoredCredentials();
+            if (relogged && error.config) {
+              error.config.headers.Authorization = `Bearer ${this.sessionToken}`;
+              return this.client.request(error.config);
+            }
+            // If auto re-login fails, clear session (but keep device creds)
+            console.log('[API] Token refresh failed; clearing session token (keeping device creds)');
+            await this.clearAllStoredData(true);
           }
         }
         return Promise.reject(error);
@@ -197,6 +208,41 @@ class ApiClient {
     return this.refreshPromise;
   }
 
+  private async reloginWithStoredCredentials(): Promise<boolean> {
+    try {
+      const creds = this.deviceCredentials ?? (await this.getStoredCredentials());
+      if (!creds) return false;
+
+      const response = await this.client.post<any>(
+        '/api/tablet/auth/login',
+        creds,
+        {
+          headers: {
+            // Prevent auth-refresh loops on failed login attempts
+            'x-skip-auth-refresh': '1',
+          },
+        }
+      );
+
+      const rawData = response.data;
+      if (rawData?.session_token && rawData?.device) {
+        const authData: AuthResponse = {
+          session_token: rawData.session_token,
+          expires_at: rawData.expires_at,
+          restaurant_id: rawData.device.restaurant_id.toString(),
+          restaurant_name: rawData.device.restaurant_name,
+          device_name: rawData.device.name,
+        };
+        await this.storeAuthData(authData);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Auto re-login failed:', error);
+      return false;
+    }
+  }
+
   private async storeAuthData(auth: AuthResponse): Promise<void> {
     this.sessionToken = auth.session_token;
     this.tokenExpiry = new Date(auth.expires_at);
@@ -257,19 +303,21 @@ class ApiClient {
   }
 
   async logout(): Promise<void> {
-    await this.clearAllStoredData();
+    await this.clearAllStoredData(false);
   }
 
-  private async clearAllStoredData(): Promise<void> {
+  private async clearAllStoredData(keepDeviceCredentials = false): Promise<void> {
     console.log('[API] Clearing all stored credentials and data');
     this.sessionToken = null;
     this.tokenExpiry = null;
-    this.deviceCredentials = null;
+    if (!keepDeviceCredentials) {
+      this.deviceCredentials = null;
+    }
     await Promise.all([
       // Clear sensitive data from SecureStore
       secureDelete(SECURE_KEYS.SESSION_TOKEN),
       secureDelete(SECURE_KEYS.TOKEN_EXPIRY),
-      secureDelete(SECURE_KEYS.DEVICE_CREDENTIALS),
+      ...(keepDeviceCredentials ? [] : [secureDelete(SECURE_KEYS.DEVICE_CREDENTIALS)]),
       // Clear non-sensitive data from AsyncStorage
       AsyncStorage.removeItem(STORAGE_KEYS.RESTAURANT_INFO),
     ]);
@@ -277,7 +325,11 @@ class ApiClient {
 
   async isAuthenticated(): Promise<boolean> {
     await this.loadStoredToken();
-    return this.sessionToken !== null && this.tokenExpiry !== null && this.tokenExpiry > new Date();
+    if (this.sessionToken !== null && this.tokenExpiry !== null && this.tokenExpiry > new Date()) {
+      return true;
+    }
+    // Attempt silent re-login using stored device credentials
+    return this.reloginWithStoredCredentials();
   }
 
   async getStoredCredentials(): Promise<DeviceCredentials | null> {

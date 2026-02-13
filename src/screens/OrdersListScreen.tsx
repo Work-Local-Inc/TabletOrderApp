@@ -62,6 +62,7 @@ const BACKLOG_ALERT_INTERVAL_MS = 60000; // 60 seconds (1 minute)
 
 // How often to verify printer connection (in ms)
 const PRINTER_VERIFY_INTERVAL_MS = 15000; // 15 seconds
+const PRINTER_DISCONNECT_ALERT_MS = 120000; // 2 minutes before alerting
 
 // ⚠️ CRITICAL SAFETY: Maximum age (in minutes) for auto-printing
 // Orders older than this will NEVER auto-print - they go to backlog instead
@@ -664,6 +665,8 @@ export const OrdersListScreen: React.FC = () => {
   const alertPopupShown = useRef(false);
   const initialAlertPlayed = useRef(false);
   const lastUnprintedCount = useRef(0);
+  const lastPrinterOkAt = useRef<number | null>(null);
+  const printerAlerted = useRef(false);
   
   // SIMPLE ALERT: Any new-ish order that hasn't been printed = ALERT
   // Doesn't matter why it wasn't printed - just alert!
@@ -869,6 +872,7 @@ export const OrdersListScreen: React.FC = () => {
       }
 
       const storedAsConnected = settings?.printerConnected;
+      const now = Date.now();
 
       // CRITICAL: Actually verify the Bluetooth connection works
       console.log('[PrinterCheck] 🔍 Verifying actual printer connection...');
@@ -876,33 +880,51 @@ export const OrdersListScreen: React.FC = () => {
       
       console.log(`[PrinterCheck] Result - stored: ${storedAsConnected}, actuallyWorking: ${actuallyWorking}`);
 
-      if (!actuallyWorking) {
-        // Printer is NOT actually responding - mark as disconnected
+      if (actuallyWorking) {
+        lastPrinterOkAt.current = now;
+        printerAlerted.current = false;
+
+        if (!storedAsConnected) {
+          // Printer just came back online! Alert user
+          console.log('[PrinterCheck] 🎉 Printer is back ONLINE!');
+          updateSettings({ printerConnected: true });
+          
+          // Play happy alert and show notification
+          if (settings?.printerAlertsEnabled !== false) {
+            Vibration.vibrate([0, 200, 100, 200]); // Short happy vibration
+            Alert.alert(
+              '🖨️ Printer Connected!',
+              'Your printer is back online and ready to print.',
+              [{ text: 'Great!', style: 'default' }]
+            );
+          }
+        } else {
+          console.log('[PrinterCheck] ✓ Printer connected and verified');
+        }
+        return;
+      }
+
+      // Not working: only alert after sustained outage
+      if (lastPrinterOkAt.current === null) {
+        lastPrinterOkAt.current = now;
+      }
+      const downMs = now - lastPrinterOkAt.current;
+      if (downMs < PRINTER_DISCONNECT_ALERT_MS) {
+        console.log(`[PrinterCheck] ⚠️ Printer not responding (${Math.round(downMs / 1000)}s) - waiting before alert`);
+        return;
+      }
+
+      // Sustained outage: mark as disconnected and alert once
+      if (storedAsConnected) {
         console.log('[PrinterCheck] ❌ Printer not responding - marking as DISCONNECTED');
         updateSettings({ printerConnected: false });
-        
-        // Alert user of connection loss with sound AND vibration (if alerts enabled)
-        if (storedAsConnected && settings?.printerAlertsEnabled !== false) {
-          console.log('[PrinterCheck] ⚠️ Printer was connected but is now OFF! Playing alert...');
-          Vibration.vibrate([0, 800, 200, 800, 200, 800]);
-          playAlertSound(); // Play sound alert
-        }
-      } else if (!storedAsConnected) {
-        // Printer just came back online! Alert user
-        console.log('[PrinterCheck] 🎉 Printer is back ONLINE!');
-        updateSettings({ printerConnected: true });
-        
-        // Play happy alert and show notification
-        if (settings?.printerAlertsEnabled !== false) {
-          Vibration.vibrate([0, 200, 100, 200]); // Short happy vibration
-          Alert.alert(
-            '🖨️ Printer Connected!',
-            'Your printer is back online and ready to print.',
-            [{ text: 'Great!', style: 'default' }]
-          );
-        }
-      } else {
-        console.log('[PrinterCheck] ✓ Printer connected and verified');
+      }
+
+      if (storedAsConnected && settings?.printerAlertsEnabled !== false && !printerAlerted.current) {
+        console.log('[PrinterCheck] ⚠️ Printer offline > 2 minutes! Playing alert...');
+        Vibration.vibrate([0, 800, 200, 800, 200, 800]);
+        playAlertSound();
+        printerAlerted.current = true;
       }
     };
     
@@ -1260,6 +1282,7 @@ export const OrdersListScreen: React.FC = () => {
             onMoveToNew={(orderId) => handleKanbanStatusChange(orderId, 'pending')}
             onOrderSelect={(orderId) => setSelectedOrderId(orderId)}
             onAccept={handleAcceptOrder}
+            onPrint={handlePrint}
             onRefresh={handleRefresh}
             refreshing={refreshing}
           />
@@ -1274,6 +1297,7 @@ export const OrdersListScreen: React.FC = () => {
             onStatusChange={handleKanbanStatusChange}
             onOrderSelect={(orderId) => setSelectedOrderId(orderId)}
             onAccept={handleAcceptOrder}
+            onPrint={handlePrint}
             onRefresh={handleRefresh}
             refreshing={refreshing}
           />
@@ -1289,6 +1313,7 @@ export const OrdersListScreen: React.FC = () => {
             onStatusChange={handleKanbanStatusChange}
             onOrderSelect={(orderId) => setSelectedOrderId(orderId)}
             onAccept={handleAcceptOrder}
+            onPrint={handlePrint}
             onRefresh={handleRefresh}
             refreshing={refreshing}
           />
