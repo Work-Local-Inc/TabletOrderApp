@@ -13,10 +13,16 @@ import {
   DispatchAvailabilityResponse,
   DispatchDriverResponse,
   DispatchDriverRequest,
+  TabletServiceConfig,
+  RecoveryCommand,
 } from '../types';
 import { addBreadcrumb, captureException } from '../config/sentry';
 
-const BASE_URL = 'https://orders.menu.ca';
+const normalizeBaseUrl = (url: string): string => {
+  return url.trim().replace(/\/+$/, '');
+};
+
+export const DEFAULT_API_BASE_URL = normalizeBaseUrl('https://menuai.ca');
 
 // SECURITY: Sensitive keys stored in SecureStore (OS keychain/keystore)
 // Non-sensitive keys remain in AsyncStorage for performance
@@ -28,6 +34,7 @@ const SECURE_KEYS = {
 
 const STORAGE_KEYS = {
   RESTAURANT_INFO: '@tablet_restaurant_info', // AsyncStorage (non-sensitive, display only)
+  API_BASE_URL: '@tablet_api_base_url',       // Legacy key (single-backend mode no longer reads it)
 };
 
 // Helper functions for SecureStore with error handling
@@ -62,10 +69,21 @@ class ApiClient {
   private tokenExpiry: Date | null = null;
   private refreshPromise: Promise<boolean> | null = null;
   private deviceCredentials: DeviceCredentials | null = null;
+  private baseUrl: string = DEFAULT_API_BASE_URL;
+
+  private isAuthEndpoint(url?: string, headers?: Record<string, any>): boolean {
+    return (
+      !!url &&
+      (url.includes('/api/tablet/auth/login') ||
+        url.includes('/api/tablet/auth/refresh') ||
+        url.includes('/auth/login') ||
+        url.includes('/auth/refresh'))
+    ) || headers?.['x-skip-auth-refresh'] === '1';
+  }
 
   constructor() {
     this.client = axios.create({
-      baseURL: BASE_URL,
+      baseURL: DEFAULT_API_BASE_URL,
       timeout: 15000,
       headers: {
         'Content-Type': 'application/json',
@@ -82,17 +100,14 @@ class ApiClient {
           { method: config.method, url: config.url }
         );
 
-        // Skip auth for login endpoint
-        if (config.url?.includes('/auth/login')) {
-          return config;
-        }
+        const isAuthRequest = this.isAuthEndpoint(config.url, config.headers as any);
 
-        // Check if token needs refresh
-        if (this.shouldRefreshToken()) {
+        // Never trigger token refresh logic from auth endpoints (prevents self-deadlock).
+        if (!isAuthRequest && this.shouldRefreshToken()) {
           await this.refreshToken();
         }
 
-        if (this.sessionToken) {
+        if (this.sessionToken && !config.headers.Authorization && !config.url?.includes('/auth/login')) {
           config.headers.Authorization = `Bearer ${this.sessionToken}`;
         }
         return config;
@@ -114,10 +129,10 @@ class ApiClient {
           });
         }
 
-        const isAuthEndpoint =
-          error.config?.url?.includes('/api/tablet/auth/login') ||
-          error.config?.url?.includes('/api/tablet/auth/refresh') ||
-          (error.config?.headers as any)?.['x-skip-auth-refresh'] === '1';
+        const isAuthEndpoint = this.isAuthEndpoint(
+          error.config?.url,
+          error.config?.headers as any
+        );
 
         if (error.response?.status === 401 && !isAuthEndpoint) {
           // Token expired, try to refresh
@@ -144,6 +159,7 @@ class ApiClient {
 
     // Load stored token on initialization
     this.loadStoredToken();
+    this.loadBaseUrl();
   }
 
   private async loadStoredToken(): Promise<void> {
@@ -167,6 +183,44 @@ class ApiClient {
     }
   }
 
+  private async loadBaseUrl(): Promise<void> {
+    try {
+      // Single-backend mode: force to compile-time default and discard legacy overrides.
+      this.baseUrl = DEFAULT_API_BASE_URL;
+      this.client.defaults.baseURL = DEFAULT_API_BASE_URL;
+      await AsyncStorage.removeItem(STORAGE_KEYS.API_BASE_URL);
+      console.log(`[API] Base URL locked: ${DEFAULT_API_BASE_URL}`);
+    } catch (error) {
+      console.error('[API] Failed to initialize base URL, using default:', error);
+      this.baseUrl = DEFAULT_API_BASE_URL;
+      this.client.defaults.baseURL = DEFAULT_API_BASE_URL;
+    }
+  }
+
+  async setBaseUrl(url: string): Promise<void> {
+    const normalized = normalizeBaseUrl(url);
+    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      throw new Error('API URL must start with http:// or https://');
+    }
+    if (normalized !== DEFAULT_API_BASE_URL) {
+      throw new Error('API URL override is disabled in this build');
+    }
+
+    this.baseUrl = DEFAULT_API_BASE_URL;
+    this.client.defaults.baseURL = DEFAULT_API_BASE_URL;
+    await AsyncStorage.removeItem(STORAGE_KEYS.API_BASE_URL);
+    addBreadcrumb('API base URL locked', 'config', { baseUrl: DEFAULT_API_BASE_URL });
+    console.log(`[API] Base URL set: ${DEFAULT_API_BASE_URL}`);
+  }
+
+  async getBaseUrl(): Promise<string> {
+    return DEFAULT_API_BASE_URL;
+  }
+
+  async resetBaseUrl(): Promise<void> {
+    await this.setBaseUrl(DEFAULT_API_BASE_URL);
+  }
+
   private shouldRefreshToken(): boolean {
     if (!this.tokenExpiry) return false;
     // Refresh if less than 1 hour until expiry
@@ -175,6 +229,10 @@ class ApiClient {
   }
 
   private async refreshToken(): Promise<boolean> {
+    if (!this.sessionToken) {
+      return false;
+    }
+
     // Prevent multiple simultaneous refresh attempts
     if (this.refreshPromise) {
       return this.refreshPromise;
@@ -182,9 +240,9 @@ class ApiClient {
 
     this.refreshPromise = (async () => {
       try {
-        const response = await this.client.post<ApiResponse<AuthResponse>>(
+        const response = await this.client.post<any>(
           '/api/tablet/auth/refresh',
-          {},
+          { session_token: this.sessionToken },
           {
             headers: {
               Authorization: `Bearer ${this.sessionToken}`,
@@ -192,8 +250,17 @@ class ApiClient {
           }
         );
 
-        if (response.data.success && response.data.data) {
-          await this.storeAuthData(response.data.data);
+        const rawData = response.data;
+        const refreshedToken = rawData?.session_token || rawData?.data?.session_token;
+        const refreshedExpiry = rawData?.expires_at || rawData?.data?.expires_at;
+
+        if (refreshedToken && refreshedExpiry) {
+          this.sessionToken = refreshedToken;
+          this.tokenExpiry = new Date(refreshedExpiry);
+          await Promise.all([
+            secureSet(SECURE_KEYS.SESSION_TOKEN, refreshedToken),
+            secureSet(SECURE_KEYS.TOKEN_EXPIRY, refreshedExpiry),
+          ]);
           return true;
         }
         return false;
@@ -257,6 +324,7 @@ class ApiClient {
         JSON.stringify({
           restaurant_id: auth.restaurant_id,
           restaurant_name: auth.restaurant_name,
+          restaurant_logo_url: auth.restaurant_logo_url ?? null,
           device_name: auth.device_name,
         })
       ),
@@ -277,12 +345,20 @@ class ApiClient {
 
       // Transform API response to our expected format
       if (rawData.session_token && rawData.device) {
+        const dev = rawData.device;
         const authData: AuthResponse = {
           session_token: rawData.session_token,
           expires_at: rawData.expires_at,
-          restaurant_id: rawData.device.restaurant_id.toString(),
-          restaurant_name: rawData.device.restaurant_name,
-          device_name: rawData.device.name,
+          restaurant_id: dev.restaurant_id.toString(),
+          restaurant_name: dev.restaurant_name,
+          restaurant_logo_url:
+            dev.restaurant_logo_url ||
+            dev.location_logo_url ||
+            dev.logo_url ||
+            dev.logoUrl ||
+            dev.logo ||
+            null,
+          device_name: dev.name,
         };
 
         await this.storeAuthData(authData);
@@ -295,9 +371,21 @@ class ApiClient {
       return { success: false, error: 'Invalid response from server' };
     } catch (error) {
       const axiosError = error as AxiosError<any>;
+      const status = axiosError.response?.status;
+      const serverError =
+        axiosError.response?.data?.error || axiosError.response?.data?.message;
+      const networkError = !axiosError.response
+        ? `Network error contacting ${DEFAULT_API_BASE_URL}`
+        : null;
+
       return {
         success: false,
-        error: axiosError.response?.data?.error || axiosError.response?.data?.message || 'Login failed. Please check your credentials.',
+        error:
+          serverError ||
+          networkError ||
+          (status === 401
+            ? 'Login failed. Please check your credentials.'
+            : 'Login failed. Please try again.'),
       };
     }
   }
@@ -341,13 +429,143 @@ class ApiClient {
     }
   }
 
-  async getRestaurantInfo(): Promise<{ restaurant_id: string; restaurant_name: string; device_name: string } | null> {
+  async getRestaurantInfo(): Promise<{ restaurant_id: string; restaurant_name: string; restaurant_logo_url: string | null; device_name: string } | null> {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEYS.RESTAURANT_INFO);
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
     }
+  }
+
+  async getRestaurantLocationLogoUrl(restaurantId: string): Promise<string | null> {
+    const pickUrl = (candidate: any): string | null => {
+      const maybe = [
+        candidate?.location_logo_url,
+        candidate?.locationLogoUrl,
+        candidate?.restaurant_logo_url,
+        candidate?.restaurantLogoUrl,
+        candidate?.logo_url,
+        candidate?.logoUrl,
+        candidate?.logo,
+        candidate?.image_url,
+        candidate?.imageUrl,
+        candidate?.image,
+        candidate?.url,
+        candidate?.src,
+      ].find((value) => typeof value === 'string' && value.length > 0);
+      if (typeof maybe !== 'string') return null;
+      if (maybe.startsWith('http')) return maybe;
+      if (maybe.startsWith('/')) return `${this.baseUrl}${maybe}`;
+      return null;
+    };
+
+    const pickFromLocationsPayload = (payload: any): string | null => {
+      const locations = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.locations)
+          ? payload.locations
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : Array.isArray(payload?.data?.locations)
+              ? payload.data.locations
+              : null;
+      if (!Array.isArray(locations) || locations.length === 0) return null;
+      const primary =
+        locations.find((loc: any) => loc?.is_primary || loc?.primary || loc?.isPrimary) ?? locations[0];
+      return pickUrl(primary);
+    };
+
+    try {
+      const response = await this.client.get<any>(`/api/restaurants/${restaurantId}`);
+      const payload = response.data?.data ?? response.data;
+      const direct = pickUrl(payload) ?? pickUrl(payload?.restaurant);
+      if (direct) return direct;
+      const fromLocations = pickFromLocationsPayload(payload);
+      if (fromLocations) return fromLocations;
+    } catch {
+      // ignore; device token may not have Admin access
+    }
+
+    try {
+      const response = await this.client.get<any>(`/api/restaurants/${restaurantId}/locations`);
+      const payload = response.data?.data ?? response.data;
+      const fromLocations = pickFromLocationsPayload(payload);
+      if (fromLocations) return fromLocations;
+    } catch {
+      // ignore; device token may not have Admin access
+    }
+
+    try {
+      const response = await this.client.get<any>(`/api/restaurants/${restaurantId}/images`);
+      const payload = response.data?.data ?? response.data;
+      const images = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.images)
+          ? payload.images
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : null;
+      if (Array.isArray(images) && images.length > 0) {
+        const preferred =
+          images.find((img: any) => img?.type === 'logo' || img?.kind === 'logo' || img?.tag === 'logo') ??
+          images[0];
+        const url = pickUrl(preferred);
+        if (url) return url;
+      }
+    } catch {
+      // ignore
+    }
+
+    return null;
+  }
+
+  private mapOrder(rawOrder: any): Order {
+    const normalizedId = rawOrder?.id?.toString?.() || '';
+    const normalizedNumericId =
+      typeof rawOrder?.numeric_id === 'number'
+        ? rawOrder.numeric_id
+        : typeof rawOrder?.numeric_id === 'string'
+          ? parseInt(rawOrder.numeric_id, 10) || 0
+          : typeof rawOrder?.id === 'number'
+            ? rawOrder.id
+            : parseInt(rawOrder?.id, 10) || 0;
+
+    return {
+      id: normalizedId,
+      numeric_id: normalizedNumericId,
+      order_number: rawOrder?.order_number || '',
+      restaurant_id:
+        rawOrder?.restaurant_id?.toString?.() ||
+        rawOrder?.restaurant_uuid?.toString?.() ||
+        '',
+      status: rawOrder?.order_status || rawOrder?.status || 'pending',
+      order_type: rawOrder?.order_type || 'pickup',
+      created_at: rawOrder?.created_at || new Date().toISOString(),
+      updated_at: rawOrder?.updated_at || rawOrder?.created_at || new Date().toISOString(),
+      acknowledged_at: rawOrder?.acknowledged_at || rawOrder?.acknowledgedAt || undefined,
+      customer: rawOrder?.customer || { name: 'Customer', phone: '' },
+      items: (rawOrder?.items || []).map((item: any) => ({
+        id:
+          item?.id?.toString?.() ||
+          item?.dish_id?.toString?.() ||
+          `${normalizedId}-${item?.name || 'item'}`,
+        name: item?.name || '',
+        size: item?.size || item?.item_size || item?.variant || '',
+        quantity: item?.quantity || 1,
+        price: item?.unit_price || item?.price || 0,
+        notes: item?.special_instructions || item?.notes || '',
+        modifiers: item?.modifiers || [],
+      })),
+      subtotal: rawOrder?.subtotal || 0,
+      tax: rawOrder?.tax_amount || rawOrder?.tax || 0,
+      delivery_fee: rawOrder?.delivery_fee || 0,
+      tip: rawOrder?.tip_amount || rawOrder?.tip || 0,
+      total: rawOrder?.total_amount || rawOrder?.total || 0,
+      notes: rawOrder?.notes || rawOrder?.special_instructions || '',
+      delivery_address: rawOrder?.delivery_address,
+      estimated_ready_time: rawOrder?.estimated_ready_time,
+    };
   }
 
   // ==================== Order Methods ====================
@@ -375,39 +593,7 @@ class ApiClient {
       const rawData = response.data;
       
       if (rawData && Array.isArray(rawData.orders)) {
-        // Transform orders to match our internal format
-        const transformedOrders = rawData.orders.map((order: any) => ({
-          id: order.id?.toString() || '',
-          numeric_id: typeof order.numeric_id === 'number'
-            ? order.numeric_id
-            : typeof order.numeric_id === 'string'
-              ? parseInt(order.numeric_id, 10) || 0
-              : typeof order.id === 'number'
-                ? order.id
-                : parseInt(order.id, 10) || 0,
-          order_number: order.order_number || '',
-          status: order.order_status || order.status || 'pending',
-          order_type: order.order_type || 'pickup',
-          created_at: order.created_at || new Date().toISOString(),
-          acknowledged_at:
-            order.acknowledged_at || order.acknowledgedAt || null,
-          customer: order.customer || {},
-          items: (order.items || []).map((item: any) => ({
-            name: item.name || '',
-            quantity: item.quantity || 1,
-            price: item.unit_price || item.price || 0,
-            notes: item.special_instructions || item.notes || '',
-            modifiers: item.modifiers || [],
-          })),
-          subtotal: order.subtotal || 0,
-          tax: order.tax_amount || order.tax || 0,
-          delivery_fee: order.delivery_fee || 0,
-          tip: order.tip_amount || order.tip || 0,
-          total: order.total_amount || order.total || 0,
-          notes: order.notes || '',
-          delivery_address: order.delivery_address,
-          estimated_ready_time: order.estimated_ready_time,
-        }));
+        const transformedOrders = rawData.orders.map((order: any) => this.mapOrder(order));
         
         console.log('[API] Transformed', transformedOrders.length, 'orders');
         if (transformedOrders.length > 0) {
@@ -419,13 +605,14 @@ class ApiClient {
           data: {
             orders: transformedOrders,
             total: rawData.total_count || transformedOrders.length,
+            has_more: Boolean(rawData.has_more ?? rawData.hasMore ?? false),
           },
         };
       }
       
       return {
         success: true,
-        data: { orders: [], total: 0 },
+        data: { orders: [], total: 0, has_more: false },
       };
     } catch (error) {
       const axiosError = error as AxiosError<any>;
@@ -439,10 +626,22 @@ class ApiClient {
 
   async getOrder(orderId: string): Promise<ApiResponse<Order>> {
     try {
-      const response = await this.client.get<ApiResponse<Order>>(
+      const response = await this.client.get<any>(
         `/api/tablet/orders/${orderId}`
       );
-      return response.data;
+      if (response.data?.success === false) {
+        return {
+          success: false,
+          error: response.data?.error || 'Failed to fetch order',
+        };
+      }
+      const rawData = response.data?.order || response.data?.data || response.data;
+
+      if (rawData) {
+        return { success: true, data: this.mapOrder(rawData) };
+      }
+
+      return { success: false, error: 'Invalid response from server' };
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse<never>>;
       return {
@@ -452,16 +651,26 @@ class ApiClient {
     }
   }
 
-  async acknowledgeOrder(orderId: string, acknowledgedAt?: string): Promise<ApiResponse<Order>> {
+  async acknowledgeOrder(orderId: string, acknowledgedAt?: string): Promise<ApiResponse<{ acknowledged_at?: string }>> {
     try {
       const payload = acknowledgedAt ? { acknowledged_at: acknowledgedAt } : undefined;
-      const response = await this.client.post<ApiResponse<Order>>(
+      const response = await this.client.post<any>(
         `/api/tablet/orders/${orderId}`,
         payload
       );
-      return response.data;
+      const rawData = response.data;
+      if (rawData?.success) {
+        return {
+          success: true,
+          data: { acknowledged_at: rawData.acknowledged_at || acknowledgedAt },
+        };
+      }
+      return {
+        success: false,
+        error: rawData?.error || 'Failed to acknowledge order',
+      };
     } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse<never>>;
+      const axiosError = error as AxiosError<any>;
       return {
         success: false,
         error: axiosError.response?.data?.error || 'Failed to acknowledge order',
@@ -475,7 +684,7 @@ class ApiClient {
   ): Promise<ApiResponse<Order>> {
     const endpoint = `/api/tablet/orders/${orderId}/status`;
     console.log(`[API] ====== STATUS UPDATE REQUEST ======`);
-    console.log(`[API] URL: ${BASE_URL}${endpoint}`);
+    console.log(`[API] URL: ${(this.client.defaults.baseURL || this.baseUrl)}${endpoint}`);
     console.log(`[API] Order ID: "${orderId}" (type: ${typeof orderId})`);
     console.log(`[API] Status: "${status}"`);
     console.log(`[API] Auth Token: ${this.sessionToken ? 'Present (' + this.sessionToken.substring(0, 20) + '...)' : 'MISSING!'}`);
@@ -530,11 +739,34 @@ class ApiClient {
       );
       
       // Backend may return data directly, not wrapped
-      const data = response.data;
+      const data = response.data || {};
+      if (data.config_update && !data.config_updates) {
+        data.config_updates = data.config_update;
+      }
+      if (data.config_updates && !data.config_update) {
+        data.config_update = data.config_updates;
+      }
+      if (data.recovery_command) {
+        const rawCommand = data.recovery_command as any;
+        const normalizedCommand: RecoveryCommand = {
+          id: rawCommand?.id || rawCommand?.command_id,
+          action: rawCommand?.action,
+          reason: rawCommand?.reason || null,
+          issued_at: rawCommand?.issued_at || new Date().toISOString(),
+          payload: rawCommand?.payload ?? rawCommand?.command_payload ?? null,
+        };
+
+        if (!normalizedCommand.id || !normalizedCommand.action) {
+          console.warn('[API] Ignoring malformed recovery command payload:', rawCommand);
+          delete data.recovery_command;
+        } else {
+          data.recovery_command = normalizedCommand;
+        }
+      }
       console.log('[API] Heartbeat response:', data);
       
       return {
-        success: true,
+        success: data.success !== false,
         data: data,
       };
     } catch (error) {
@@ -637,6 +869,164 @@ class ApiClient {
       return {
         success: false,
         error: `${errorMsg} (HTTP ${axiosError.response?.status || '?'})`,
+      };
+    }
+  }
+
+  // ==================== Tablet Service Config Methods ====================
+
+  private toBoolean(value: unknown, fallback: boolean | null = null): boolean | null {
+    if (typeof value === 'boolean') return value;
+    if (value === 1 || value === '1') return true;
+    if (value === 0 || value === '0') return false;
+    return fallback;
+  }
+
+  private toNumber(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim().length > 0) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  }
+
+  private unwrapTabletServicePayload(rawData: any): any {
+    if (rawData && typeof rawData === 'object' && rawData.data && typeof rawData.data === 'object') {
+      return rawData.data;
+    }
+    return rawData;
+  }
+
+  private normalizeTabletServiceConfig(rawData: any): TabletServiceConfig | null {
+    const payload = this.unwrapTabletServicePayload(rawData);
+    const hasDeliveryEnabled = this.toBoolean(
+      payload?.has_delivery_enabled ?? payload?.delivery_enabled,
+      null
+    );
+    if (hasDeliveryEnabled === null) {
+      return null;
+    }
+
+    return {
+      config_id: this.toNumber(payload?.config_id),
+      has_delivery_enabled: hasDeliveryEnabled,
+      pickup_enabled: this.toBoolean(payload?.pickup_enabled, true) ?? true,
+      takeout_time_minutes: this.toNumber(payload?.takeout_time_minutes),
+      busy_takeout_time_minutes: this.toNumber(payload?.busy_takeout_time_minutes),
+      busy_mode_enabled: this.toBoolean(payload?.busy_mode_enabled, false) ?? false,
+      twilio_call: this.toBoolean(payload?.twilio_call, false) ?? false,
+      online_ordering_enabled:
+        this.toBoolean(payload?.online_ordering_enabled, true) ?? true,
+    };
+  }
+
+  async getTabletServiceConfig(): Promise<ApiResponse<TabletServiceConfig>> {
+    try {
+      const response = await this.client.get<any>('/api/tablet/service-config');
+      const normalized = this.normalizeTabletServiceConfig(response.data);
+
+      if (!normalized) {
+        console.warn('[API] Unrecognized tablet service-config payload:', response.data);
+        return { success: false, error: 'Invalid response from server' };
+      }
+
+      return {
+        success: true,
+        data: normalized,
+      };
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      return {
+        success: false,
+        error: axiosError.response?.data?.error || 'Failed to fetch service config',
+      };
+    }
+  }
+
+  async updateTabletServiceConfig(
+    updates: Partial<
+      Pick<
+        TabletServiceConfig,
+        | 'has_delivery_enabled'
+        | 'pickup_enabled'
+        | 'takeout_time_minutes'
+        | 'busy_takeout_time_minutes'
+        | 'busy_mode_enabled'
+        | 'twilio_call'
+        | 'online_ordering_enabled'
+      >
+    >
+  ): Promise<ApiResponse<TabletServiceConfig>> {
+    try {
+      const response = await this.client.patch<any>('/api/tablet/service-config', updates);
+      const rawData = response.data;
+      const normalized = this.normalizeTabletServiceConfig(rawData);
+
+      if (rawData?.success === false) {
+        return {
+          success: false,
+          error: rawData?.error || 'Failed to update service config',
+        };
+      }
+
+      if (normalized) {
+        return {
+          success: true,
+          data: normalized,
+        };
+      }
+
+      console.warn('[API] Unrecognized tablet service-config update payload:', rawData);
+      return {
+        success: false,
+        error: rawData?.error || 'Failed to update service config',
+      };
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      return {
+        success: false,
+        error: axiosError.response?.data?.error || 'Failed to update service config',
+      };
+    }
+  }
+
+  async getDeliveryConfig(): Promise<ApiResponse<TabletServiceConfig>> {
+    return this.getTabletServiceConfig();
+  }
+
+  async updateDeliveryEnabled(hasDeliveryEnabled: boolean): Promise<ApiResponse<TabletServiceConfig>> {
+    return this.updateTabletServiceConfig({ has_delivery_enabled: hasDeliveryEnabled });
+  }
+
+  async acknowledgeRecoveryCommand(
+    commandId: string,
+    status: 'executed' | 'failed',
+    result?: string
+  ): Promise<ApiResponse<{ acknowledged: boolean }>> {
+    try {
+      const response = await this.client.post<any>(
+        '/api/tablet/recovery-ack',
+        {
+          command_id: commandId,
+          status,
+          result,
+        }
+      );
+
+      if (response.data?.success) {
+        return { success: true, data: { acknowledged: true } };
+      }
+
+      return {
+        success: false,
+        error: response.data?.error || 'Failed to acknowledge recovery command',
+      };
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      return {
+        success: false,
+        error: axiosError.response?.data?.error || 'Failed to acknowledge recovery command',
       };
     }
   }

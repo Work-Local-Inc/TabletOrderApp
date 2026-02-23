@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,10 @@ import {
   ActivityIndicator,
   Platform,
   PermissionsAndroid,
+  Linking,
+  useWindowDimensions,
 } from 'react-native';
+import * as Application from 'expo-application';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useStore } from '../store/useStore';
@@ -22,8 +25,14 @@ import {
   printTestReceipt,
   ensureConnected,
 } from '../services/printService';
-import { useTheme } from '../theme';
-import { tabletGetDeliveryConfig, tabletUpdateDeliveryEnabled } from '../api/supabaseRpc';
+import { useTheme, type Theme } from '../theme';
+import { apiClient } from '../api/client';
+import { NotificationTone, TabletServiceConfig } from '../types';
+import { initSound, playAlert } from '../services/soundService';
+
+const APP_VERSION = Application.nativeApplicationVersion || 'unknown';
+const APP_PACKAGE = Application.applicationId || 'unknown.package';
+const APP_NAME = Application.applicationName || 'Menu.ca Orders NEON';
 
 // Request Bluetooth permissions for Android 12+
 const requestBluetoothPermissions = async (): Promise<boolean> => {
@@ -35,64 +44,59 @@ const requestBluetoothPermissions = async (): Promise<boolean> => {
   }
 
   try {
+    const openAppSettings = () => {
+      Linking.openSettings().catch((err) => {
+        console.warn('[Permissions] Failed to open app settings:', err);
+      });
+    };
+
     // For Android 12+ (API 31+)
     if (Platform.Version >= 31) {
-      console.log('[Permissions] Android 12+, requesting BLUETOOTH_SCAN and BLUETOOTH_CONNECT');
+      console.log('[Permissions] Android 12+, requesting BLUETOOTH_SCAN and BLUETOOTH_CONNECT (+location fallback)');
       
       // Check if already granted first
       const scanStatus = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN);
       const connectStatus = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT);
+      const fineLocationStatus = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
       
-      console.log('[Permissions] Current status - SCAN:', scanStatus, 'CONNECT:', connectStatus);
+      console.log('[Permissions] Current status - SCAN:', scanStatus, 'CONNECT:', connectStatus, 'FINE_LOCATION:', fineLocationStatus);
       
       if (scanStatus && connectStatus) {
         console.log('[Permissions] Already granted!');
         return true;
       }
 
-      const permissions = [
+      const permissions: string[] = [
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
       ];
+      // Some Bluetooth libraries still rely on location at runtime for discovery.
+      if (!fineLocationStatus) {
+        permissions.push(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+      }
 
       console.log('[Permissions] Calling requestMultiple...');
-      
-      // Add timeout to prevent hanging if Expo Go doesn't support these permissions
-      const timeoutPromise = new Promise<any>((_, reject) => 
-        setTimeout(() => reject(new Error('Permission request timed out')), 5000)
-      );
-      
-      let results: any;
-      try {
-        results = await Promise.race([
-          PermissionsAndroid.requestMultiple(permissions),
-          timeoutPromise,
-        ]);
-      } catch (e: any) {
-        console.log('[Permissions] Request timed out or failed:', e.message);
-        Alert.alert(
-          'Bluetooth Permissions',
-          'Could not request permissions automatically.\n\nPlease go to:\nSettings → Apps → Expo Go → Permissions\n\nThen enable "Nearby devices" and "Location"',
-          [{ text: 'OK' }]
-        );
-        return false;
-      }
+      const results = await PermissionsAndroid.requestMultiple(permissions);
       console.log('[Permissions] Results:', JSON.stringify(results));
-      
-      const allGranted = Object.values(results).every(
-        result => result === PermissionsAndroid.RESULTS.GRANTED
-      );
 
-      if (!allGranted) {
-        console.log('[Permissions] Not all granted');
+      const scanGranted =
+        scanStatus || results[PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN] === PermissionsAndroid.RESULTS.GRANTED;
+      const connectGranted =
+        connectStatus || results[PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT] === PermissionsAndroid.RESULTS.GRANTED;
+
+      if (!scanGranted || !connectGranted) {
+        console.log('[Permissions] Required permissions missing');
         Alert.alert(
           'Bluetooth Permission Required',
-          'Please grant Bluetooth permissions to scan for printers. Go to Settings → Apps → Kitchen Printer → Permissions → Nearby Devices → Allow',
-          [{ text: 'OK' }]
+          `Please allow Nearby devices for this app.\n\nPath:\nSettings → Apps → ${APP_NAME} → Permissions → Nearby devices`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: openAppSettings },
+          ]
         );
         return false;
       }
-      console.log('[Permissions] All granted!');
+      console.log('[Permissions] Required Bluetooth permissions granted');
       return true;
     } else {
       // For Android 11 and below
@@ -109,13 +113,26 @@ const requestBluetoothPermissions = async (): Promise<boolean> => {
       );
       const result = granted === PermissionsAndroid.RESULTS.GRANTED;
       console.log('[Permissions] Location permission result:', result);
+      if (!result) {
+        Alert.alert(
+          'Location Permission Required',
+          `Bluetooth scanning on Android ${Platform.Version} requires Location permission.\n\nPath:\nSettings → Apps → ${APP_NAME} → Permissions → Location`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: openAppSettings },
+          ]
+        );
+      }
       return result;
     }
   } catch (err) {
     console.error('[Permissions] Error:', err);
-    // If permission check fails, try to proceed anyway
-    Alert.alert('Permission Error', 'Could not check permissions. Trying to scan anyway...');
-    return true; // Try anyway
+    Alert.alert(
+      'Permission Error',
+      `Could not complete Bluetooth permission check.\n\nPath:\nSettings → Apps → ${APP_NAME} → Permissions`,
+      [{ text: 'OK' }]
+    );
+    return false;
   }
 };
 
@@ -151,18 +168,88 @@ const VIEW_MODES = [
   { value: 'four', label: '4 Columns', description: 'New / Active / Ready / Completed' },
 ] as const;
 
+const NOTIFICATION_TONES: Array<{
+  value: NotificationTone;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'default',
+    label: 'Default Alert',
+    description: 'Current standard tablet alert',
+  },
+  {
+    value: 'submarine_sonar',
+    label: 'Submarine Sonar',
+    description: 'Deep repeating sonar ping',
+  },
+  {
+    value: 'rotary_phone',
+    label: 'Rotary Phone Ring',
+    description: 'Old-school analog phone ring',
+  },
+  {
+    value: 'clown_horn',
+    label: 'Clown Horn',
+    description: 'New horn alert from Downloads',
+  },
+];
+
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const { settings, updateSettings, logout, auth, offline } = useStore();
-  const { themeMode, toggleTheme } = useTheme();
+  const { width, height } = useWindowDimensions();
+  const {
+    settings,
+    updateSettings,
+    logout,
+    auth,
+    offline,
+    orders,
+    clearCompletedColumnNow,
+    resetCompletedColumnClear,
+  } = useStore();
+  const { theme, themeMode, toggleTheme } = useTheme();
+  const isDarkMode = themeMode === 'dark';
+  const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
+  const dividerStyle = useMemo(
+    () => ({ borderTopWidth: 1, borderTopColor: theme.cardBorder as string }),
+    [theme.cardBorder]
+  );
+  const appearanceTrackColor = useMemo(
+    () => ({ false: isDarkMode ? '#0f3460' : '#d1d5db', true: '#FF8A65' }),
+    [isDarkMode]
+  );
+  const defaultTrackColor = useMemo(
+    () => ({ false: isDarkMode ? '#374151' : '#d1d5db', true: '#10b981' }),
+    [isDarkMode]
+  );
+  const serviceTrackColor = useMemo(
+    () => ({ false: isDarkMode ? '#374151' : '#d1d5db', true: '#3b82f6' }),
+    [isDarkMode]
+  );
+  const switchThumbOff = isDarkMode ? '#9ca3af' : '#f8fafc';
   const [showIntervalSelector, setShowIntervalSelector] = useState(false);
   const [showPrintTypeSelector, setShowPrintTypeSelector] = useState(false);
   const [showViewModeSelector, setShowViewModeSelector] = useState(false);
+  const [showToneSelector, setShowToneSelector] = useState(false);
+  const [showPrinterToneSelector, setShowPrinterToneSelector] = useState(false);
 
   const yellowMin = Math.max(1, settings.orderAgingYellowMin ?? 5);
   const redMin = Math.max(yellowMin + 1, settings.orderAgingRedMin ?? 10);
   const completedArchiveLimit = Math.max(1, settings.completedArchiveLimit ?? 50);
   const agingControlsDisabled = !settings.orderAgingEnabled;
+  const ordersList = orders?.orders ?? [];
+  const completedColumnStatusSet =
+    settings.viewMode === 'four'
+      ? new Set(['completed', 'cancelled'])
+      : new Set(['ready', 'completed', 'cancelled']);
+  const completedColumnOrderIds = ordersList
+    .filter((order) => completedColumnStatusSet.has(order.status))
+    .map((order) => order.id);
+  const isLandscape = width > height;
+  const contentMaxWidth = isLandscape
+    ? Math.min(Math.max(width - 48, 780), 1200)
+    : Math.min(Math.max(width - 24, 320), 720);
 
   const adjustYellow = (delta: number) => {
     const next = Math.max(1, Math.min(yellowMin + delta, redMin - 1));
@@ -178,6 +265,34 @@ export const SettingsScreen: React.FC = () => {
     const next = Math.max(1, Math.min(completedArchiveLimit + delta, 200));
     updateSettings({ completedArchiveLimit: next });
   };
+  const completedColumnClearedAt = settings.completedColumnClearedAt;
+  const completedColumnClearedAtLabel = completedColumnClearedAt
+    ? new Date(completedColumnClearedAt).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : null;
+
+  const handleClearCompletedColumn = useCallback(() => {
+    Alert.alert(
+      'Clear Completed Column',
+      `Hide ${completedColumnOrderIds.length} currently visible completed-column order(s) on this tablet?\n\nThis is local-only and does not change backend order data.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => clearCompletedColumnNow(completedColumnOrderIds),
+        },
+      ]
+    );
+  }, [clearCompletedColumnNow, completedColumnOrderIds]);
+
+  const handleRestoreCompletedColumn = useCallback(() => {
+    resetCompletedColumnClear();
+  }, [resetCompletedColumnClear]);
   
   // Printer state
   const [isScanning, setIsScanning] = useState(false);
@@ -186,60 +301,155 @@ export const SettingsScreen: React.FC = () => {
   const [showPrinterList, setShowPrinterList] = useState(false);
   
   // Restaurant service config state
-  const [deliveryEnabled, setDeliveryEnabled] = useState<boolean | null>(null);
-  const [isLoadingDeliveryConfig, setIsLoadingDeliveryConfig] = useState(false);
-  const [isUpdatingDelivery, setIsUpdatingDelivery] = useState(false);
+  const [serviceConfig, setServiceConfig] = useState<TabletServiceConfig | null>(null);
+  const [isLoadingServiceConfig, setIsLoadingServiceConfig] = useState(false);
+  const [isUpdatingServiceConfig, setIsUpdatingServiceConfig] = useState(false);
 
-  // Fetch delivery config on mount
+  // Fetch service config on mount
   React.useEffect(() => {
-    const fetchDeliveryConfig = async () => {
-      if (!auth.restaurantId) return;
-      
-      setIsLoadingDeliveryConfig(true);
+    const fetchServiceConfig = async () => {
+      if (!auth.isAuthenticated) return;
+
+      setIsLoadingServiceConfig(true);
       try {
-        const result = await tabletGetDeliveryConfig(auth.restaurantId);
+        const result = await apiClient.getTabletServiceConfig();
         if (result.success && result.data) {
-          setDeliveryEnabled(result.data.has_delivery_enabled);
+          setServiceConfig(result.data);
+        } else {
+          console.warn('[Settings] Failed to fetch service config:', result.error);
         }
       } catch (error) {
-        console.error('[Settings] Failed to fetch delivery config:', error);
+        console.error('[Settings] Failed to fetch service config:', error);
       } finally {
-        setIsLoadingDeliveryConfig(false);
+        setIsLoadingServiceConfig(false);
       }
     };
-    
-    fetchDeliveryConfig();
-  }, [auth.restaurantId]);
 
-  const handleToggleDelivery = useCallback(async (newValue: boolean) => {
-    if (!auth.restaurantId || isUpdatingDelivery) return;
-    
-    const previousValue = deliveryEnabled;
-    setDeliveryEnabled(newValue); // Optimistic update
-    setIsUpdatingDelivery(true);
-    
-    try {
-      const result = await tabletUpdateDeliveryEnabled(auth.restaurantId, newValue);
-      if (result.success) {
-        Alert.alert(
-          newValue ? '✓ Delivery Enabled' : '✓ Delivery Disabled',
-          newValue 
-            ? 'Customers can now order for delivery.' 
-            : 'Delivery orders are now disabled. Customers will only see pickup.',
-          [{ text: 'OK' }]
-        );
-      } else {
-        // Revert on failure
-        setDeliveryEnabled(previousValue);
-        Alert.alert('Update Failed', result.error || 'Could not update delivery setting');
+    fetchServiceConfig();
+  }, [auth.isAuthenticated]);
+
+  const applyServiceConfigUpdate = useCallback(
+    async (
+      updates: Partial<
+        Pick<
+          TabletServiceConfig,
+          | 'online_ordering_enabled'
+          | 'has_delivery_enabled'
+          | 'pickup_enabled'
+          | 'takeout_time_minutes'
+          | 'busy_mode_enabled'
+          | 'busy_takeout_time_minutes'
+          | 'twilio_call'
+        >
+      >
+    ): Promise<boolean> => {
+      if (!auth.isAuthenticated || isUpdatingServiceConfig || !serviceConfig) return false;
+
+      const previousConfig = serviceConfig;
+      setServiceConfig({ ...serviceConfig, ...updates });
+      setIsUpdatingServiceConfig(true);
+
+      try {
+        const result = await apiClient.updateTabletServiceConfig(updates);
+        if (result.success && result.data) {
+          setServiceConfig(result.data);
+          return true;
+        }
+
+        console.warn('[Settings] Service config update failed:', {
+          updates,
+          error: result.error,
+        });
+        setServiceConfig(previousConfig);
+        Alert.alert('Update Failed', result.error || 'Could not update restaurant setting');
+        return false;
+      } catch (error) {
+        console.error('[Settings] Service config update exception:', error);
+        setServiceConfig(previousConfig);
+        Alert.alert('Error', 'Failed to update restaurant setting');
+        return false;
+      } finally {
+        setIsUpdatingServiceConfig(false);
       }
-    } catch (error) {
-      setDeliveryEnabled(previousValue);
-      Alert.alert('Error', 'Failed to update delivery setting');
-    } finally {
-      setIsUpdatingDelivery(false);
-    }
-  }, [auth.restaurantId, deliveryEnabled, isUpdatingDelivery]);
+    },
+    [auth.isAuthenticated, isUpdatingServiceConfig, serviceConfig]
+  );
+
+  const handleToggleDelivery = useCallback(
+    async (newValue: boolean) => {
+      await applyServiceConfigUpdate({ has_delivery_enabled: newValue });
+    },
+    [applyServiceConfigUpdate]
+  );
+
+  const handleToggleOnlineOrdering = useCallback(
+    (newValue: boolean) => {
+      if (newValue) {
+        applyServiceConfigUpdate({ online_ordering_enabled: true });
+        return;
+      }
+
+      Alert.alert(
+        'Pause Online Ordering?',
+        'Customers will not be able to place new online orders until you turn it back on.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Pause Ordering',
+            style: 'destructive',
+            onPress: () => {
+              applyServiceConfigUpdate({ online_ordering_enabled: false });
+            },
+          },
+        ]
+      );
+    },
+    [applyServiceConfigUpdate]
+  );
+
+  const handleTogglePickup = useCallback(
+    async (newValue: boolean) => {
+      await applyServiceConfigUpdate({ pickup_enabled: newValue });
+    },
+    [applyServiceConfigUpdate]
+  );
+
+  const handleToggleBusyMode = useCallback(
+    async (newValue: boolean) => {
+      await applyServiceConfigUpdate({ busy_mode_enabled: newValue });
+    },
+    [applyServiceConfigUpdate]
+  );
+
+  const handleToggleTwilioFallback = useCallback(
+    async (newValue: boolean) => {
+      await applyServiceConfigUpdate({ twilio_call: newValue });
+    },
+    [applyServiceConfigUpdate]
+  );
+
+  const adjustTakeoutPrep = useCallback(
+    async (delta: number) => {
+      if (!serviceConfig) return;
+      const current = serviceConfig.takeout_time_minutes ?? 15;
+      const next = Math.max(0, Math.min(240, current + delta));
+      if (next === current) return;
+      await applyServiceConfigUpdate({ takeout_time_minutes: next });
+    },
+    [applyServiceConfigUpdate, serviceConfig]
+  );
+
+  const adjustBusyPrep = useCallback(
+    async (delta: number) => {
+      if (!serviceConfig) return;
+      const fallbackBusyPrep = Math.max((serviceConfig.takeout_time_minutes ?? 15) + 10, 30);
+      const current = serviceConfig.busy_takeout_time_minutes ?? fallbackBusyPrep;
+      const next = Math.max(0, Math.min(240, current + delta));
+      if (next === current) return;
+      await applyServiceConfigUpdate({ busy_takeout_time_minutes: next });
+    },
+    [applyServiceConfigUpdate, serviceConfig]
+  );
 
   const handleLogout = useCallback(() => {
     Alert.alert(
@@ -390,7 +600,30 @@ export const SettingsScreen: React.FC = () => {
     );
   }, [settings.printerConnected, settings.printerMacAddress, settings.printerName, updateSettings]);
 
+  const playTonePreview = useCallback(async (tone: NotificationTone) => {
+    try {
+      await initSound();
+      await playAlert(tone, { interruptExisting: true, maxDurationMs: 3200 });
+    } catch (error: any) {
+      Alert.alert('Sound Test Failed', error?.message || 'Could not play alert tone');
+    }
+  }, []);
+
+  const handleTestNotificationTone = useCallback(async () => {
+    await playTonePreview(settings.notificationTone ?? 'default');
+  }, [playTonePreview, settings.notificationTone]);
+
+  const handleTestPrinterAlertTone = useCallback(async () => {
+    await playTonePreview(settings.printerAlertTone ?? settings.notificationTone ?? 'default');
+  }, [playTonePreview, settings.notificationTone, settings.printerAlertTone]);
+
   const selectedInterval = POLL_INTERVALS.find((i) => i.value === settings.pollIntervalMs);
+  const selectedNotificationTone =
+    NOTIFICATION_TONES.find((tone) => tone.value === settings.notificationTone) ??
+    NOTIFICATION_TONES[0];
+  const selectedPrinterAlertTone =
+    NOTIFICATION_TONES.find((tone) => tone.value === settings.printerAlertTone) ??
+    selectedNotificationTone;
 
   return (
     <View style={styles.container}>
@@ -406,7 +639,10 @@ export const SettingsScreen: React.FC = () => {
         <View style={styles.placeholder} />
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={[styles.contentContainer, { maxWidth: contentMaxWidth }]}
+      >
         {/* Printer Section - MOST IMPORTANT */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🖨️ Printer Connection</Text>
@@ -529,14 +765,14 @@ export const SettingsScreen: React.FC = () => {
               <Switch
                 value={themeMode === 'light'}
                 onValueChange={toggleTheme}
-                trackColor={{ false: '#0f3460', true: '#FF8A65' }}
+                trackColor={appearanceTrackColor}
                 thumbColor={themeMode === 'light' ? '#FF5722' : '#e94560'}
               />
             </View>
 
             {/* Workflow View Selector */}
             <TouchableOpacity
-              style={[styles.settingRowTouchable, { borderTopWidth: 1, borderTopColor: '#334155' }]}
+              style={[styles.settingRowTouchable, dividerStyle]}
               onPress={() => setShowViewModeSelector(!showViewModeSelector)}
               testID="settings-view-mode"
               nativeID="settings-view-mode"
@@ -579,7 +815,7 @@ export const SettingsScreen: React.FC = () => {
             )}
 
             {/* Completed Archive Limit */}
-            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+            <View style={[styles.settingRow, dividerStyle]}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>✅ Completed Archive Limit</Text>
                 <Text style={styles.settingDescription}>
@@ -612,6 +848,39 @@ export const SettingsScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
             </View>
+
+            <View style={[styles.completedFlushSection, dividerStyle]}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>🧹 Completed Column Flush</Text>
+                <Text style={styles.settingDescription}>
+                  Hide completed-column orders locally on this tablet only.
+                </Text>
+                <Text style={styles.settingDescription}>
+                  Backend order data is not changed.
+                </Text>
+                {completedColumnClearedAtLabel && (
+                  <Text style={styles.completedFlushMeta}>
+                    Last cleared: {completedColumnClearedAtLabel}
+                  </Text>
+                )}
+              </View>
+              <View style={styles.completedFlushActions}>
+                <TouchableOpacity
+                  style={styles.clearCompletedButton}
+                  onPress={handleClearCompletedColumn}
+                >
+                  <Text style={styles.clearCompletedButtonText}>🧹 Clear Completed Column</Text>
+                </TouchableOpacity>
+                {completedColumnClearedAt && (
+                  <TouchableOpacity
+                    style={styles.restoreCompletedButton}
+                    onPress={handleRestoreCompletedColumn}
+                  >
+                    <Text style={styles.restoreCompletedButtonText}>↩ Show Cleared Orders Again</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
           </View>
         </View>
 
@@ -629,13 +898,13 @@ export const SettingsScreen: React.FC = () => {
               <Switch
                 value={settings.autoPrint}
                 onValueChange={(value) => updateSettings({ autoPrint: value })}
-                trackColor={{ false: '#374151', true: '#22c55e' }}
-                thumbColor={settings.autoPrint ? '#fff' : '#9ca3af'}
+                trackColor={defaultTrackColor}
+                thumbColor={settings.autoPrint ? '#fff' : switchThumbOff}
               />
             </View>
 
             {/* Ring Until Accepted Toggle */}
-            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+            <View style={[styles.settingRow, dividerStyle]}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>🔔 Ring Until Accepted</Text>
                 <Text style={styles.settingDescription}>
@@ -645,13 +914,150 @@ export const SettingsScreen: React.FC = () => {
               <Switch
                 value={settings.ringUntilAccepted ?? false}
                 onValueChange={(value) => updateSettings({ ringUntilAccepted: value })}
-                trackColor={{ false: '#374151', true: '#10b981' }}
-                thumbColor={settings.ringUntilAccepted ? '#fff' : '#9ca3af'}
+                trackColor={defaultTrackColor}
+                thumbColor={settings.ringUntilAccepted ? '#fff' : switchThumbOff}
               />
             </View>
 
+            <View style={[styles.settingRow, dividerStyle]}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>⏩ Auto-Move Accepted to Active</Text>
+                <Text style={styles.settingDescription}>
+                  When ON, tapping Accept also moves the order to Active
+                </Text>
+              </View>
+              <Switch
+                value={settings.autoProgressAcceptedOrders ?? false}
+                onValueChange={(value) =>
+                  updateSettings({ autoProgressAcceptedOrders: value })
+                }
+                trackColor={defaultTrackColor}
+                thumbColor={settings.autoProgressAcceptedOrders ? '#fff' : switchThumbOff}
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.settingRowTouchable, dividerStyle]}
+              onPress={() => setShowToneSelector(!showToneSelector)}
+              testID="settings-notification-tone"
+              nativeID="settings-notification-tone"
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>🎵 New Order Ringtone</Text>
+                <Text style={styles.settingDescription}>
+                  {selectedNotificationTone.label}
+                </Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+
+            {showToneSelector && (
+              <View style={styles.selectorContainer}>
+                {NOTIFICATION_TONES.map((tone) => (
+                  <TouchableOpacity
+                    key={tone.value}
+                    style={[
+                      styles.selectorOption,
+                      (settings.notificationTone ?? 'default') === tone.value &&
+                        styles.selectorOptionSelected,
+                    ]}
+                    onPress={() => {
+                      updateSettings({ notificationTone: tone.value });
+                      void playTonePreview(tone.value);
+                    }}
+                    testID={`settings-tone-${tone.value}`}
+                    nativeID={`settings-tone-${tone.value}`}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.selectorOptionLabel}>{tone.label}</Text>
+                      <Text style={[styles.settingDescription, { marginTop: 2 }]}>
+                        {tone.description}
+                      </Text>
+                    </View>
+                    {(settings.notificationTone ?? 'default') === tone.value && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+                <View style={styles.tonePreviewRow}>
+                  <TouchableOpacity
+                    style={styles.tonePreviewButton}
+                    onPress={handleTestNotificationTone}
+                  >
+                    <Text style={styles.tonePreviewButtonText}>▶ Test Ringtone</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.toneCloseButton}
+                    onPress={() => setShowToneSelector(false)}
+                  >
+                    <Text style={styles.toneCloseButtonText}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.settingRowTouchable, dividerStyle]}
+              onPress={() => setShowPrinterToneSelector(!showPrinterToneSelector)}
+              testID="settings-printer-alert-tone"
+              nativeID="settings-printer-alert-tone"
+            >
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingLabel}>🖨️ Printer Alert Sound</Text>
+                <Text style={styles.settingDescription}>
+                  {selectedPrinterAlertTone.label}
+                </Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </TouchableOpacity>
+
+            {showPrinterToneSelector && (
+              <View style={styles.selectorContainer}>
+                {NOTIFICATION_TONES.map((tone) => (
+                  <TouchableOpacity
+                    key={`printer-${tone.value}`}
+                    style={[
+                      styles.selectorOption,
+                      (settings.printerAlertTone ?? settings.notificationTone ?? 'default') === tone.value &&
+                        styles.selectorOptionSelected,
+                    ]}
+                    onPress={() => {
+                      updateSettings({ printerAlertTone: tone.value });
+                      void playTonePreview(tone.value);
+                    }}
+                    testID={`settings-printer-tone-${tone.value}`}
+                    nativeID={`settings-printer-tone-${tone.value}`}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.selectorOptionLabel}>{tone.label}</Text>
+                      <Text style={[styles.settingDescription, { marginTop: 2 }]}>
+                        {tone.description}
+                      </Text>
+                    </View>
+                    {(settings.printerAlertTone ?? settings.notificationTone ?? 'default') === tone.value && (
+                      <Text style={styles.checkmark}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+                <View style={styles.tonePreviewRow}>
+                  <TouchableOpacity
+                    style={styles.tonePreviewButton}
+                    onPress={handleTestPrinterAlertTone}
+                  >
+                    <Text style={styles.tonePreviewButtonText}>▶ Test Printer Alert</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.toneCloseButton}
+                    onPress={() => setShowPrinterToneSelector(false)}
+                  >
+                    <Text style={styles.toneCloseButtonText}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
             {/* Printer Alerts Toggle */}
-            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+            <View style={[styles.settingRow, dividerStyle]}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>🔔 Printer Alerts</Text>
                 <Text style={styles.settingDescription}>
@@ -661,13 +1067,13 @@ export const SettingsScreen: React.FC = () => {
               <Switch
                 value={settings.printerAlertsEnabled ?? true}
                 onValueChange={(value) => updateSettings({ printerAlertsEnabled: value })}
-                trackColor={{ false: '#374151', true: '#f59e0b' }}
-                thumbColor={settings.printerAlertsEnabled ?? true ? '#fff' : '#9ca3af'}
+                trackColor={{ false: isDarkMode ? '#374151' : '#d1d5db', true: '#f59e0b' }}
+                thumbColor={settings.printerAlertsEnabled ?? true ? '#fff' : switchThumbOff}
               />
             </View>
 
             {/* Expanded View Prices Toggle */}
-            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+            <View style={[styles.settingRow, dividerStyle]}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>💲 Show Prices In Expanded View</Text>
                 <Text style={styles.settingDescription}>
@@ -677,13 +1083,13 @@ export const SettingsScreen: React.FC = () => {
               <Switch
                 value={settings.showPricesInExpanded ?? false}
                 onValueChange={(value) => updateSettings({ showPricesInExpanded: value })}
-                trackColor={{ false: '#374151', true: '#10b981' }}
-                thumbColor={settings.showPricesInExpanded ? '#fff' : '#9ca3af'}
+                trackColor={defaultTrackColor}
+                thumbColor={settings.showPricesInExpanded ? '#fff' : switchThumbOff}
               />
             </View>
 
             {/* Auto-show prices when no printer */}
-            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+            <View style={[styles.settingRow, dividerStyle]}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>Auto-Show Prices (No Printer)</Text>
                 <Text style={styles.settingDescription}>
@@ -693,13 +1099,13 @@ export const SettingsScreen: React.FC = () => {
               <Switch
                 value={settings.autoShowPricesWhenNoPrinter ?? true}
                 onValueChange={(value) => updateSettings({ autoShowPricesWhenNoPrinter: value })}
-                trackColor={{ false: '#374151', true: '#10b981' }}
-                thumbColor={(settings.autoShowPricesWhenNoPrinter ?? true) ? '#fff' : '#9ca3af'}
+                trackColor={defaultTrackColor}
+                thumbColor={(settings.autoShowPricesWhenNoPrinter ?? true) ? '#fff' : switchThumbOff}
               />
             </View>
 
             {/* Order Aging Colors Toggle */}
-            <View style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: '#334155' }]}>
+            <View style={[styles.settingRow, dividerStyle]}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingLabel}>🎨 Order Aging Colors</Text>
                 <Text style={styles.settingDescription}>
@@ -709,8 +1115,8 @@ export const SettingsScreen: React.FC = () => {
               <Switch
                 value={settings.orderAgingEnabled ?? false}
                 onValueChange={(value) => updateSettings({ orderAgingEnabled: value })}
-                trackColor={{ false: '#374151', true: '#10b981' }}
-                thumbColor={settings.orderAgingEnabled ? '#fff' : '#9ca3af'}
+                trackColor={defaultTrackColor}
+                thumbColor={settings.orderAgingEnabled ? '#fff' : switchThumbOff}
               />
             </View>
 
@@ -718,7 +1124,7 @@ export const SettingsScreen: React.FC = () => {
             <View
               style={[
                 styles.settingRow,
-                { borderTopWidth: 1, borderTopColor: '#334155' },
+                dividerStyle,
                 agingControlsDisabled && { opacity: 0.5 },
               ]}
               pointerEvents={agingControlsDisabled ? 'none' : 'auto'}
@@ -751,7 +1157,7 @@ export const SettingsScreen: React.FC = () => {
             <View
               style={[
                 styles.settingRow,
-                { borderTopWidth: 1, borderTopColor: '#334155' },
+                dividerStyle,
                 agingControlsDisabled && { opacity: 0.5 },
               ]}
               pointerEvents={agingControlsDisabled ? 'none' : 'auto'}
@@ -783,7 +1189,7 @@ export const SettingsScreen: React.FC = () => {
 
             {/* Default Print Type Selector */}
             <TouchableOpacity
-              style={[styles.settingRowTouchable, { borderTopWidth: 1, borderTopColor: '#334155' }]}
+              style={[styles.settingRowTouchable, dividerStyle]}
               onPress={() => setShowPrintTypeSelector(!showPrintTypeSelector)}
             >
               <View style={styles.settingInfo}>
@@ -827,45 +1233,204 @@ export const SettingsScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🏪 Restaurant Settings</Text>
           <View style={styles.card}>
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>🚗 Delivery Service</Text>
-                <Text style={styles.settingDescription}>
-                  Allow customers to order for delivery
-                </Text>
+            {isLoadingServiceConfig ? (
+              <View style={styles.settingRow}>
+                <ActivityIndicator size="small" color={theme.primary} />
               </View>
-              {isLoadingDeliveryConfig ? (
-                <ActivityIndicator size="small" color="#3b82f6" />
-              ) : deliveryEnabled === null ? (
-                <Text style={{ color: '#64748b', fontSize: 12 }}>N/A</Text>
-              ) : (
-                <Switch
-                  value={deliveryEnabled}
-                  onValueChange={handleToggleDelivery}
-                  disabled={isUpdatingDelivery}
-                  trackColor={{ false: '#374151', true: '#3b82f6' }}
-                  thumbColor={deliveryEnabled ? '#fff' : '#9ca3af'}
-                />
-              )}
-            </View>
-            {deliveryEnabled !== null && (
-              <View style={styles.serviceStatusRow}>
-                <View style={[
-                  styles.serviceStatusBadge,
-                  { backgroundColor: deliveryEnabled ? '#22c55e20' : '#ef444420' }
-                ]}>
-                  <View style={[
-                    styles.serviceStatusDot,
-                    { backgroundColor: deliveryEnabled ? '#22c55e' : '#ef4444' }
-                  ]} />
-                  <Text style={[
-                    styles.serviceStatusText,
-                    { color: deliveryEnabled ? '#22c55e' : '#ef4444' }
-                  ]}>
-                    {deliveryEnabled ? 'Delivery is ACTIVE' : 'Delivery is OFF'}
-                  </Text>
+            ) : !serviceConfig ? (
+              <View style={styles.settingRow}>
+                <Text style={styles.serviceUnavailableText}>Service settings unavailable</Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.settingRow}>
+                  <View style={styles.settingInfo}>
+                    <Text style={styles.settingLabel}>🟢 Online Ordering</Text>
+                    <Text style={styles.settingDescription}>
+                      Master switch for accepting new online orders
+                    </Text>
+                  </View>
+                  <Switch
+                    value={serviceConfig.online_ordering_enabled}
+                    onValueChange={handleToggleOnlineOrdering}
+                    disabled={isUpdatingServiceConfig}
+                    trackColor={serviceTrackColor}
+                    thumbColor={serviceConfig.online_ordering_enabled ? '#fff' : switchThumbOff}
+                    testID="settings-online-ordering-switch"
+                    nativeID="settings-online-ordering-switch"
+                  />
                 </View>
-              </View>
+
+                <View style={[styles.settingRow, dividerStyle]}>
+                  <View style={styles.settingInfo}>
+                    <Text style={styles.settingLabel}>🚗 Delivery Service</Text>
+                    <Text style={styles.settingDescription}>
+                      Allow customers to order for delivery
+                    </Text>
+                  </View>
+                  <Switch
+                    value={serviceConfig.has_delivery_enabled}
+                    onValueChange={handleToggleDelivery}
+                    disabled={isUpdatingServiceConfig}
+                    trackColor={serviceTrackColor}
+                    thumbColor={serviceConfig.has_delivery_enabled ? '#fff' : switchThumbOff}
+                    testID="settings-delivery-switch"
+                    nativeID="settings-delivery-switch"
+                  />
+                </View>
+
+                <View style={[styles.settingRow, dividerStyle]}>
+                  <View style={styles.settingInfo}>
+                    <Text style={styles.settingLabel}>🛍️ Pickup Service</Text>
+                    <Text style={styles.settingDescription}>
+                      Allow customers to order for pickup
+                    </Text>
+                  </View>
+                  <Switch
+                    value={serviceConfig.pickup_enabled}
+                    onValueChange={handleTogglePickup}
+                    disabled={isUpdatingServiceConfig}
+                    trackColor={serviceTrackColor}
+                    thumbColor={serviceConfig.pickup_enabled ? '#fff' : switchThumbOff}
+                    testID="settings-pickup-switch"
+                    nativeID="settings-pickup-switch"
+                  />
+                </View>
+
+                {serviceConfig.pickup_enabled && (
+                  <View style={[styles.settingRow, dividerStyle]}>
+                    <View style={styles.settingInfo}>
+                      <Text style={styles.settingLabel}>⏱️ Pickup Prep Time</Text>
+                      <Text style={styles.settingDescription}>
+                        Minutes shown to customers for pickup
+                      </Text>
+                    </View>
+                    <View style={styles.stepper}>
+                      <TouchableOpacity
+                        style={[styles.stepperButton, isUpdatingServiceConfig && { opacity: 0.4 }]}
+                        onPress={() => adjustTakeoutPrep(-1)}
+                        disabled={isUpdatingServiceConfig}
+                      >
+                        <Text style={styles.stepperButtonText}>-</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.stepperValue}>{serviceConfig.takeout_time_minutes ?? 15}m</Text>
+                      <TouchableOpacity
+                        style={[styles.stepperButton, isUpdatingServiceConfig && { opacity: 0.4 }]}
+                        onPress={() => adjustTakeoutPrep(1)}
+                        disabled={isUpdatingServiceConfig}
+                      >
+                        <Text style={styles.stepperButtonText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
+                <View style={[styles.settingRow, dividerStyle]}>
+                  <View style={styles.settingInfo}>
+                    <Text style={styles.settingLabel}>⚡ Smart Busy Mode</Text>
+                    <Text style={styles.settingDescription}>
+                      Use a longer prep time during busy periods
+                    </Text>
+                  </View>
+                  <Switch
+                    value={serviceConfig.busy_mode_enabled}
+                    onValueChange={handleToggleBusyMode}
+                    disabled={isUpdatingServiceConfig}
+                    trackColor={serviceTrackColor}
+                    thumbColor={serviceConfig.busy_mode_enabled ? '#fff' : switchThumbOff}
+                    testID="settings-busy-mode-switch"
+                    nativeID="settings-busy-mode-switch"
+                  />
+                </View>
+
+                {serviceConfig.busy_mode_enabled && (
+                  <View style={[styles.settingRow, dividerStyle]}>
+                    <View style={styles.settingInfo}>
+                      <Text style={styles.settingLabel}>⏱️ Busy Prep Time</Text>
+                      <Text style={styles.settingDescription}>
+                        Minutes shown during busy mode
+                      </Text>
+                    </View>
+                    <View style={styles.stepper}>
+                      <TouchableOpacity
+                        style={[styles.stepperButton, isUpdatingServiceConfig && { opacity: 0.4 }]}
+                        onPress={() => adjustBusyPrep(-1)}
+                        disabled={isUpdatingServiceConfig}
+                      >
+                        <Text style={styles.stepperButtonText}>-</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.stepperValue}>
+                        {serviceConfig.busy_takeout_time_minutes ??
+                          Math.max((serviceConfig.takeout_time_minutes ?? 15) + 10, 30)}
+                        m
+                      </Text>
+                      <TouchableOpacity
+                        style={[styles.stepperButton, isUpdatingServiceConfig && { opacity: 0.4 }]}
+                        onPress={() => adjustBusyPrep(1)}
+                        disabled={isUpdatingServiceConfig}
+                      >
+                        <Text style={styles.stepperButtonText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
+                <View style={[styles.settingRow, dividerStyle]}>
+                  <View style={styles.settingInfo}>
+                    <Text style={styles.settingLabel}>📞 Twilio Fallback Calls</Text>
+                    <Text style={styles.settingDescription}>
+                      Auto-call when orders are not acknowledged
+                    </Text>
+                  </View>
+                  <Switch
+                    value={serviceConfig.twilio_call}
+                    onValueChange={handleToggleTwilioFallback}
+                    disabled={isUpdatingServiceConfig}
+                    trackColor={serviceTrackColor}
+                    thumbColor={serviceConfig.twilio_call ? '#fff' : switchThumbOff}
+                    testID="settings-twilio-fallback-switch"
+                    nativeID="settings-twilio-fallback-switch"
+                  />
+                </View>
+
+                <View style={styles.serviceStatusRow}>
+                  <View
+                    style={[
+                      styles.serviceStatusBadge,
+                      {
+                        backgroundColor: serviceConfig.online_ordering_enabled
+                          ? '#22c55e20'
+                          : '#ef444420',
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.serviceStatusDot,
+                        {
+                          backgroundColor: serviceConfig.online_ordering_enabled
+                            ? '#22c55e'
+                            : '#ef4444',
+                        },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.serviceStatusText,
+                        {
+                          color: serviceConfig.online_ordering_enabled
+                            ? '#22c55e'
+                            : '#ef4444',
+                        },
+                      ]}
+                    >
+                      {serviceConfig.online_ordering_enabled
+                        ? 'Online Ordering is ACTIVE'
+                        : 'Online Ordering is PAUSED'}
+                    </Text>
+                  </View>
+                </View>
+              </>
             )}
           </View>
         </View>
@@ -946,357 +1511,423 @@ export const SettingsScreen: React.FC = () => {
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Text style={styles.logoutButtonText}>Disconnect Device</Text>
           </TouchableOpacity>
-          <Text style={styles.versionText}>Kitchen Printer App v1.0.3</Text>
+          <Text style={styles.versionText}>{`NEON v${APP_VERSION} (${APP_PACKAGE})`}</Text>
         </View>
       </ScrollView>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1a1a2e',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#16213e',
-    padding: 16,
-    borderBottomWidth: 2,
-    borderBottomColor: '#0f3460',
-  },
-  backButton: {
-    padding: 8,
-    minWidth: 80,
-  },
-  backText: {
-    fontSize: 16,
-    color: '#22c55e',
-    fontWeight: '600',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  placeholder: {
-    minWidth: 80,
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 20,
-    maxWidth: 600,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#94a3b8',
-    textTransform: 'uppercase',
-    marginBottom: 10,
-    marginLeft: 4,
-    letterSpacing: 0.5,
-  },
-  card: {
-    backgroundColor: '#16213e',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  // Printer Status
-  printerStatusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#334155',
-  },
-  printerStatusInfo: {
-    flex: 1,
-  },
-  printerStatusLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  printerStatusSubtext: {
-    fontSize: 14,
-    color: '#94a3b8',
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  statusBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  // Scan Button
-  scanButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#3b82f6',
-    padding: 16,
-    margin: 16,
-    borderRadius: 12,
-  },
-  scanButtonIcon: {
-    fontSize: 20,
-    marginRight: 10,
-  },
-  scanButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  // Printer List
-  printerList: {
-    padding: 16,
-    paddingTop: 0,
-  },
-  printerListTitle: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginBottom: 12,
-  },
-  printerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#1e293b',
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  printerItemInfo: {
-    flex: 1,
-  },
-  printerItemName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  printerItemMac: {
-    fontSize: 12,
-    color: '#64748b',
-    fontFamily: 'monospace',
-  },
-  connectText: {
-    color: '#22c55e',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  noPrintersText: {
-    color: '#64748b',
-    textAlign: 'center',
-    padding: 20,
-    fontSize: 14,
-  },
-  // Printer Actions
-  printerActions: {
-    flexDirection: 'row',
-    padding: 16,
-    paddingTop: 0,
-    gap: 12,
-  },
-  testPrintButton: {
-    flex: 1,
-    backgroundColor: '#22c55e',
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  testPrintText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  disconnectButton: {
-    flex: 1,
-    backgroundColor: '#374151',
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  disconnectText: {
-    color: '#94a3b8',
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  // Settings Rows
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  settingRowTouchable: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  settingInfo: {
-    flex: 1,
-    marginRight: 16,
-  },
-  settingLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  settingDescription: {
-    fontSize: 14,
-    color: '#94a3b8',
-  },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  stepperButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#1f2937',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepperButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  stepperValue: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-    marginHorizontal: 10,
-    minWidth: 40,
-    textAlign: 'center',
-  },
-  chevron: {
-    fontSize: 24,
-    color: '#64748b',
-  },
-  // Info Rows
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#334155',
-  },
-  infoLabel: {
-    fontSize: 15,
-    color: '#94a3b8',
-  },
-  infoValue: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-  },
-  statusText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  // Selector
-  selectorContainer: {
-    backgroundColor: '#1e293b',
-    borderTopWidth: 1,
-    borderTopColor: '#334155',
-  },
-  selectorOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#334155',
-  },
-  selectorOptionSelected: {
-    backgroundColor: '#0f3460',
-  },
-  selectorOptionLabel: {
-    fontSize: 15,
-    color: '#fff',
-    flex: 1,
-  },
-  checkmark: {
-    fontSize: 18,
-    color: '#22c55e',
-    fontWeight: 'bold',
-  },
-  // Service Status
-  serviceStatusRow: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  serviceStatusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  serviceStatusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
-  },
-  serviceStatusText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  // Logout
-  logoutButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#ef4444',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  logoutButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ef4444',
-  },
-  versionText: {
-    textAlign: 'center',
-    color: '#64748b',
-    fontSize: 13,
-    marginTop: 16,
-  },
-});
+const createStyles = (theme: Theme, isDarkMode: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: theme.headerBg,
+      padding: 16,
+      borderBottomWidth: 2,
+      borderBottomColor: theme.headerBorder,
+    },
+    backButton: {
+      padding: 8,
+      minWidth: 80,
+    },
+    backText: {
+      fontSize: 16,
+      color: isDarkMode ? '#22c55e' : '#15803d',
+      fontWeight: '600',
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.text,
+    },
+    placeholder: {
+      minWidth: 80,
+    },
+    content: {
+      flex: 1,
+    },
+    contentContainer: {
+      padding: 20,
+      alignSelf: 'center',
+      width: '100%',
+    },
+    section: {
+      marginBottom: 24,
+    },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: theme.textSecondary,
+      textTransform: 'uppercase',
+      marginBottom: 10,
+      marginLeft: 4,
+      letterSpacing: 0.5,
+    },
+    card: {
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+    },
+    printerStatusRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.cardBorder,
+    },
+    printerStatusInfo: {
+      flex: 1,
+    },
+    printerStatusLabel: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.text,
+      marginBottom: 4,
+    },
+    printerStatusSubtext: {
+      fontSize: 14,
+      color: theme.textSecondary,
+    },
+    statusBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 16,
+    },
+    statusBadgeText: {
+      color: '#fff',
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    scanButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#3b82f6',
+      padding: 16,
+      margin: 16,
+      borderRadius: 12,
+    },
+    scanButtonIcon: {
+      fontSize: 20,
+      marginRight: 10,
+    },
+    scanButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    printerList: {
+      padding: 16,
+      paddingTop: 0,
+    },
+    printerListTitle: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      marginBottom: 12,
+    },
+    printerItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
+      padding: 16,
+      borderRadius: 10,
+      marginBottom: 8,
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+    },
+    printerItemInfo: {
+      flex: 1,
+    },
+    printerItemName: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.text,
+      marginBottom: 4,
+    },
+    printerItemMac: {
+      fontSize: 12,
+      color: theme.textMuted,
+      fontFamily: 'monospace',
+    },
+    connectText: {
+      color: '#22c55e',
+      fontWeight: '600',
+      fontSize: 14,
+    },
+    noPrintersText: {
+      color: theme.textMuted,
+      textAlign: 'center',
+      padding: 20,
+      fontSize: 14,
+    },
+    printerActions: {
+      flexDirection: 'row',
+      padding: 16,
+      paddingTop: 0,
+      gap: 12,
+    },
+    testPrintButton: {
+      flex: 1,
+      backgroundColor: '#22c55e',
+      padding: 14,
+      borderRadius: 10,
+      alignItems: 'center',
+    },
+    testPrintText: {
+      color: '#fff',
+      fontWeight: '600',
+      fontSize: 15,
+    },
+    disconnectButton: {
+      flex: 1,
+      backgroundColor: isDarkMode ? '#374151' : '#e2e8f0',
+      padding: 14,
+      borderRadius: 10,
+      alignItems: 'center',
+    },
+    disconnectText: {
+      color: isDarkMode ? '#94a3b8' : '#334155',
+      fontWeight: '600',
+      fontSize: 15,
+    },
+    settingRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+    },
+    settingRowTouchable: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+    },
+    settingInfo: {
+      flex: 1,
+      marginRight: 16,
+    },
+    settingLabel: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.text,
+      marginBottom: 4,
+    },
+    settingDescription: {
+      fontSize: 14,
+      color: theme.textSecondary,
+    },
+    serviceUnavailableText: {
+      color: theme.textMuted,
+      fontSize: 12,
+    },
+    stepper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    stepperButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      backgroundColor: isDarkMode ? '#1f2937' : '#e2e8f0',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stepperButtonText: {
+      color: theme.text,
+      fontSize: 18,
+      fontWeight: '700',
+    },
+    stepperValue: {
+      color: theme.text,
+      fontSize: 15,
+      fontWeight: '600',
+      marginHorizontal: 10,
+      minWidth: 40,
+      textAlign: 'center',
+    },
+    completedFlushSection: {
+      padding: 16,
+    },
+    completedFlushMeta: {
+      marginTop: 8,
+      fontSize: 13,
+      color: theme.textSecondary,
+    },
+    completedFlushActions: {
+      marginTop: 12,
+      gap: 10,
+    },
+    clearCompletedButton: {
+      backgroundColor: '#b91c1c',
+      borderRadius: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      alignItems: 'center',
+    },
+    clearCompletedButtonText: {
+      color: '#fff',
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    restoreCompletedButton: {
+      backgroundColor: isDarkMode ? '#1f2937' : '#f3f4f6',
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+      borderRadius: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 14,
+      alignItems: 'center',
+    },
+    restoreCompletedButtonText: {
+      color: theme.text,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    chevron: {
+      fontSize: 24,
+      color: theme.textMuted,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.cardBorder,
+    },
+    infoLabel: {
+      fontSize: 15,
+      color: theme.textSecondary,
+    },
+    infoValue: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.text,
+    },
+    statusIndicator: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    statusDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      marginRight: 8,
+    },
+    statusText: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: theme.text,
+    },
+    selectorContainer: {
+      backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
+      borderTopWidth: 1,
+      borderTopColor: theme.cardBorder,
+    },
+    selectorOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 14,
+      paddingHorizontal: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.cardBorder,
+    },
+    selectorOptionSelected: {
+      backgroundColor: isDarkMode ? '#0f3460' : '#dbeafe',
+    },
+    selectorOptionLabel: {
+      fontSize: 15,
+      color: theme.text,
+      flex: 1,
+    },
+    tonePreviewRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      padding: 12,
+      paddingHorizontal: 16,
+    },
+    tonePreviewButton: {
+      flex: 1,
+      backgroundColor: isDarkMode ? '#0f766e' : '#0ea5e9',
+      borderRadius: 10,
+      paddingVertical: 10,
+      alignItems: 'center',
+    },
+    tonePreviewButtonText: {
+      color: '#fff',
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    toneCloseButton: {
+      minWidth: 88,
+      backgroundColor: isDarkMode ? '#334155' : '#e2e8f0',
+      borderRadius: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    toneCloseButtonText: {
+      color: theme.text,
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    checkmark: {
+      fontSize: 18,
+      color: '#22c55e',
+      fontWeight: 'bold',
+    },
+    serviceStatusRow: {
+      paddingHorizontal: 16,
+      paddingBottom: 16,
+    },
+    serviceStatusBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 8,
+      alignSelf: 'flex-start',
+    },
+    serviceStatusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginRight: 8,
+    },
+    serviceStatusText: {
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    logoutButton: {
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      borderColor: '#ef4444',
+      borderRadius: 12,
+      padding: 16,
+      alignItems: 'center',
+    },
+    logoutButtonText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#ef4444',
+    },
+    versionText: {
+      textAlign: 'center',
+      color: theme.textMuted,
+      fontSize: 13,
+      marginTop: 16,
+    },
+  });

@@ -2,6 +2,7 @@
 export interface OrderItem {
   id: string;
   name: string;
+  size?: string; // Item size variant (e.g., "Large", "Small", "2 x Large")
   quantity: number;
   price: number;
   modifiers?: OrderModifier[];
@@ -46,6 +47,15 @@ export type OrderStatus =
 
 export type OrderType = 'pickup' | 'delivery' | 'dine_in';
 
+export type NotificationTone =
+  | 'default'
+  | 'chime'
+  | 'bell'
+  | 'alert'
+  | 'submarine_sonar'
+  | 'rotary_phone'
+  | 'clown_horn';
+
 export interface Order {
   id: string;
   numeric_id: number;
@@ -79,6 +89,7 @@ export interface AuthResponse {
   expires_at: string;
   restaurant_id: string;
   restaurant_name: string;
+  restaurant_logo_url?: string | null;
   device_name: string;
 }
 
@@ -86,7 +97,7 @@ export interface DeviceConfig {
   poll_interval_ms: number;
   auto_print: boolean;
   sound_enabled: boolean;
-  notification_tone: string;
+  notification_tone: NotificationTone;
   printer_connected: boolean;
 }
 
@@ -106,12 +117,44 @@ export interface HeartbeatPayload {
   printer_status?: 'connected' | 'disconnected' | 'error';
   app_version: string;
   last_order_received?: string;
+  last_successful_fetch?: string;
+  consecutive_fetch_failures?: number;
+  oldest_pending_order_minutes?: number;
   // Stuck order detection - orders that haven't progressed
   stuck_orders?: StuckOrderInfo[];
 }
 
+export type RecoveryCommandAction =
+  | 'resync'
+  | 'reload_app'
+  | 'clear_offline_queue'
+  | 'reset_api_base_url'
+  | 'set_api_base_url'
+  | 'check_for_update';
+
+export interface RecoveryCommand {
+  id: string;
+  action: RecoveryCommandAction;
+  reason?: string | null;
+  issued_at: string;
+  payload?: {
+    api_base_url?: string;
+    campaign_id?: number | null;
+    campaign_key?: string | null;
+    rollout_type?: 'ota' | 'binary';
+    target_version?: string | null;
+    required?: boolean;
+    force_at?: string | null;
+    update_url?: string | null;
+    message?: string | null;
+    metadata?: Record<string, any> | null;
+  } | null;
+}
+
 export interface HeartbeatResponse {
   config_updates?: Partial<DeviceConfig>;
+  config_update?: Partial<DeviceConfig>;
+  recovery_command?: RecoveryCommand | null;
   server_time: string;
 }
 
@@ -163,4 +206,15 @@ export interface DispatchDriverRequest {
   driverEarning?: number;
   distanceKm?: number;
   postalCode?: string;
+}
+
+export interface TabletServiceConfig {
+  config_id: number | null;
+  has_delivery_enabled: boolean;
+  pickup_enabled: boolean;
+  takeout_time_minutes: number | null;
+  busy_takeout_time_minutes: number | null;
+  busy_mode_enabled: boolean;
+  twilio_call: boolean;
+  online_ordering_enabled: boolean;
 }

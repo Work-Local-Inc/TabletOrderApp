@@ -1,0 +1,38 @@
+node_modules
+node_modules_corrupt*
+.git
+.expo
+.expo-shared
+dist
+ios
+android 2
+.serena
+.cursor
+.memory
+AI-CHAT-HISTORY
+AI AGENTS READ ME
+build-artifacts
+docs
+*.apk
+android/app/src/debugOptimized
+android/.gradle
+android/build
+android/app/build
+
+# Ignore duplicate "copy" files that were accidentally committed.
+* 2
+* 3
+* 4
+* 5
+* 2.*
+* 3.*
+* 4.*
+* 5.*
+**/* 2
+**/* 3
+**/* 4
+**/* 5
+**/* 2.*
+**/* 3.*
+**/* 4.*
+**/* 5.*

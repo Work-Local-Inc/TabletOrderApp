@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 
 // Sentry DSN - Error reports go to sentry.io dashboard
-const SENTRY_DSN = 'https://c1fb47df3447243a3b83029ace70c69d@o4510845279010816.ingest.us.sentry.io/4510845293232128';
+const SENTRY_DSN = (process.env.EXPO_PUBLIC_SENTRY_DSN || '').trim();
 
 /**
  * Initialize Sentry error tracking.
@@ -15,7 +15,7 @@ export const initSentry = () => {
   }
 
   // Skip if DSN not configured
-  if (SENTRY_DSN === 'YOUR_SENTRY_DSN_HERE') {
+  if (!SENTRY_DSN) {
     console.warn('[Sentry] DSN not configured - error tracking disabled');
     return;
   }
@@ -28,10 +28,10 @@ export const initSentry = () => {
       tracesSampleRate: 0.2,
       
       // Environment based on build
-      environment: 'production',
+      environment: process.env.EXPO_PUBLIC_APP_ENV || 'production',
       
       // App version for tracking releases
-      release: 'ca.menu.orders@1.4.0',
+      release: process.env.EXPO_PUBLIC_SENTRY_RELEASE,
       
       // Don't send personally identifiable information
       sendDefaultPii: false,

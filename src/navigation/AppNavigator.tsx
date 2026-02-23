@@ -49,16 +49,25 @@ export const AppNavigator: React.FC = () => {
       >
         {!auth.isAuthenticated ? (
           // Auth Stack
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ orientation: 'default' }}
+          />
         ) : (
           // Main App Stack
           <>
-            <Stack.Screen name="Orders" component={OrdersListScreen} />
+            <Stack.Screen
+              name="Orders"
+              component={OrdersListScreen}
+              options={{ orientation: 'landscape' }}
+            />
             <Stack.Screen
               name="OrderDetail"
               component={OrderDetailScreen}
               options={{
                 animation: 'slide_from_bottom',
+                orientation: 'landscape',
               }}
             />
             <Stack.Screen
@@ -66,6 +75,7 @@ export const AppNavigator: React.FC = () => {
               component={SettingsScreen}
               options={{
                 animation: 'slide_from_right',
+                orientation: 'default',
               }}
             />
           </>

@@ -9,17 +9,13 @@ import {
   ActivityIndicator,
   Alert,
   Vibration,
-  Image,
-  StatusBar,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // import { Audio } from 'expo-av'; // Temporarily disabled
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useStore } from '../store/useStore';
-import { useOrderNotifications } from '../hooks';
 import { Order, OrderStatus } from '../types';
 import { 
   printKitchenTicket, 
@@ -32,11 +28,11 @@ import {
   getConnectedPrinterAddress,
   disconnectPrinter,
 } from '../services/printService';
-import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus, KanbanBoard } from '../components/orders';
+import { OrderListItem, OrderDetailPanel, OrderFilters, FilterStatus, KanbanBoard, OrdersBottomDock } from '../components/orders';
 import { KanbanBoard4Col } from '../components/orders/KanbanBoard4Col';
 import { KanbanBoard3Col } from '../components/orders/KanbanBoard3Col';
 import { useTheme } from '../theme';
-import { tabletUpdateOrderStatus } from '../api/supabaseRpc';
+import { apiClient } from '../api/client';
 // useHeartbeat removed - already running at app root (App.tsx)
 
 type RootStackParamList = {
@@ -72,14 +68,24 @@ const MAX_AUTO_PRINT_AGE_MINUTES = 10;
 // Maximum times an order can be printed (safety limit)
 const MAX_PRINT_COUNT = 2;
 
+// Connectivity watchdog constants
+const WATCHDOG_CHECK_INTERVAL_MS = 30000; // Every 30s
+const WATCHDOG_STALE_WARNING_MS = 2 * 60 * 1000; // Warn/recover after 2 minutes
+const WATCHDOG_RECOVERY_COOLDOWN_MS = 60 * 1000; // Max once per minute
+
+const formatElapsedTime = (ms: number): string => {
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  if (minutes <= 0) return `${seconds}s`;
+  return `${minutes}m ${seconds}s`;
+};
+
 export const OrdersListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { theme, themeMode } = useTheme();
   const insets = useSafeAreaInsets();
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastKnownOrderIds = useRef<Set<string>>(new Set());
-  // Enable new-order notifications + ring-until-accepted logic
-  useOrderNotifications();
   
   // NOTE: Heartbeat removed - already running at app root (App.tsx)
   // Having it here caused duplicate heartbeats (2x network, 2x battery drain)
@@ -89,6 +95,10 @@ export const OrdersListScreen: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<FilterStatus>('new');
   const [refreshing, setRefreshing] = useState(false);
   const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
+  const [healthNow, setHealthNow] = useState<number>(Date.now());
+  const [recallMode, setRecallMode] = useState(false);
+  const [locationLogoUrl, setLocationLogoUrl] = useState<string | null>(null);
+  const lastRecoveryAttemptAt = useRef(0);
   
   // PRINTED ORDER TRACKING - React state so we properly wait for it to load
   const [printedOrderIds, setPrintedOrderIds] = useState<Set<string>>(new Set());
@@ -181,7 +191,12 @@ export const OrdersListScreen: React.FC = () => {
   const playAlertSound = useCallback(async () => {
     try {
       const { playAlert } = await import('../services/soundService');
-      await playAlert();
+      const currentSettings = useStore.getState().settings;
+      await playAlert(
+        currentSettings?.printerAlertTone ??
+          currentSettings?.notificationTone ??
+          'default'
+      );
       console.log('[Sound] 🔔 Alert triggered!');
     } catch (error) {
       console.error('[Sound] Failed to play:', error);
@@ -302,11 +317,13 @@ export const OrdersListScreen: React.FC = () => {
     orders,
     setOrders,
     fetchOrders,
+    checkAuth,
     acknowledgeOrder,
     updateOrderStatus,
     settings,
     updateSettings,
     auth,
+    offline,
   } = useStore();
 
   const printerConnected = settings?.printerConnected ?? false;
@@ -314,10 +331,25 @@ export const OrdersListScreen: React.FC = () => {
   const simplifiedView = viewMode === 'two';
   const threeColumnView = viewMode === 'three';
   const ordersList = orders?.orders || [];
+  const lastFetchAtMs = orders?.lastFetchTime ? new Date(orders.lastFetchTime).getTime() : null;
+  const staleFetchMs = lastFetchAtMs ? Math.max(0, healthNow - lastFetchAtMs) : null;
+  const consecutiveFetchFailures = orders?.consecutiveFetchFailures ?? 0;
+  const shouldShowStaleBanner = !!auth?.isAuthenticated && !!staleFetchMs && staleFetchMs >= WATCHDOG_STALE_WARNING_MS;
   const completedArchiveLimit = Math.max(1, settings?.completedArchiveLimit ?? 50);
+  const completedColumnHiddenOrderIds = Array.isArray(settings?.completedColumnHiddenOrderIds)
+    ? settings.completedColumnHiddenOrderIds
+    : [];
+  const hiddenCompletedOrderIdSet = new Set(completedColumnHiddenOrderIds);
+  const isVisibleAfterCompletedClear = (order: Order): boolean => {
+    return !hiddenCompletedOrderIdSet.has(order.id);
+  };
 
   const completedOrdersBase = ordersList
-    .filter(o => o.status === 'ready' || o.status === 'completed' || o.status === 'cancelled')
+    .filter(
+      o =>
+        (o.status === 'ready' || o.status === 'completed' || o.status === 'cancelled') &&
+        isVisibleAfterCompletedClear(o)
+    )
     .sort((a, b) => {
       const aTime = new Date(a.updated_at || a.created_at).getTime();
       const bTime = new Date(b.updated_at || b.created_at).getTime();
@@ -328,7 +360,11 @@ export const OrdersListScreen: React.FC = () => {
   const completedOrdersArchived = completedOrdersBase.slice(completedArchiveLimit);
 
   const completedOnlyBase = ordersList
-    .filter(o => o.status === 'completed' || o.status === 'cancelled')
+    .filter(
+      o =>
+        (o.status === 'completed' || o.status === 'cancelled') &&
+        isVisibleAfterCompletedClear(o)
+    )
     .sort((a, b) => {
       const aTime = new Date(a.updated_at || a.created_at).getTime();
       const bTime = new Date(b.updated_at || b.created_at).getTime();
@@ -375,15 +411,10 @@ export const OrdersListScreen: React.FC = () => {
   
   // Actual print logic (separated to allow confirmation dialog above)
   const performPrint = useCallback(async (order: Order) => {
-    // Check if printer is supposedly connected (from settings)
-    if (!printerConnected) {
-      Alert.alert('Printer Not Connected', 'Please connect a printer in Settings first.');
-      return;
-    }
-
     setPrintingOrderId(order.id);
     try {
-      // CRITICAL: Verify the ACTUAL Bluetooth connection before printing
+      // Use saved printer config and always try to re-establish Bluetooth before printing.
+      // `printerConnected` in settings can be stale after app restart or BT drops.
       const macAddress = settings?.printerMacAddress;
       if (!macAddress) {
         Alert.alert('No Printer Configured', 'Please connect a printer in Settings first.');
@@ -391,9 +422,13 @@ export const OrdersListScreen: React.FC = () => {
         return;
       }
 
-      // Ensure we have an active connection
+      // Ensure we have an active connection (with one retry)
       console.log(`[Print] 🔗 Verifying connection to ${settings?.printerName}...`);
-      const isConnected = await ensureConnected(macAddress);
+      let isConnected = await ensureConnected(macAddress);
+      if (!isConnected) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        isConnected = await ensureConnected(macAddress);
+      }
       
       if (!isConnected) {
         console.error('[Print] ❌ Could not establish printer connection');
@@ -406,6 +441,11 @@ export const OrdersListScreen: React.FC = () => {
         updateSettings({ printerConnected: false });
         setPrintingOrderId(null);
         return;
+      }
+
+      // Keep settings state in sync when reconnect succeeds during print/reprint
+      if (!printerConnected) {
+        updateSettings({ printerConnected: true });
       }
       
       console.log(`[Print] ✓ Connection verified, printing...`);
@@ -431,34 +471,9 @@ export const OrdersListScreen: React.FC = () => {
         // ONLY mark as printed if print ACTUALLY succeeded
         markAsPrinted(order.id);
         Vibration.vibrate(100);
-        
-        // Move to Active (preparing) status
-        if (order.status === 'pending') {
-          console.log(`[Print] ✓ Moving order #${order.order_number} to Active...`);
-          try {
-            // Don't await - fire and forget, we already did optimistic update
-            updateOrderStatus(order.id, 'preparing')
-              .then(result => {
-                if (result) {
-                  console.log(`[Print] ✓ Backend confirmed: Order #${order.order_number} is Active`);
-                } else {
-                  console.warn(`[Print] ⚠️ Backend update failed for order #${order.order_number} - will sync on next fetch`);
-                }
-              })
-              .catch(err => {
-                console.warn(`[Print] ⚠️ Backend update error for order #${order.order_number}:`, err);
-              });
-            
-            // Show success immediately - don't wait for backend
-            Alert.alert('✓ Printed', `Order #${order.order_number} printed successfully`);
-          } catch (err: any) {
-            console.error('[Print] Failed to update status:', err);
-            // Still show success since print worked
-            Alert.alert('✓ Printed', `Order #${order.order_number} printed successfully`);
-          }
-        } else {
-          Alert.alert('✓ Printed', `Order #${order.order_number} printed successfully`);
-        }
+
+        // Keep order in New after auto-print; staff must explicitly Accept to move forward.
+        Alert.alert('✓ Printed', `Order #${order.order_number} printed successfully`);
       } else {
         console.error(`[Print] ❌ Print FAILED for order #${order.order_number}`);
         // Update settings to reflect that printer may be disconnected
@@ -504,7 +519,7 @@ export const OrdersListScreen: React.FC = () => {
     } finally {
       setPrintingOrderId(null);
     }
-  }, [printerConnected, settings?.defaultPrintType, settings?.printerMacAddress, settings?.printerName, markAsPrinted, updateOrderStatus, updateSettings, addToBacklog]);
+  }, [printerConnected, settings?.defaultPrintType, settings?.printerMacAddress, settings?.printerName, markAsPrinted, updateSettings, addToBacklog]);
 
   // Auto-print new orders - returns true if print succeeded, false if failed
   const autoPrintOrder = useCallback(async (order: Order): Promise<boolean> => {
@@ -779,39 +794,8 @@ export const OrdersListScreen: React.FC = () => {
     };
   }, [ordersList, printedOrderIds, playAlertSound, settings?.printerAlertsEnabled, settings?.soundEnabled, settings?.printerMacAddress, navigation]);
 
-  // Sync printed orders to Active status on load
-  // Direct: pending → preparing (backend now allows this)
-  useEffect(() => {
-    // Wait for printed IDs to load
-    if (!printedIdsLoaded) return;
-    
-    const syncPrintedOrdersToActive = async () => {
-      console.log(`[Sync] Checking ${ordersList.length} orders, ${printedOrderIds.size} printed IDs`);
-      
-      const printedButPending = ordersList.filter(
-        order => printedOrderIds.has(order.id) && order.status === 'pending'
-      );
-      
-      if (printedButPending.length > 0) {
-        console.log(`[Sync] 🔄 Moving ${printedButPending.length} printed orders to Active...`);
-        for (const order of printedButPending) {
-          try {
-            console.log(`[Sync] → Order #${order.order_number} to preparing...`);
-            await updateOrderStatus(order.id, 'preparing');
-            console.log(`[Sync] ✓ Done`);
-          } catch (err) {
-            console.error(`[Sync] ✗ Failed:`, err);
-          }
-        }
-        // Refresh after sync
-        setTimeout(() => fetchOrders(), 500);
-      }
-    };
-    
-    if (ordersList.length > 0 && printedOrderIds.size > 0) {
-      syncPrintedOrdersToActive();
-    }
-  }, [ordersList.length, printedIdsLoaded, printedOrderIds, updateOrderStatus, fetchOrders]);
+  // Intentionally do NOT auto-move printed orders to Active.
+  // Orders stay in New until staff taps Accept, which also clears ring-until-accepted.
 
   // Clear selection when entering simplified view (cards should start collapsed)
   useEffect(() => {
@@ -940,6 +924,82 @@ export const OrdersListScreen: React.FC = () => {
     };
   }, [settings?.printerMacAddress, settings?.printerName, settings?.printerConnected, settings?.printerAlertsEnabled, updateSettings, playAlertSound]);
 
+  const runConnectionRecovery = useCallback(
+    async (reason: string, showSuccessAlert = false) => {
+      const now = Date.now();
+      if (!showSuccessAlert && now - lastRecoveryAttemptAt.current < WATCHDOG_RECOVERY_COOLDOWN_MS) {
+        return;
+      }
+      if (!offline.isOnline) {
+        console.warn(`[Watchdog] Recovery skipped while offline (${reason})`);
+        if (showSuccessAlert) {
+          Alert.alert('Tablet Offline', 'Cannot recover while offline. Check Wi-Fi and internet first.');
+        }
+        return;
+      }
+
+      lastRecoveryAttemptAt.current = now;
+      console.warn(`[Watchdog] Running recovery (${reason})`);
+
+      try {
+        await checkAuth();
+        await fetchOrders();
+        setHealthNow(Date.now());
+
+        if (showSuccessAlert) {
+          const latestFetch = useStore.getState().orders.lastFetchTime;
+          const message = latestFetch
+            ? `Orders re-synced at ${new Date(latestFetch).toLocaleTimeString()}.`
+            : 'Recovery completed. Please confirm orders are updating.';
+          Alert.alert('Recovery Complete', message);
+        }
+      } catch (error) {
+        console.error('[Watchdog] Recovery failed:', error);
+        if (showSuccessAlert) {
+          Alert.alert('Recovery Failed', 'Could not re-sync orders. Check network and try again.');
+        }
+      }
+    },
+    [checkAuth, fetchOrders, offline.isOnline]
+  );
+
+  const handleManualRecovery = useCallback(() => {
+    void runConnectionRecovery('manual', true);
+  }, [runConnectionRecovery]);
+
+  // Watchdog: detect stale order sync and self-heal before stale orders become a customer issue.
+  useEffect(() => {
+    const tick = async () => {
+      const now = Date.now();
+      setHealthNow(now);
+
+      const state = useStore.getState();
+      if (!state.auth.isAuthenticated) {
+        return;
+      }
+
+      const lastFetchMs = state.orders.lastFetchTime
+        ? new Date(state.orders.lastFetchTime).getTime()
+        : null;
+      const staleMs = lastFetchMs ? Math.max(0, now - lastFetchMs) : null;
+      const failures = state.orders.consecutiveFetchFailures || 0;
+
+      if (failures >= 3 || (!!staleMs && staleMs >= WATCHDOG_STALE_WARNING_MS)) {
+        await runConnectionRecovery(
+          failures >= 3
+            ? `consecutive failures (${failures})`
+            : `stale sync ${Math.round((staleMs || 0) / 1000)}s`
+        );
+      }
+    };
+
+    void tick();
+    const interval = setInterval(() => {
+      void tick();
+    }, WATCHDOG_CHECK_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [runConnectionRecovery]);
+
   // Polling
   useFocusEffect(
     useCallback(() => {
@@ -969,9 +1029,11 @@ export const OrdersListScreen: React.FC = () => {
   // Refresh handler
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
+    await checkAuth();
     await fetchOrders();
+    setHealthNow(Date.now());
     setRefreshing(false);
-  }, [fetchOrders]);
+  }, [checkAuth, fetchOrders]);
 
   // Status change handler
   const handleStatusChange = useCallback(async (orderId: string, status: string) => {
@@ -991,16 +1053,15 @@ export const OrdersListScreen: React.FC = () => {
     }
   }, [acknowledgeOrder]);
 
-  // Kanban status change - uses direct Supabase call for flexible transitions
+  // Kanban status change via tablet API endpoint (supports compatibility transitions)
   const handleKanbanStatusChange = useCallback(async (orderId: string, targetStatus: string) => {
     // Read fresh state directly from store (avoids stale closure on rapid drags)
     const freshOrders = useStore.getState().orders.orders;
     const targetOrder = freshOrders.find(o => o.id === orderId);
     const previousStatus = targetOrder?.status;
-    const numericId = targetOrder?.numeric_id;
-    
-    if (!numericId) {
-      console.error(`[KanbanStatusChange] No numeric_id found for order ${orderId}`);
+
+    if (!targetOrder) {
+      console.error(`[KanbanStatusChange] Order not found in local state: ${orderId}`);
       Alert.alert('Error', 'Could not identify order. Please refresh and try again.');
       return;
     }
@@ -1015,8 +1076,42 @@ export const OrdersListScreen: React.FC = () => {
     setOrders({ orders: updatedOrders });
 
     try {
-      // Use direct Supabase RPC call - bypasses PHP backend restrictions
-      const result = await tabletUpdateOrderStatus(numericId, targetStatus);
+      const fallbackOrderId =
+        targetOrder.numeric_id && targetOrder.numeric_id > 0
+          ? String(targetOrder.numeric_id)
+          : null;
+
+      const runStatusUpdate = async (nextStatus: OrderStatus) => {
+        let result = await apiClient.updateOrderStatus(orderId, nextStatus);
+        const shouldRetryWithNumericId =
+          !result.success &&
+          !!fallbackOrderId &&
+          fallbackOrderId !== orderId &&
+          (result.error?.includes('Order not found') ||
+            result.error?.includes('not found') ||
+            result.error?.includes('Invalid order ID'));
+
+        if (shouldRetryWithNumericId) {
+          console.warn(
+            `[KanbanStatusChange] Primary ID failed for ${orderId}; retrying with numeric_id ${fallbackOrderId}`
+          );
+          result = await apiClient.updateOrderStatus(fallbackOrderId!, nextStatus);
+        }
+        return result;
+      };
+
+      const statusSequence: OrderStatus[] =
+        previousStatus === 'ready' && targetStatus === 'preparing'
+          ? ['pending', 'preparing']
+          : [targetStatus as OrderStatus];
+
+      let lastSuccessfulStatus: OrderStatus | null = null;
+      let result: { success: boolean; error?: string } = { success: true };
+      for (const nextStatus of statusSequence) {
+        result = await runStatusUpdate(nextStatus);
+        if (!result.success) break;
+        lastSuccessfulStatus = nextStatus;
+      }
       
       if (!result.success) {
         // Check if the order was deleted from the database
@@ -1027,11 +1122,12 @@ export const OrdersListScreen: React.FC = () => {
           if (selectedOrderId === orderId) setSelectedOrderId(null);
           Alert.alert('Order Removed', 'This order no longer exists and has been removed from the list.');
         } else {
-          // Revert just this one order back to its previous status
+          // Revert to last known-good local status (or previous status if nothing succeeded)
+          const fallbackStatus = lastSuccessfulStatus || previousStatus;
           const currentOrders = useStore.getState().orders.orders;
           const revertedOrders = currentOrders.map(order =>
-            order.id === orderId && previousStatus
-              ? { ...order, status: previousStatus }
+            order.id === orderId && fallbackStatus
+              ? { ...order, status: fallbackStatus }
               : order
           );
           setOrders({ orders: revertedOrders });
@@ -1165,27 +1261,79 @@ export const OrdersListScreen: React.FC = () => {
     o => backloggedOrderIds.has(o.id) && o.status === 'pending'
   ).length;
 
-  // Dynamic styles based on theme
-  const dynamicStyles = {
-    container: { backgroundColor: theme.background },
-    header: { 
-      backgroundColor: themeMode === 'dark' ? '#0f172a' : '#ffffff',
-      borderBottomColor: themeMode === 'dark' ? '#1e293b' : '#e2e8f0',
-    },
-    headerText: { color: theme.text },
-    headerSubtext: { color: theme.textSecondary },
-    listColumn: { backgroundColor: theme.surface, borderRightColor: theme.cardBorder },
-    detailColumn: { backgroundColor: themeMode === 'dark' ? '#1a1a2e' : '#ffffff' },
-    printerBadge: { backgroundColor: printerConnected ? '#22c55e' : '#ef4444' },
-  };
+  const twoColNewOrders = ordersList.filter(
+    o => o.status === 'pending' || o.status === 'confirmed' || o.status === 'preparing'
+  );
+  const threeColNewOrders = ordersList.filter(o => o.status === 'pending');
+  const threeColActiveOrders = ordersList.filter(o => o.status === 'confirmed' || o.status === 'preparing');
+  const fourColNewOrders = ordersList.filter(o => o.status === 'pending');
+  const fourColActiveOrders = ordersList.filter(o => o.status === 'confirmed' || o.status === 'preparing');
+  const fourColReadyOrders = ordersList.filter(o => o.status === 'ready');
+
+  const archivedCompleteCount = viewMode === 'four' ? completedOnlyArchived.length : completedOrdersArchived.length;
+  const displayedCompleteCount = viewMode === 'four'
+    ? (recallMode ? completedOnlyArchived.length : completedOnlyVisible.length)
+    : (recallMode ? completedOrdersArchived.length : completedOrdersVisible.length);
+
+  const dockCounts: { new: number; active?: number; ready?: number; complete: number } =
+    viewMode === 'two'
+      ? { new: twoColNewOrders.length, complete: displayedCompleteCount }
+      : viewMode === 'four'
+        ? {
+            new: fourColNewOrders.length,
+            active: fourColActiveOrders.length,
+            ready: fourColReadyOrders.length,
+            complete: displayedCompleteCount,
+          }
+        : {
+            new: threeColNewOrders.length,
+            active: threeColActiveOrders.length,
+            complete: displayedCompleteCount,
+          };
+
+  useEffect(() => {
+    setRecallMode(false);
+  }, [viewMode]);
+
+  useEffect(() => {
+    if (recallMode && archivedCompleteCount === 0) {
+      setRecallMode(false);
+    }
+  }, [recallMode, archivedCompleteCount]);
+
+  useEffect(() => {
+    setLocationLogoUrl(auth?.restaurantLogoUrl ?? null);
+  }, [auth?.restaurantLogoUrl]);
 
   // Top spacing to separate from Samsung status bar
   const topPadding = Math.max(insets.top, 8);
 
   return (
-    <View style={[styles.container, dynamicStyles.container]}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Spacer bar to separate from Samsung status bar */}
       <View style={[styles.statusBarSpacer, { height: topPadding, backgroundColor: themeMode === 'dark' ? '#0a0f1a' : '#f1f5f9' }]} />
+
+      {/* ORDER SYNC WATCHDOG BANNER */}
+      {shouldShowStaleBanner && (
+        <TouchableOpacity
+          style={styles.connectionStaleBanner}
+          onPress={handleManualRecovery}
+          activeOpacity={0.8}
+        >
+          <View style={styles.backlogBannerContent}>
+            <Text style={styles.backlogBannerIcon}>📡</Text>
+            <View style={styles.backlogBannerText}>
+              <Text style={styles.connectionStaleTitle}>Order Sync Delayed</Text>
+              <Text style={styles.backlogBannerSubtitle}>
+                {offline.isOnline
+                  ? `Last successful sync ${formatElapsedTime(staleFetchMs || 0)} ago • Failures: ${consecutiveFetchFailures}`
+                  : 'Tablet appears offline • Check Wi-Fi and internet connection'}
+              </Text>
+            </View>
+            <Text style={styles.connectionStaleAction}>RECOVER</Text>
+          </View>
+        </TouchableOpacity>
+      )}
       
       {/* PRINTER OFFLINE BANNER - Shows when printer is configured but disconnected */}
       {settings?.printerMacAddress && !printerConnected && (
@@ -1239,42 +1387,14 @@ export const OrdersListScreen: React.FC = () => {
         </TouchableOpacity>
       )}
       
-      {/* Header - Single Horizontal Line */}
-      <View style={[styles.header, dynamicStyles.header]}>
-        <View style={styles.logoContainer}>
-          <Image 
-            source={require('../../assets/logo.png')} 
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
-        <Text style={[styles.headerTitle, dynamicStyles.headerText]}>
-          {auth?.restaurantName || 'Kitchen Printer'}
-        </Text>
-        <View style={[styles.printerBadge, dynamicStyles.printerBadge]}>
-          <Text style={styles.printerBadgeText}>
-            {printerConnected ? '🖨️ Connected' : '⚠️ No Printer'}
-          </Text>
-            </View>
-        <View style={styles.headerSpacer} />
-          <TouchableOpacity
-          style={[styles.settingsButton, { backgroundColor: theme.surface }]}
-            onPress={() => navigation.navigate('Settings')}
-            testID="orders-settings-button"
-            nativeID="orders-settings-button"
-          >
-            <Ionicons name="settings-outline" size={24} color={theme.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
       {/* Main Content */}
       <View style={styles.content}>
         {simplifiedView ? (
           /* Kanban Board for Simplified View */
           <KanbanBoard
-            newOrders={ordersList.filter(o => 
-              o.status === 'pending' || o.status === 'confirmed' || o.status === 'preparing'
-            )}
+            showColumnHeaders={false}
+            recallMode={recallMode}
+            newOrders={twoColNewOrders}
             completeOrders={completedOrdersVisible}
             archivedCompleteOrders={completedOrdersArchived}
             selectedOrderId={selectedOrderId}
@@ -1289,8 +1409,10 @@ export const OrdersListScreen: React.FC = () => {
         ) : threeColumnView ? (
           /* 3-Column Kanban Board */
           <KanbanBoard3Col
-            newOrders={ordersList.filter(o => o.status === 'pending')}
-            activeOrders={ordersList.filter(o => o.status === 'confirmed' || o.status === 'preparing')}
+            showColumnHeaders={false}
+            recallMode={recallMode}
+            newOrders={threeColNewOrders}
+            activeOrders={threeColActiveOrders}
             completeOrders={completedOrdersVisible}
             archivedCompleteOrders={completedOrdersArchived}
             selectedOrderId={selectedOrderId}
@@ -1304,9 +1426,11 @@ export const OrdersListScreen: React.FC = () => {
         ) : (
           /* 4-Column Kanban Board for Regular View */
           <KanbanBoard4Col
-            newOrders={ordersList.filter(o => o.status === 'pending')}
-            activeOrders={ordersList.filter(o => o.status === 'confirmed' || o.status === 'preparing')}
-            readyOrders={ordersList.filter(o => o.status === 'ready')}
+            showColumnHeaders={false}
+            recallMode={recallMode}
+            newOrders={fourColNewOrders}
+            activeOrders={fourColActiveOrders}
+            readyOrders={fourColReadyOrders}
             completeOrders={completedOnlyVisible}
             archivedCompleteOrders={completedOnlyArchived}
             selectedOrderId={selectedOrderId}
@@ -1320,6 +1444,23 @@ export const OrdersListScreen: React.FC = () => {
         )}
       </View>
 
+      <OrdersBottomDock
+        restaurantName={auth?.restaurantName || 'Kitchen Printer'}
+        locationLogoUrl={locationLogoUrl}
+        viewMode={viewMode}
+        counts={dockCounts}
+        isOnline={offline.isOnline}
+        printerConnected={printerConnected}
+        onOpenSettings={() => navigation.navigate('Settings' as never)}
+        onRefresh={handleRefresh}
+        recall={{
+          enabled: archivedCompleteCount > 0,
+          archivedCount: archivedCompleteCount,
+          active: recallMode,
+          onToggle: () => setRecallMode(prev => !prev),
+        }}
+      />
+
       {/* Detail Panel removed - both views now use expandable cards */}
     </View>
   );
@@ -1331,49 +1472,6 @@ const styles = StyleSheet.create({
   },
   statusBarSpacer: {
     width: '100%',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 0,
-    gap: 16,
-  },
-  logoContainer: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  logo: {
-    width: 70,
-    height: 28,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  printerBadge: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  printerBadgeText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  headerSpacer: {
-    flex: 1,
-  },
-  settingsButton: {
-    padding: 10,
-    borderRadius: 10,
-  },
-  settingsIcon: {
-    fontSize: 24,
   },
   content: {
     flex: 1,
@@ -1454,6 +1552,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   // Backlog warning banner styles
+  connectionStaleBanner: {
+    backgroundColor: '#b45309',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  connectionStaleTitle: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  connectionStaleAction: {
+    backgroundColor: '#ffffff',
+    color: '#b45309',
+    fontSize: 14,
+    fontWeight: '800',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
   backlogBanner: {
     backgroundColor: '#dc2626',
     paddingVertical: 12,
