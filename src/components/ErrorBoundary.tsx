@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import * as Sentry from '@sentry/react-native';
 import * as Updates from 'expo-updates';
 
 interface Props {
@@ -31,17 +30,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
     console.error('[ErrorBoundary] Caught error:', error);
     console.error('[ErrorBoundary] Component stack:', errorInfo.componentStack);
     
-    // Report to Sentry with component stack
-    if (!__DEV__) {
-      try {
-        Sentry.withScope((scope) => {
-          scope.setExtra('componentStack', errorInfo.componentStack);
-          scope.setTag('error_boundary', 'true');
-          Sentry.captureException(error);
-        });
-      } catch (e) {
-        console.error('[ErrorBoundary] Failed to report to Sentry:', e);
-      }
+    console.error('[ErrorBoundary] Error caught:', error);
     }
   }
 

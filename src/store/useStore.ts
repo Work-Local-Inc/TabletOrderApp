@@ -3,7 +3,6 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Order, DeviceConfig, QueuedAction, OrderStatus } from '../types';
 import { apiClient } from '../api/client';
-import { addBreadcrumb, captureException } from '../config/sentry';
 
 interface AuthState {
   isAuthenticated: boolean;
