@@ -15,7 +15,6 @@ import {
 import * as Linking from 'expo-linking';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useStore } from '../store/useStore';
-// Use the secure REST API client (NOT direct Supabase!)
 import { apiClient } from '../api/client';
 
 // TEST BUILD - Hardcoded credentials for testing
