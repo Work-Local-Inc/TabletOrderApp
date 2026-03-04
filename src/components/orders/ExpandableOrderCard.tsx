@@ -472,8 +472,10 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   };
 
   const handleAcceptPress = () => {
+    // Only acknowledge — do NOT call onStatusChange here.
+    // Calling both simultaneously caused a race: status change to 'confirmed'
+    // would race against acknowledge, leaving orders in a broken state.
     onAccept?.(order.id);
-    onStatusChange(order.id);
   };
 
   const handleAdvancePress = () => {
