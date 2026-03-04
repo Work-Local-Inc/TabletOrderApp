@@ -38,7 +38,8 @@
         "android.permission.BLUETOOTH",
         "android.permission.BLUETOOTH_ADMIN",
         "android.permission.BLUETOOTH_CONNECT",
-        "android.permission.BLUETOOTH_SCAN"
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.CAMERA"
       ],
       "intentFilters": [
         {
@@ -63,7 +64,13 @@
     },
     "plugins": [
       "expo-secure-store",
-      "expo-updates"
+      "expo-updates",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan QR codes for device pairing."
+        }
+      ]
     ],
     "extra": {
       "eas": {
