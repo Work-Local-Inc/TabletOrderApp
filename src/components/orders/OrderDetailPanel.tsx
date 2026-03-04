@@ -564,11 +564,40 @@ export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
               <Text style={[styles.itemName, { color: colors.text }]}>
                 {item.name} <Text style={{ color: colors.textMuted }}>x {item.quantity}</Text>
               </Text>
-              {item.modifiers && item.modifiers.length > 0 && (
-                <Text style={[styles.itemModifiers, { color: colors.textMuted }]}>
-                  {item.modifiers.map(m => m.name).join(', ')}
-                </Text>
-              )}
+              {item.modifiers && item.modifiers.length > 0 && (() => {
+                const hasInstanceIndex = item.modifiers!.some(m => m.instance_index != null);
+                if (hasInstanceIndex) {
+                  // Group by instance_index for per-pizza display
+                  const byInstance: Record<number, typeof item.modifiers> = {};
+                  item.modifiers!.forEach(m => {
+                    const key = m.instance_index ?? 0;
+                    if (!byInstance[key]) byInstance[key] = [];
+                    byInstance[key]!.push(m);
+                  });
+                  return (
+                    <View style={{ marginTop: 2 }}>
+                      {Object.keys(byInstance).sort().map(k => {
+                        const idx = Number(k);
+                        return (
+                          <View key={idx} style={{ marginTop: 2 }}>
+                            <Text style={[styles.itemModifiers, { color: colors.textMuted, fontWeight: '600' }]}>
+                              Pizza {idx + 1}:
+                            </Text>
+                            <Text style={[styles.itemModifiers, { color: colors.textMuted }]}>
+                              {byInstance[idx]!.map(m => m.name).join(', ')}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  );
+                }
+                return (
+                  <Text style={[styles.itemModifiers, { color: colors.textMuted }]}>
+                    {item.modifiers!.map(m => m.name).join(', ')}
+                  </Text>
+                );
+              })()}
               {item.notes && (
                 <Text style={styles.itemNotes}>"{item.notes}"</Text>
               )}

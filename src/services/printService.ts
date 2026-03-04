@@ -211,22 +211,43 @@ export const generateReceiptData = (order: Order): string => {
     ) + '\n';
     receipt += COMMANDS.BOLD_OFF;
 
-    // Modifiers - grouped by group_name, with placement and price
+    // Modifiers - grouped by instance_index (if present) then by group_name
     if (item.modifiers && item.modifiers.length > 0) {
-      const groups = groupModifiers(item.modifiers);
-      groups.forEach((group) => {
-        if (group.groupName) {
-          receipt += `   ${group.groupName.toUpperCase()}:\n`;
-        }
-        group.modifiers.forEach((mod) => {
-          const modPrice = mod.price > 0 ? ` +${formatCurrency(mod.price)}` : '';
-          let placementText = '';
-          if (mod.placement && mod.placement !== 'whole') {
-            placementText = mod.placement === 'left' ? ' (LEFT)' : ' (RIGHT)';
-          }
-          receipt += `   - ${mod.name}${placementText}${modPrice}\n`;
+      const hasInstanceIndex = item.modifiers.some((m) => m.instance_index != null);
+      if (hasInstanceIndex) {
+        const instances = groupModifiersByInstance(item.modifiers);
+        instances.forEach((instance) => {
+          receipt += `  ${instance.instanceLabel}:\n`;
+          instance.groups.forEach((group) => {
+            if (group.groupName) {
+              receipt += `   ${group.groupName.toUpperCase()}:\n`;
+            }
+            group.modifiers.forEach((mod) => {
+              const modPrice = mod.price > 0 ? ` +${formatCurrency(mod.price)}` : '';
+              let placementText = '';
+              if (mod.placement && mod.placement !== 'whole') {
+                placementText = mod.placement === 'left' ? ' (LEFT)' : ' (RIGHT)';
+              }
+              receipt += `    - ${mod.name}${placementText}${modPrice}\n`;
+            });
+          });
         });
-      });
+      } else {
+        const groups = groupModifiers(item.modifiers);
+        groups.forEach((group) => {
+          if (group.groupName) {
+            receipt += `   ${group.groupName.toUpperCase()}:\n`;
+          }
+          group.modifiers.forEach((mod) => {
+            const modPrice = mod.price > 0 ? ` +${formatCurrency(mod.price)}` : '';
+            let placementText = '';
+            if (mod.placement && mod.placement !== 'whole') {
+              placementText = mod.placement === 'left' ? ' (LEFT)' : ' (RIGHT)';
+            }
+            receipt += `   - ${mod.name}${placementText}${modPrice}\n`;
+          });
+        });
+      }
     }
 
     // Item notes
@@ -616,7 +637,7 @@ const sanitizeForPrinter = (text: string): string => {
  * Returns an array of { groupName, modifiers } in insertion order.
  * Modifiers with no group_name (null/undefined) go into a group with groupName = null.
  */
-const groupModifiers = (modifiers: Array<{ name: string; price: number; quantity?: number; placement?: string | null; group_name?: string | null }>): Array<{ groupName: string | null; modifiers: typeof modifiers }> => {
+const groupModifiers = (modifiers: Array<{ name: string; price: number; quantity?: number; placement?: string | null; group_name?: string | null; instance_index?: number | null }>): Array<{ groupName: string | null; modifiers: typeof modifiers }> => {
   const groups: Map<string | null, typeof modifiers> = new Map();
   for (const mod of modifiers) {
     const key = mod.group_name ?? null;
@@ -626,6 +647,30 @@ const groupModifiers = (modifiers: Array<{ name: string; price: number; quantity
     groups.get(key)!.push(mod);
   }
   return Array.from(groups.entries()).map(([groupName, mods]) => ({ groupName, modifiers: mods }));
+};
+
+/**
+ * Group modifiers by instance_index (for 2-for-1 pizzas etc.).
+ * Returns an array of { instanceLabel, groups } where groups is the result of groupModifiers.
+ * Only called when at least one modifier has instance_index != null.
+ * Within each instance, modifiers are further grouped by group_name.
+ */
+type ModifierItem = Parameters<typeof groupModifiers>[0][number];
+const groupModifiersByInstance = (modifiers: ModifierItem[]): Array<{ instanceLabel: string; groups: ReturnType<typeof groupModifiers> }> => {
+  const byInstance: Map<number, ModifierItem[]> = new Map();
+  for (const mod of modifiers) {
+    const key = mod.instance_index ?? 0;
+    if (!byInstance.has(key)) {
+      byInstance.set(key, []);
+    }
+    byInstance.get(key)!.push(mod);
+  }
+  // Sort by instance_index so Pizza 1 comes before Pizza 2
+  const sortedKeys = Array.from(byInstance.keys()).sort((a, b) => a - b);
+  return sortedKeys.map((idx) => ({
+    instanceLabel: `PIZZA ${idx + 1}`,
+    groups: groupModifiers(byInstance.get(idx)!),
+  }));
 };
 
 /**
@@ -818,34 +863,63 @@ const generateKitchenTicket = (order: Order): string => {
     text += COMMANDS.BOLD_OFF;
     text += COMMANDS.NORMAL_SIZE;
     
-    // Modifiers - grouped by group_name, with placement and quantity
+    // Modifiers - grouped by instance_index (if present) then by group_name, with placement and quantity
     if (item.modifiers && item.modifiers.length > 0) {
-      const groups = groupModifiers(item.modifiers);
-      groups.forEach((group) => {
-        // Print group header if it has a name
-        if (group.groupName) {
-          text += LEFT_MARGIN + '   ' + COMMANDS.BOLD_ON + sanitizeForPrinter(group.groupName).toUpperCase() + ':' + COMMANDS.BOLD_OFF + '\n';
-        }
-        group.modifiers.forEach((mod) => {
-          let placementText = '';
-          if (mod.placement && mod.placement !== 'whole') {
-            placementText = mod.placement === 'left' ? ' (LEFT)' : ' (RIGHT)';
-          }
-          const modName = sanitizeForPrinter(mod.name);
-          const hasQuantity = mod.quantity && mod.quantity > 1;
-          const modQuantity = hasQuantity ? ` x${mod.quantity}` : '';
-          
-          text += LEFT_MARGIN + '   - ' + modName;
-          if (hasQuantity) {
-            text += COMMANDS.BOLD_ON;
-            text += modQuantity;
-            text += COMMANDS.BOLD_OFF;
-          }
-          text += placementText + '\n';
+      const hasInstanceIndex = item.modifiers.some((m) => m.instance_index != null);
+      if (hasInstanceIndex) {
+        const instances = groupModifiersByInstance(item.modifiers);
+        instances.forEach((instance) => {
+          text += LEFT_MARGIN + '  ' + COMMANDS.BOLD_ON + instance.instanceLabel + ':' + COMMANDS.BOLD_OFF + '\n';
+          instance.groups.forEach((group) => {
+            if (group.groupName) {
+              text += LEFT_MARGIN + '   ' + COMMANDS.BOLD_ON + sanitizeForPrinter(group.groupName).toUpperCase() + ':' + COMMANDS.BOLD_OFF + '\n';
+            }
+            group.modifiers.forEach((mod) => {
+              let placementText = '';
+              if (mod.placement && mod.placement !== 'whole') {
+                placementText = mod.placement === 'left' ? ' (LEFT)' : ' (RIGHT)';
+              }
+              const modName = sanitizeForPrinter(mod.name);
+              const hasQuantity = mod.quantity && mod.quantity > 1;
+              const modQuantity = hasQuantity ? ` x${mod.quantity}` : '';
+              text += LEFT_MARGIN + '    - ' + modName;
+              if (hasQuantity) {
+                text += COMMANDS.BOLD_ON;
+                text += modQuantity;
+                text += COMMANDS.BOLD_OFF;
+              }
+              text += placementText + '\n';
+            });
+          });
         });
-      });
+      } else {
+        const groups = groupModifiers(item.modifiers);
+        groups.forEach((group) => {
+          // Print group header if it has a name
+          if (group.groupName) {
+            text += LEFT_MARGIN + '   ' + COMMANDS.BOLD_ON + sanitizeForPrinter(group.groupName).toUpperCase() + ':' + COMMANDS.BOLD_OFF + '\n';
+          }
+          group.modifiers.forEach((mod) => {
+            let placementText = '';
+            if (mod.placement && mod.placement !== 'whole') {
+              placementText = mod.placement === 'left' ? ' (LEFT)' : ' (RIGHT)';
+            }
+            const modName = sanitizeForPrinter(mod.name);
+            const hasQuantity = mod.quantity && mod.quantity > 1;
+            const modQuantity = hasQuantity ? ` x${mod.quantity}` : '';
+
+            text += LEFT_MARGIN + '   - ' + modName;
+            if (hasQuantity) {
+              text += COMMANDS.BOLD_ON;
+              text += modQuantity;
+              text += COMMANDS.BOLD_OFF;
+            }
+            text += placementText + '\n';
+          });
+        });
+      }
     }
-    
+
     // Item-specific notes - Normal size, indented, with word wrap
     if (item.notes) {
       const noteLines = wrapText(item.notes, PAPER_WIDTH - 6); // Account for "   >> " prefix
@@ -1297,32 +1371,62 @@ const generateReceiptText = (order: Order): string => {
     const priceLine = `$${itemTotal.toFixed(2)}`;
     text += rightAlign(itemLine, priceLine) + '\n';
     
-    // Modifiers - grouped by group_name, with placement, quantity, and price
+    // Modifiers - grouped by instance_index (if present) then by group_name, with placement, quantity, and price
     if (item.modifiers && item.modifiers.length > 0) {
-      const groups = groupModifiers(item.modifiers);
-      groups.forEach((group) => {
-        if (group.groupName) {
-          text += LEFT_MARGIN + '   ' + COMMANDS.BOLD_ON + sanitizeForPrinter(group.groupName).toUpperCase() + ':' + COMMANDS.BOLD_OFF + '\n';
-        }
-        group.modifiers.forEach((mod) => {
-          const modPrice = mod.price > 0 ? `+$${mod.price.toFixed(2)}` : '';
-          let placementText = '';
-          if (mod.placement && mod.placement !== 'whole') {
-            placementText = mod.placement === 'left' ? ' (L)' : ' (R)';
-          }
-          const modName = sanitizeForPrinter(mod.name);
-          const hasQuantity = mod.quantity && mod.quantity > 1;
-          const modQuantity = hasQuantity ? ` x${mod.quantity}` : '';
-          
-          text += LEFT_MARGIN + '   - ' + modName;
-          if (hasQuantity) {
-            text += COMMANDS.BOLD_ON;
-            text += modQuantity;
-            text += COMMANDS.BOLD_OFF;
-          }
-          text += placementText + ' ' + modPrice + '\n';
+      const hasInstanceIndex = item.modifiers.some((m) => m.instance_index != null);
+      if (hasInstanceIndex) {
+        const instances = groupModifiersByInstance(item.modifiers);
+        instances.forEach((instance) => {
+          text += LEFT_MARGIN + '  ' + COMMANDS.BOLD_ON + instance.instanceLabel + ':' + COMMANDS.BOLD_OFF + '\n';
+          instance.groups.forEach((group) => {
+            if (group.groupName) {
+              text += LEFT_MARGIN + '   ' + COMMANDS.BOLD_ON + sanitizeForPrinter(group.groupName).toUpperCase() + ':' + COMMANDS.BOLD_OFF + '\n';
+            }
+            group.modifiers.forEach((mod) => {
+              const modPrice = mod.price > 0 ? `+$${mod.price.toFixed(2)}` : '';
+              let placementText = '';
+              if (mod.placement && mod.placement !== 'whole') {
+                placementText = mod.placement === 'left' ? ' (L)' : ' (R)';
+              }
+              const modName = sanitizeForPrinter(mod.name);
+              const hasQuantity = mod.quantity && mod.quantity > 1;
+              const modQuantity = hasQuantity ? ` x${mod.quantity}` : '';
+              text += LEFT_MARGIN + '    - ' + modName;
+              if (hasQuantity) {
+                text += COMMANDS.BOLD_ON;
+                text += modQuantity;
+                text += COMMANDS.BOLD_OFF;
+              }
+              text += placementText + ' ' + modPrice + '\n';
+            });
+          });
         });
-      });
+      } else {
+        const groups = groupModifiers(item.modifiers);
+        groups.forEach((group) => {
+          if (group.groupName) {
+            text += LEFT_MARGIN + '   ' + COMMANDS.BOLD_ON + sanitizeForPrinter(group.groupName).toUpperCase() + ':' + COMMANDS.BOLD_OFF + '\n';
+          }
+          group.modifiers.forEach((mod) => {
+            const modPrice = mod.price > 0 ? `+$${mod.price.toFixed(2)}` : '';
+            let placementText = '';
+            if (mod.placement && mod.placement !== 'whole') {
+              placementText = mod.placement === 'left' ? ' (L)' : ' (R)';
+            }
+            const modName = sanitizeForPrinter(mod.name);
+            const hasQuantity = mod.quantity && mod.quantity > 1;
+            const modQuantity = hasQuantity ? ` x${mod.quantity}` : '';
+
+            text += LEFT_MARGIN + '   - ' + modName;
+            if (hasQuantity) {
+              text += COMMANDS.BOLD_ON;
+              text += modQuantity;
+              text += COMMANDS.BOLD_OFF;
+            }
+            text += placementText + ' ' + modPrice + '\n';
+          });
+        });
+      }
     }
     
     // Item notes with word wrap

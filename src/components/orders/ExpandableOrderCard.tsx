@@ -848,14 +848,35 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
           {items.map((item, index) => {
             const modifiers = item.modifiers || [];
             const hasModifiers = modifiers.length > 0;
-            const groupedModifiers = showPricesEffective
-              ? modifiers.reduce<Record<string, typeof modifiers>>((acc, mod) => {
-                  const group = mod.group_name || '';
-                  if (!acc[group]) acc[group] = [];
-                  acc[group].push(mod);
-                  return acc;
-                }, {})
-              : null;
+            const hasInstanceIndex = modifiers.some(m => m.instance_index != null);
+
+            // Build per-instance grouping when instance_index is present
+            const instanceGroups: Array<{ instanceLabel: string; instanceMods: typeof modifiers }> | null =
+              hasInstanceIndex
+                ? (() => {
+                    const byInstance: Record<number, typeof modifiers> = {};
+                    modifiers.forEach(m => {
+                      const key = m.instance_index ?? 0;
+                      if (!byInstance[key]) byInstance[key] = [];
+                      byInstance[key].push(m);
+                    });
+                    return Object.keys(byInstance)
+                      .map(Number)
+                      .sort()
+                      .map(idx => ({ instanceLabel: `Pizza ${idx + 1}`, instanceMods: byInstance[idx] }));
+                  })()
+                : null;
+
+            // Build group_name grouping for the showPrices path (non-instance)
+            const groupedModifiers =
+              showPricesEffective && !hasInstanceIndex
+                ? modifiers.reduce<Record<string, typeof modifiers>>((acc, mod) => {
+                    const group = mod.group_name || '';
+                    if (!acc[group]) acc[group] = [];
+                    acc[group].push(mod);
+                    return acc;
+                  }, {})
+                : null;
 
             return (
             <View key={index} style={[styles.itemRow, { borderBottomColor: colors.border }]}>
@@ -866,12 +887,39 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                 <Text style={[styles.itemName, { color: colors.text }]}>
                   {item.name}
                 </Text>
-                {hasModifiers && !showPricesEffective && (
+                {/* Per-instance display (2-for-1 pizzas etc.) */}
+                {hasModifiers && hasInstanceIndex && instanceGroups && (
+                  <View style={styles.modifierGroups}>
+                    {instanceGroups.map(({ instanceLabel, instanceMods }) => (
+                      <View key={instanceLabel} style={styles.modifierGroup}>
+                        <Text style={[styles.modifierGroupLabel, { color: colors.textMuted }]}>
+                          {instanceLabel.toUpperCase()}
+                        </Text>
+                        {instanceMods.map((mod, modIndex) => (
+                          <View key={`${mod.id ?? modIndex}-${modIndex}`} style={styles.modifierRow}>
+                            <Text style={[styles.modifierName, { color: colors.textMuted }]}>
+                              {mod.quantity && mod.quantity > 1 ? `${mod.quantity}x ` : ''}
+                              {mod.name}
+                            </Text>
+                            {showPricesEffective && (
+                              <Text style={[styles.modifierPrice, { color: colors.textMuted }]}>
+                                {formatPrice((mod.price || 0) * (mod.quantity || 1))}
+                              </Text>
+                            )}
+                          </View>
+                        ))}
+                      </View>
+                    ))}
+                  </View>
+                )}
+                {/* Flat modifier list (no instance_index, no prices) */}
+                {hasModifiers && !hasInstanceIndex && !showPricesEffective && (
                   <Text style={[styles.itemMods, { color: colors.textMuted }]}>
                     {modifiers.map(m => m.name).join(', ')}
                   </Text>
                 )}
-                {hasModifiers && showPricesEffective && groupedModifiers && (
+                {/* Grouped by group_name with prices */}
+                {hasModifiers && !hasInstanceIndex && showPricesEffective && groupedModifiers && (
                   <View style={styles.modifierGroups}>
                     {Object.entries(groupedModifiers).map(([groupName, groupMods]) => (
                       <View key={groupName || 'modifiers'} style={styles.modifierGroup}>

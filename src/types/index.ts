@@ -16,6 +16,7 @@ export interface OrderModifier {
   quantity?: number; // Quantity of this modifier (e.g., "extra cheese x2")
   placement?: 'whole' | 'left' | 'right' | null;
   group_name?: string | null; // Modifier group label (e.g., "CHOOSE YOUR SIZE", "Extra Sauce")
+  instance_index?: number | null; // For 2-for-1 pizzas: 0 = Pizza 1, 1 = Pizza 2
 }
 
 export interface CustomerInfo {
