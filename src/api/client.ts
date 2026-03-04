@@ -16,7 +16,6 @@ import {
   TabletServiceConfig,
   RecoveryCommand,
 } from '../types';
-import { addBreadcrumb, captureException } from '../config/sentry';
 
 const normalizeBaseUrl = (url: string): string => {
   return url.trim().replace(/\/+$/, '');
@@ -119,7 +118,6 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error: AxiosError) => {
-        // Capture API errors to Sentry (excluding expected errors like 401)
         if (error.response?.status !== 401) {
           captureException(error, {
             endpoint: error.config?.url,

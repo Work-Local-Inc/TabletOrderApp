@@ -3,8 +3,6 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Order, DeviceConfig, QueuedAction, OrderStatus } from '../types';
 import { apiClient } from '../api/client';
-import { tabletUpdateOrderStatus } from '../api/supabaseRpc';
-import { addBreadcrumb, captureException } from '../config/sentry';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -422,9 +420,8 @@ export const useStore = create<AppStore>()(
           return false;
         }
 
-        // Try to update on backend via Supabase RPC (bypasses PHP restrictions)
-        const result = await tabletUpdateOrderStatus(numericId, status);
-        console.log(`[Store] Supabase RPC result:`, result.success, result.error || 'OK');
+        const result = await apiClient.updateOrderStatus(String(numericId), status);
+        console.log(`[Store] API result:`, result.success, result.error || 'OK');
         
         if (result.success) {
           console.log(`[Store] ✓ Backend updated to ${status}`);
@@ -540,8 +537,8 @@ export const useStore = create<AppStore>()(
               const numericId = action.payload.numeric_id 
                 || get().orders.orders.find(o => o.id === action.order_id)?.numeric_id;
               if (numericId) {
-                const result = await tabletUpdateOrderStatus(
-                  numericId,
+                const result = await apiClient.updateOrderStatus(
+                  String(numericId),
                   action.payload.status
                 );
                 success = result.success;

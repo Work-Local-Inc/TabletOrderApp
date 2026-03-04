@@ -15,13 +15,12 @@ import {
 import * as Linking from 'expo-linking';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useStore } from '../store/useStore';
-// Use the secure REST API client (NOT direct Supabase!)
 import { apiClient } from '../api/client';
 
 // TEST BUILD - Hardcoded credentials for testing
 // TODO: Remove these for production builds
-const TEST_UUID = __DEV__ ? '006fe8aa-eec7-465c-bb8d-9180d3a2c910' : '';
-const TEST_KEY = __DEV__ ? 'aU2065zyc6zJrOwhQajVXToYLs4TNsOPlCgzKPVbyDE' : '';
+const TEST_UUID = __DEV__ ? (process.env.EXPO_PUBLIC_DEV_UUID ?? '') : '';
+const TEST_KEY = __DEV__ ? (process.env.EXPO_PUBLIC_DEV_KEY ?? '') : '';
 
 export const LoginScreen: React.FC = () => {
   const [deviceUuid, setDeviceUuid] = useState(TEST_UUID);

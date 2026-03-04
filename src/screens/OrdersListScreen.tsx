@@ -1047,9 +1047,13 @@ export const OrdersListScreen: React.FC = () => {
 
   const handleAcceptOrder = useCallback(async (orderId: string) => {
     try {
-      await acknowledgeOrder(orderId);
+      const success = await acknowledgeOrder(orderId);
+      if (!success) {
+        Alert.alert('Error', 'Failed to acknowledge order. Please try again.');
+      }
     } catch (error) {
       console.error('[Accept] Error:', error);
+      Alert.alert('Error', 'Failed to acknowledge order. Please try again.');
     }
   }, [acknowledgeOrder]);
 
