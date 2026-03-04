@@ -31,7 +31,6 @@ export class ErrorBoundary extends React.Component<Props, State> {
     console.error('[ErrorBoundary] Component stack:', errorInfo.componentStack);
     
     console.error('[ErrorBoundary] Error caught:', error);
-    }
   }
 
   handleReload = async () => {

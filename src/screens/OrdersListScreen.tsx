@@ -1047,11 +1047,20 @@ export const OrdersListScreen: React.FC = () => {
 
   const handleAcceptOrder = useCallback(async (orderId: string) => {
     try {
-      await acknowledgeOrder(orderId);
+      const success = await acknowledgeOrder(orderId);
+      if (!success) {
+        Alert.alert('Error', 'Failed to acknowledge order. Please try again.');
+        return;
+      }
+      // After acknowledging, move order to confirmed so it progresses to Active column.
+      // Previously handleAcceptPress called onStatusChange simultaneously which caused
+      // a race condition — now we sequence it: acknowledge first, then status change.
+      await updateOrderStatus(orderId, 'confirmed');
     } catch (error) {
       console.error('[Accept] Error:', error);
+      Alert.alert('Error', 'Failed to acknowledge order. Please try again.');
     }
-  }, [acknowledgeOrder]);
+  }, [acknowledgeOrder, updateOrderStatus]);
 
   // Kanban status change via tablet API endpoint (supports compatibility transitions)
   const handleKanbanStatusChange = useCallback(async (orderId: string, targetStatus: string) => {
