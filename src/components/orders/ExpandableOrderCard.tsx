@@ -615,12 +615,11 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                   <TouchableOpacity
                     style={styles.acceptButton}
                     onPress={() => handleAcceptPress()}
-                    onPressIn={() => { ignoreTapRef.current = true; }}
-                    onPressOut={() => { ignoreTapRef.current = false; }}
                     activeOpacity={0.85}
                     hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     testID="order-accept-button"
                     nativeID="order-accept-button"
+                    {...{ onPressIn: () => { ignoreTapRef.current = true; }, onPressOut: () => { ignoreTapRef.current = false; } }}
                   >
                     <Text style={styles.acceptButtonText}>Accept</Text>
                   </TouchableOpacity>
@@ -975,7 +974,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
             </View>
             <View style={[styles.totalRow, styles.grandTotal]}>
               <Text style={[styles.grandTotalLabel, { color: colors.text }]}>Total</Text>
-              <Text style={styles.grandTotalValue}>{formatPrice(order.total || order.total_amount || 0)}</Text>
+              <Text style={styles.grandTotalValue}>{formatPrice(order.total || 0)}</Text>
             </View>
           </View>
         )}

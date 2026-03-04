@@ -17,6 +17,7 @@ import {
   printKitchenTicket,
   printCustomerReceipt,
   printBoth,
+  stripTwilioLogs,
 } from '../../services/printService';
 import { apiClient } from '../../api/client';
 

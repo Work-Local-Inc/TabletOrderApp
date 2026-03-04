@@ -38,7 +38,7 @@ try {
 /**
  * Strip Twilio call log entries from order notes before printing.
  */
-const stripTwilioLogs = (notes: string): string => {
+export const stripTwilioLogs = (notes: string): string => {
   if (!notes) return '';
   return notes
     .split('\n')
@@ -1218,7 +1218,7 @@ const generateKitchenTicket = (order: Order): string => {
   }
   
   // Pack checklist for takeout/delivery - Normal size
-  if (order.order_type === 'pickup' || order.order_type === 'delivery' || order.order_type === 'takeout') {
+  if (order.order_type === 'pickup' || order.order_type === 'delivery') {
     text += '\n' + marginLine('PACK / CHECK:') + '\n';
     text += marginLine('[ ] Utensils') + '\n';
     text += marginLine('[ ] Napkins') + '\n';
