@@ -6,3 +6,4 @@ export { KanbanBoard } from './KanbanBoard';
 export { KanbanBoard3Col } from './KanbanBoard3Col';
 export { ExpandableOrderCard } from './ExpandableOrderCard';
 export { DraggableOrderCard } from './DraggableOrderCard';
+export { OrdersBottomDock } from './OrdersBottomDock';

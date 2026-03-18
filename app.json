@@ -2,7 +2,7 @@
   "expo": {
     "name": "Menu.ca Orders",
     "slug": "TabletOrderApp",
-    "version": "1.4.9",
+    "version": "1.4.22",
     "orientation": "landscape",
     "runtimeVersion": {
       "policy": "appVersion"
@@ -11,7 +11,10 @@
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 5000,
-      "url": "https://u.expo.dev/a8b29fb9-0480-49fb-b993-b008bfb974bf"
+      "url": "https://u.expo.dev/a8b29fb9-0480-49fb-b993-b008bfb974bf",
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      }
     },
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -57,7 +60,8 @@
             "DEFAULT"
           ]
         }
-      ]
+      ],
+      "versionCode": 31
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -491,9 +491,15 @@ export const OrderDetailPanel: React.FC<OrderDetailPanelProps> = ({
         {/* Status Badges */}
         <View style={styles.badgeRow}>
           {getStatusBadge(order.status)}
-          <View style={[styles.statusBadge, { backgroundColor: '#d1fae5' }]}>
-            <Text style={[styles.statusBadgeText, { color: '#047857' }]}>Paid</Text>
-          </View>
+          {order.payment_status === 'paid' ? (
+            <View style={[styles.statusBadge, { backgroundColor: '#d1fae5' }]}>
+              <Text style={[styles.statusBadgeText, { color: '#047857' }]}>Paid</Text>
+            </View>
+          ) : (
+            <View style={[styles.statusBadge, { backgroundColor: '#fef3c7' }]}>
+              <Text style={[styles.statusBadgeText, { color: '#92400e' }]}>Payment Due</Text>
+            </View>
+          )}
         </View>
 
         {/* Pickup/Delivery Details */}

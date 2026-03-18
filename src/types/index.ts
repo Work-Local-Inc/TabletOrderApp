@@ -77,6 +77,7 @@ export interface Order {
   created_at: string;
   updated_at: string;
   acknowledged_at?: string;
+  payment_status?: string;
 }
 
 // Device/Auth Types

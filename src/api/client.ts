@@ -17,11 +17,14 @@ import {
   RecoveryCommand,
 } from '../types';
 
+const addBreadcrumb = (_msg: string, _cat?: string, _data?: Record<string, unknown>) => {};
+const captureException = (_err: unknown, _extra?: Record<string, unknown>) => {};
+
 const normalizeBaseUrl = (url: string): string => {
   return url.trim().replace(/\/+$/, '');
 };
 
-export const DEFAULT_API_BASE_URL = normalizeBaseUrl('https://menuai.ca');
+export const DEFAULT_API_BASE_URL = normalizeBaseUrl('https://orders.menu.ca');
 
 // SECURITY: Sensitive keys stored in SecureStore (OS keychain/keystore)
 // Non-sensitive keys remain in AsyncStorage for performance
@@ -563,6 +566,7 @@ class ApiClient {
       notes: rawOrder?.notes || rawOrder?.special_instructions || '',
       delivery_address: rawOrder?.delivery_address,
       estimated_ready_time: rawOrder?.estimated_ready_time,
+      payment_status: rawOrder?.payment_status || null,
     };
   }
 

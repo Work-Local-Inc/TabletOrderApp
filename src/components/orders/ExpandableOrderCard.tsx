@@ -636,7 +636,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const isNarrow = containerWidth < 300;
 
   // Expanded card view - no PanResponder (drag only on collapsed cards)
-  const expandedMaxHeight = containerHeight ? Math.max(240, containerHeight - 8) : undefined;
+  const expandedHeight = containerHeight ? Math.max(300, containerHeight - 8) : 500;
 
   return (
     <View 
@@ -645,7 +645,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
         { 
           backgroundColor: contentBackground,
           borderColor: colors.borderExpanded,
-          ...(expandedMaxHeight ? { maxHeight: expandedMaxHeight } : null),
+          height: expandedHeight,
         }
       ]}
       testID="order-card-expanded"
@@ -745,8 +745,8 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                   <View style={[styles.headerBadge, { backgroundColor: 'rgba(0,0,0,0.15)' }]}>
                     <Text style={styles.headerBadgeText}>{getStatusLabel(order.status)}</Text>
                   </View>
-                  <View style={[styles.headerBadge, { backgroundColor: 'rgba(0,0,0,0.15)' }]}>
-                    <Text style={styles.headerBadgeText}>Paid</Text>
+                  <View style={[styles.headerBadge, { backgroundColor: order.payment_status === 'paid' ? 'rgba(0,0,0,0.15)' : 'rgba(251,191,36,0.4)' }]}>
+                    <Text style={styles.headerBadgeText}>{order.payment_status === 'paid' ? 'Paid' : 'Payment Due'}</Text>
                   </View>
                   <View style={[styles.headerBadge, { backgroundColor: 'rgba(0,0,0,0.15)' }]}>
                     <Text style={styles.headerBadgeText}>{getOrderTypeLabel(orderType)}</Text>

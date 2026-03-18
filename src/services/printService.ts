@@ -1225,6 +1225,16 @@ const generateKitchenTicket = (order: Order): string => {
     text += marginLine('[ ] Condiments') + '\n';
   }
   
+  // Payment status
+  text += '\n';
+  if (order.payment_status === 'paid') {
+    text += centerText('--- PAID ---') + '\n';
+  } else {
+    text += COMMANDS.BOLD_ON;
+    text += centerText('*** PAYMENT DUE ***') + '\n';
+    text += COMMANDS.BOLD_OFF;
+  }
+
   // Footer - Reset to normal, add paper feed (8 lines) and cut
   text += COMMANDS.NORMAL_SIZE;
   text += '\n' + dividerLine('=') + '\n';
@@ -1461,7 +1471,13 @@ const generateReceiptText = (order: Order): string => {
   text += COMMANDS.BOLD_OFF;
   
   // Payment status
-  text += centerText('--- PAID ---') + '\n';
+  if (order.payment_status === 'paid') {
+    text += centerText('--- PAID ---') + '\n';
+  } else {
+    text += COMMANDS.BOLD_ON;
+    text += centerText('*** PAYMENT DUE ***') + '\n';
+    text += COMMANDS.BOLD_OFF;
+  }
   text += dividerLine('=') + '\n';
   
   // ========== ORDER NOTES ==========

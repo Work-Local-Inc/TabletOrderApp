@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Order, DeviceConfig, QueuedAction, OrderStatus } from '../types';
 import { apiClient } from '../api/client';
 
+const addBreadcrumb = (_msg: string, _cat?: string, _data?: Record<string, unknown>) => {};
+
 interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
