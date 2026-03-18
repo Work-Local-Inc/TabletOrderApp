@@ -352,20 +352,20 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const colors = {
     // Card backgrounds
     cardBg: '#ffffff',
-    cardBgDark: '#1e293b',
+    cardBgDark: '#ffffff',
     // Header background when expanded
     headerBg: '#293A4A',
     headerText: '#ffffff',
     // Content
     contentBg: '#ffffff',
-    contentBgDark: '#0f172a',
-    // Text
-    text: themeMode === 'dark' ? '#f1f5f9' : '#1e293b',
-    textSecondary: themeMode === 'dark' ? '#94a3b8' : '#64748b',
-    textMuted: themeMode === 'dark' ? '#64748b' : '#94a3b8',
-    // Borders
-    border: themeMode === 'dark' ? '#334155' : '#e2e8f0',
-    borderExpanded: themeMode === 'dark' ? '#475569' : '#cbd5e1',
+    contentBgDark: '#ffffff',
+    // Text - always dark on white cards
+    text: '#1e293b',
+    textSecondary: '#64748b',
+    textMuted: '#94a3b8',
+    // Borders - always light for white cards
+    border: '#e2e8f0',
+    borderExpanded: '#cbd5e1',
     // Accents
     newAccent: '#22c55e',
     activeAccent: BRAND_PURPLE,
