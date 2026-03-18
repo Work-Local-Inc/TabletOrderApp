@@ -4,9 +4,7 @@
     "slug": "TabletOrderApp",
     "version": "1.4.22",
     "orientation": "landscape",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.4.22",
     "updates": {
       "enabled": true,
       "checkAutomatically": "ON_LOAD",
