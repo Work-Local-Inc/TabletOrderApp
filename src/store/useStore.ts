@@ -37,6 +37,8 @@ interface SettingsState {
   orderAgingYellowMin: number; // Minutes before yellow warning
   orderAgingRedMin: number; // Minutes before red critical
   completedArchiveLimit: number; // Max completed orders shown before archiving
+  completedColumnClearedAt: string | null;
+  completedColumnHiddenOrderIds: string[];
   viewMode: 'two' | 'three' | 'four'; // Kanban view mode
   showPricesInExpanded: boolean; // Show prices in expanded order view
   autoShowPricesWhenNoPrinter: boolean; // Auto-enable prices when no printer connected
@@ -69,6 +71,8 @@ interface AppStore {
   // Settings
   settings: SettingsState;
   updateSettings: (settings: Partial<SettingsState>) => void;
+  clearCompletedColumnNow: (orderIds?: string[]) => void;
+  resetCompletedColumnClear: () => void;
 
   // Local Accept state (client-side only)
   acceptedOrderMap: Record<string, string>;
@@ -79,6 +83,7 @@ interface AppStore {
   addToQueue: (action: Omit<QueuedAction, 'id' | 'created_at' | 'retry_count'>) => void;
   processQueue: () => Promise<void>;
   removeFromQueue: (actionId: string) => void;
+  clearQueue: () => void;
 }
 
 export const useStore = create<AppStore>()(
@@ -142,6 +147,11 @@ export const useStore = create<AppStore>()(
             error: null,
           },
           acceptedOrderMap: {},
+          settings: {
+            ...get().settings,
+            completedColumnClearedAt: null,
+            completedColumnHiddenOrderIds: [],
+          },
         });
       },
 
@@ -370,13 +380,11 @@ export const useStore = create<AppStore>()(
         addBreadcrumb('Updating order status', 'store', { orderId, newStatus: status });
         const { offline, orders: currentOrdersState } = get();
         
-        // Look up the order — bail early if it doesn't exist in state
         const targetOrder = currentOrdersState.orders.find(o => o.id === orderId);
         if (!targetOrder) {
           console.error(`[Store] Order ${orderId} not found in local state — skipping update`);
           return false;
         }
-        const numericId = targetOrder.numeric_id;
         const previousStatus = targetOrder.status;
 
         // Optimistic update
@@ -399,46 +407,63 @@ export const useStore = create<AppStore>()(
           get().addToQueue({
             type: 'status_update',
             order_id: orderId,
-            payload: { status, numeric_id: numericId },
+            payload: { status },
           });
           return true;
         }
 
-        if (!numericId) {
-          console.error(`[Store] No numeric_id found for order ${orderId} — reverting optimistic update`);
-          // Revert only this order, not the entire array
-          set((state) => ({
-            orders: {
-              ...state.orders,
-              orders: state.orders.orders.map((o) =>
-                o.id === orderId ? { ...o, status: previousStatus } : o
-              ),
-              selectedOrder:
-                state.orders.selectedOrder?.id === orderId
-                  ? { ...state.orders.selectedOrder, status: previousStatus }
-                  : state.orders.selectedOrder,
-            },
-          }));
-          return false;
+        const fallbackOrderId =
+          targetOrder.numeric_id && targetOrder.numeric_id > 0
+            ? String(targetOrder.numeric_id)
+            : null;
+
+        const runStatusUpdate = async (nextStatus: OrderStatus) => {
+          let result = await apiClient.updateOrderStatus(orderId, nextStatus);
+          const shouldRetryWithNumericId =
+            !result.success &&
+            !!fallbackOrderId &&
+            fallbackOrderId !== orderId &&
+            (result.error?.includes('Order not found') ||
+              result.error?.includes('not found') ||
+              result.error?.includes('Invalid order ID'));
+
+          if (shouldRetryWithNumericId) {
+            console.warn(
+              `[Store] Primary status update failed for ${orderId}; retrying with numeric_id ${fallbackOrderId}`
+            );
+            result = await apiClient.updateOrderStatus(fallbackOrderId!, nextStatus);
+          }
+          return result;
+        };
+
+        // Build status sequence for multi-step transitions
+        const statusSequence: OrderStatus[] =
+          previousStatus === 'ready' && status === 'preparing'
+            ? ['pending', 'preparing']
+            : [status];
+
+        let result: { success: boolean; error?: string } = { success: false };
+        for (const nextStatus of statusSequence) {
+          result = await runStatusUpdate(nextStatus);
+          if (!result.success) break;
         }
 
-        const result = await apiClient.updateOrderStatus(String(numericId), status);
         console.log(`[Store] API result:`, result.success, result.error || 'OK');
         
         if (result.success) {
           console.log(`[Store] ✓ Backend updated to ${status}`);
           return true;
         } else {
-          // Revert only this order — preserves concurrent updates to other orders
+          const fallbackStatus = previousStatus;
           set((state) => ({
             orders: {
               ...state.orders,
               orders: state.orders.orders.map((o) =>
-                o.id === orderId ? { ...o, status: previousStatus } : o
+                o.id === orderId ? { ...o, status: fallbackStatus } : o
               ),
               selectedOrder:
                 state.orders.selectedOrder?.id === orderId
-                  ? { ...state.orders.selectedOrder, status: previousStatus }
+                  ? { ...state.orders.selectedOrder, status: fallbackStatus }
                   : state.orders.selectedOrder,
             },
           }));
@@ -474,6 +499,8 @@ export const useStore = create<AppStore>()(
         orderAgingYellowMin: 5, // Yellow after 5 minutes
         orderAgingRedMin: 10, // Red after 10 minutes
         completedArchiveLimit: 50, // Show last 50 completed orders before archive
+        completedColumnClearedAt: null,
+        completedColumnHiddenOrderIds: [],
         viewMode: 'three', // Default to 3-column view (New / Active / Completed)
         showPricesInExpanded: false, // Default OFF for kitchen speed
         autoShowPricesWhenNoPrinter: true, // Auto-enable when no printer connected
@@ -481,6 +508,26 @@ export const useStore = create<AppStore>()(
 
       updateSettings: (settings) =>
         set((state) => ({ settings: { ...state.settings, ...settings } })),
+
+      clearCompletedColumnNow: (orderIds = []) => {
+        const uniqueHiddenOrderIds = Array.from(new Set(orderIds));
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            completedColumnClearedAt: new Date().toISOString(),
+            completedColumnHiddenOrderIds: uniqueHiddenOrderIds,
+          },
+        }));
+      },
+
+      resetCompletedColumnClear: () =>
+        set((state) => ({
+          settings: {
+            ...state.settings,
+            completedColumnClearedAt: null,
+            completedColumnHiddenOrderIds: [],
+          },
+        })),
 
       // Local Accept state
       acceptedOrderMap: {},
@@ -579,6 +626,14 @@ export const useStore = create<AppStore>()(
             queuedActions: state.offline.queuedActions.filter(
               (a) => a.id !== actionId
             ),
+          },
+        })),
+
+      clearQueue: () =>
+        set((state) => ({
+          offline: {
+            ...state.offline,
+            queuedActions: [],
           },
         })),
     }),

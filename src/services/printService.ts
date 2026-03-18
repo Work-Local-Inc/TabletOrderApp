@@ -211,6 +211,11 @@ export const generateReceiptData = (order: Order): string => {
     ) + '\n';
     receipt += COMMANDS.BOLD_OFF;
 
+    const escItemSize = getItemSizeLabel(item);
+    if (escItemSize) {
+      receipt += `   (${escItemSize})\n`;
+    }
+
     // Modifiers - grouped by instance_index (if present) then by group_name
     if (item.modifiers && item.modifiers.length > 0) {
       const hasInstanceIndex = item.modifiers.some((m) => m.instance_index != null);
@@ -673,6 +678,27 @@ const groupModifiersByInstance = (modifiers: ModifierItem[]): Array<{ instanceLa
   }));
 };
 
+const getItemSizeLabel = (item: any): string | null => {
+  const directSize = [item?.size, item?.item_size, item?.variant, item?.variant_name]
+    .find((v) => typeof v === 'string' && v.trim().length > 0);
+  if (typeof directSize === 'string') return directSize.trim();
+
+  const modifiers = Array.isArray(item?.modifiers) ? item.modifiers : [];
+  const sizeMods = modifiers.filter((mod: any) => {
+    const groupName = String(mod?.group_name ?? mod?.groupName ?? '').toLowerCase();
+    return groupName.includes('size');
+  });
+
+  if (sizeMods.length > 0) {
+    const labels = sizeMods
+      .map((mod: any) => String(mod?.name ?? '').trim())
+      .filter(Boolean);
+    if (labels.length > 0) return labels.join(', ');
+  }
+
+  return null;
+};
+
 /**
  * Word-wrap text to fit within a maximum width
  * Returns array of lines
@@ -862,6 +888,11 @@ const generateKitchenTicket = (order: Order): string => {
     text += COMMANDS.CHAR_SPACING_NORMAL; // Reset spacing
     text += COMMANDS.BOLD_OFF;
     text += COMMANDS.NORMAL_SIZE;
+
+    const kitchenItemSize = getItemSizeLabel(item);
+    if (kitchenItemSize) {
+      text += LEFT_MARGIN + '   (' + sanitizeForPrinter(kitchenItemSize) + ')' + '\n';
+    }
     
     // Modifiers - grouped by instance_index (if present) then by group_name, with placement and quantity
     if (item.modifiers && item.modifiers.length > 0) {
@@ -1218,7 +1249,7 @@ const generateKitchenTicket = (order: Order): string => {
   }
   
   // Pack checklist for takeout/delivery - Normal size
-  if (order.order_type === 'pickup' || order.order_type === 'delivery') {
+  if (order.order_type === 'pickup' || order.order_type === 'delivery' || order.order_type === 'takeout') {
     text += '\n' + marginLine('PACK / CHECK:') + '\n';
     text += marginLine('[ ] Utensils') + '\n';
     text += marginLine('[ ] Napkins') + '\n';
@@ -1380,7 +1411,12 @@ const generateReceiptText = (order: Order): string => {
     const itemLine = `${item.quantity}x ${itemName}`;
     const priceLine = `$${itemTotal.toFixed(2)}`;
     text += rightAlign(itemLine, priceLine) + '\n';
-    
+
+    const receiptItemSize = getItemSizeLabel(item);
+    if (receiptItemSize) {
+      text += LEFT_MARGIN + '   (' + sanitizeForPrinter(receiptItemSize) + ')' + '\n';
+    }
+
     // Modifiers - grouped by instance_index (if present) then by group_name, with placement, quantity, and price
     if (item.modifiers && item.modifiers.length > 0) {
       const hasInstanceIndex = item.modifiers.some((m) => m.instance_index != null);

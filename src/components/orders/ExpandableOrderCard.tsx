@@ -13,6 +13,7 @@ import {
   Linking,
   ActivityIndicator,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import {
   PanGestureHandler,
@@ -24,13 +25,14 @@ import {
 } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Order } from '../../types';
-import { useTheme } from '../../theme';
 import { apiClient } from '../../api/client';
 import { useStore } from '../../store/useStore';
 
 const BRAND_PURPLE = '#7c3aed';
+const HEADER_ACTION_BORDER = '#c4b5fd';
+const COMPLETE_CARD_RED = '#8B1E2D';
+const COMPLETE_CARD_RED_DARK = '#5E1220';
 
-// Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
@@ -48,28 +50,20 @@ interface ExpandableOrderCardProps {
   onPrint?: (order: Order) => void;
   containerWidth: number;
   containerHeight?: number;
-  // Scroll lock: disable parent ScrollView the instant a card is touched
-  // so native Android ScrollView can't steal horizontal gestures
   onScrollLock?: () => void;
   onScrollUnlock?: () => void;
-  // Allow coordination with parent ScrollView gesture handler
   simultaneousHandlers?: any;
 }
 
-/**
- * Strip Twilio call log entries from order notes.
- * These are injected by the backend and shouldn't show to restaurant staff.
- */
 const stripTwilioLogs = (notes: string): string => {
   if (!notes) return '';
-  // Remove lines containing TWILIO_FALLBACK_CALL and surrounding whitespace
   const cleaned = notes
     .split('\n')
     .filter(line => !line.includes('TWILIO_FALLBACK_CALL'))
     .join('\n')
-    .replace(/\|\s*\|/g, '|')  // Clean up double pipes left behind
-    .replace(/^\s*\|\s*/gm, '') // Clean up leading pipes
-    .replace(/\s*\|\s*$/gm, '') // Clean up trailing pipes
+    .replace(/\|\s*\|/g, '|')
+    .replace(/^\s*\|\s*/gm, '')
+    .replace(/\s*\|\s*$/gm, '')
     .trim();
   return cleaned;
 };
@@ -132,15 +126,6 @@ const formatPrice = (price: number): string => {
   return `$${(price || 0).toFixed(2)}`;
 };
 
-const getInitials = (name: string): string => {
-  if (!name) return '??';
-  const parts = name.split(' ');
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-  return name.substring(0, 2).toUpperCase();
-};
-
 export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   order,
   column,
@@ -158,15 +143,15 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   onScrollUnlock,
   simultaneousHandlers,
 }) => {
-  const { theme, themeMode } = useTheme();
   const orderAgingEnabled = useStore((state) => state.settings.orderAgingEnabled);
   const orderAgingYellowMin = useStore((state) => state.settings.orderAgingYellowMin);
   const orderAgingRedMin = useStore((state) => state.settings.orderAgingRedMin);
   const viewMode = useStore((state) => state.settings.viewMode ?? 'three');
   const printerConnected = useStore((state) => state.settings.printerConnected ?? false);
-  const showPricesInExpanded = useStore((state) => state.settings.showPricesInExpanded ?? false);
+  const showPricesInExpanded = useStore((state) => state.settings.showPricesInExpanded ?? true);
   const autoShowPricesWhenNoPrinter = useStore((state) => state.settings.autoShowPricesWhenNoPrinter ?? true);
   const isTwoColView = viewMode === 'two';
+  const { height: windowHeight } = useWindowDimensions();
   const showPricesEffective = showPricesInExpanded || (autoShowPricesWhenNoPrinter && !printerConnected);
 
   const nextAction = (() => {
@@ -183,18 +168,14 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
 
   const nextActionLabel = (() => {
     switch (nextAction) {
-      case 'accept':
-        return 'Accept';
-      case 'ready':
-        return 'Ready';
-      case 'complete':
-        return 'Complete';
-      case 'reopen':
-        return 'Reopen';
-      default:
-        return 'Complete';
+      case 'accept': return 'Accept';
+      case 'ready': return 'Ready';
+      case 'complete': return 'Complete';
+      case 'reopen': return 'Reopen';
+      default: return 'Complete';
     }
   })();
+
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
   const zIndex = useRef(new Animated.Value(2)).current;
@@ -205,10 +186,6 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const tapRef = useRef<TapGestureHandler | null>(null);
   const ignoreTapRef = useRef(false);
 
-  // ── "Latest refs" pattern ──────────────────────────────────────────
-  // PanResponder is created once in useRef and captures a stale closure.
-  // These refs are updated every render so the PanResponder always reads
-  // the current callback / value without needing to be recreated.
   const onDragEndRef = useRef(onDragEnd);
   const onDragStartRef = useRef(onDragStart);
   const onDragReleaseRef = useRef(onDragRelease);
@@ -218,7 +195,6 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const containerWidthRef = useRef(containerWidth);
   const orderIdRef = useRef(order.id);
 
-  // Update refs on every render (synchronous, no useEffect delay)
   onDragEndRef.current = onDragEnd;
   onDragStartRef.current = onDragStart;
   onDragReleaseRef.current = onDragRelease;
@@ -231,9 +207,11 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const customerName = order.customer?.name || 'Walk-in';
   const customerPhone = order.customer?.phone;
   const orderType = order.order_type || 'pickup';
+  const canChangeStatus = order.status !== 'cancelled';
   const items = order.items || [];
   const showAcceptButton =
     nextAction === 'accept' && order.status === 'pending' && !order.acknowledged_at;
+  const isCompleteColumn = column === 'complete';
   const agingYellowMin = Math.max(1, orderAgingYellowMin ?? 5);
   const agingRedMin = Math.max(agingYellowMin + 1, orderAgingRedMin ?? 10);
   const isAgingEligible =
@@ -244,7 +222,6 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
       ? getAgingAccent(orderAgeMinutes, agingYellowMin, agingRedMin)
       : null;
 
-  // Driver dispatch state
   const [dispatchInfo, setDispatchInfo] = useState<{
     dispatch_available: boolean;
     provider: { code: string; name: string; external_id: string } | null;
@@ -252,56 +229,36 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const [dispatchingDriver, setDispatchingDriver] = useState(false);
   const [driverDispatched, setDriverDispatched] = useState(false);
   const [showCompleteOptions, setShowCompleteOptions] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
 
-  // Check if driver dispatch is available for delivery orders
   useEffect(() => {
     const checkDispatch = async () => {
       setDispatchInfo(null);
       setDriverDispatched(false);
-      
-      console.log('[Dispatch] Checking - order_type:', order?.order_type, 'status:', order?.status);
-      
-      if (!order || order.order_type !== 'delivery') {
-        console.log('[Dispatch] Not a delivery order, skipping');
-        return;
-      }
-      
+      if (!order || order.order_type !== 'delivery') return;
       const validStatuses = ['confirmed', 'preparing', 'ready'];
-      if (!validStatuses.includes(order.status)) {
-        console.log('[Dispatch] Status not valid for dispatch:', order.status);
-        return;
-      }
-      
+      if (!validStatuses.includes(order.status)) return;
       try {
-        console.log('[Dispatch] Calling checkDispatchAvailable for order:', order.id);
         const response = await apiClient.checkDispatchAvailable(order.id);
-        console.log('[Dispatch] Response:', response);
         if (response.success && response.data) {
-          console.log('[Dispatch] Setting dispatch info:', response.data);
           setDispatchInfo(response.data);
-        } else {
-          console.log('[Dispatch] No dispatch available or failed');
         }
       } catch (error) {
         console.log('[Dispatch] Check failed:', error);
       }
     };
-    
-    if (isExpanded) {
-      checkDispatch();
-    }
+    if (isExpanded) checkDispatch();
   }, [order?.id, order?.status, order?.order_type, isExpanded]);
 
   const handleDispatchDriver = async () => {
     if (!order) return;
-    
     setDispatchingDriver(true);
     try {
       const response = await apiClient.dispatchDriver(order.id);
       if (response.success && response.data) {
         setDriverDispatched(true);
         setDispatchInfo(null);
-        
         if (response.data.used_backup_email) {
           Alert.alert('Driver Requested (Backup)', 'Driver request sent via backup email.');
         } else {
@@ -317,72 +274,52 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     }
   };
 
-  // Reset opacity and pan when order/column changes (after drag completes)
   useEffect(() => {
     opacity.setValue(1);
     pan.setValue({ x: 0, y: 0 });
     setShowCompleteOptions(false);
+    setShowDetails(false);
   }, [order.id, column]);
-  
-  // Reset complete options when card collapses
+
   useEffect(() => {
-    if (!isExpanded) {
-      setShowCompleteOptions(false);
-    }
+    if (!isExpanded) setShowCompleteOptions(false);
   }, [isExpanded]);
 
-  // Animate expand/collapse
   useEffect(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   }, [isExpanded]);
 
-  // Lock parent column scroll while expanded to prevent outer scroll fighting inner scroll
   useEffect(() => {
     if (isExpanded) {
       onScrollLockRef.current?.();
     } else {
       onScrollUnlockRef.current?.();
     }
-    return () => {
-      onScrollUnlockRef.current?.();
-    };
+    return () => { onScrollUnlockRef.current?.(); };
   }, [isExpanded]);
 
-  // Design system colors
   const colors = {
-    // Card backgrounds
     cardBg: '#ffffff',
-    cardBgDark: '#ffffff',
-    // Header background when expanded
     headerBg: '#293A4A',
     headerText: '#ffffff',
-    // Content
     contentBg: '#ffffff',
-    contentBgDark: '#ffffff',
-    // Text - always dark on white cards
     text: '#1e293b',
     textSecondary: '#64748b',
     textMuted: '#94a3b8',
-    // Borders - always light for white cards
     border: '#e2e8f0',
     borderExpanded: '#cbd5e1',
-    // Accents
     newAccent: '#22c55e',
     activeAccent: BRAND_PURPLE,
     readyAccent: '#22c55e',
-    completeAccent: '#DC2626',
-    // Interactive
+    completeAccent: COMPLETE_CARD_RED,
     link: BRAND_PURPLE,
-    // Status badges
     badgeBg: 'rgba(255,255,255,0.15)',
-    // Items
     itemBg: '#293A4A',
-    // Action button
     actionBg: column === 'new' ? '#22c55e' : BRAND_PURPLE,
   };
 
-  const cardBackground = themeMode === 'dark' ? colors.cardBgDark : colors.cardBg;
-  const contentBackground = themeMode === 'dark' ? colors.contentBgDark : colors.contentBg;
+  const cardBackground = colors.cardBg;
+  const contentBackground = colors.contentBg;
   const borderColor = isExpanded ? colors.borderExpanded : colors.border;
   const baseAccentColor = column === 'complete' ? colors.completeAccent : colors.newAccent;
   const accentColor = agingAccent ?? baseAccentColor;
@@ -394,8 +331,8 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   };
 
   const handlePanGestureEvent = (event: PanGestureHandlerGestureEvent) => {
+    if (!canChangeStatus) return;
     const { translationX, translationY } = event.nativeEvent;
-
     if (!isDragging.current && Math.abs(translationX) > 15 && Math.abs(translationX) > Math.abs(translationY)) {
       isDragging.current = true;
       zIndex.setValue(20);
@@ -405,29 +342,25 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
       onDragStartRef.current?.();
       onScrollLockRef.current?.();
     }
-
     if (isDragging.current) {
       pan.setValue({ x: translationX, y: 0 });
     }
   };
 
   const handlePanStateChange = (event: PanGestureHandlerStateChangeEvent) => {
-    const { state, translationX, translationY } = event.nativeEvent;
-
+    if (!canChangeStatus) return;
+    const { state, translationX } = event.nativeEvent;
     if (state === State.BEGAN) {
       startTime.current = Date.now();
       isDragging.current = false;
       return;
     }
-
     if (state === State.END) {
       resetVisuals();
       onScrollUnlockRef.current?.();
-
       if (isDragging.current) {
         onDragReleaseRef.current?.();
         isDragging.current = false;
-
         const threshold = Math.min(containerWidthRef.current * 0.25, 80);
         if (Math.abs(translationX) > threshold) {
           Vibration.vibrate(100);
@@ -442,13 +375,10 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
       }
       return;
     }
-
     if (state === State.CANCELLED || state === State.FAILED) {
       resetVisuals();
       onScrollUnlockRef.current?.();
-      if (isDragging.current) {
-        onDragReleaseRef.current?.();
-      }
+      if (isDragging.current) onDragReleaseRef.current?.();
       isDragging.current = false;
       Animated.parallel([
         Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: false }),
@@ -472,13 +402,12 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   };
 
   const handleAcceptPress = () => {
-    // Only acknowledge — do NOT call onStatusChange here.
-    // Calling both simultaneously caused a race: status change to 'confirmed'
-    // would race against acknowledge, leaving orders in a broken state.
+    if (!canChangeStatus) return;
     onAccept?.(order.id);
   };
 
   const handleAdvancePress = () => {
+    if (!canChangeStatus) return;
     if (column === 'new') {
       onAccept?.(order.id);
     }
@@ -495,24 +424,18 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   };
 
   const handleCompleteOnly = () => {
+    if (!canChangeStatus) return;
     setShowCompleteOptions(false);
-    if (column === 'new') {
-      onAccept?.(order.id);
-    }
+    if (column === 'new') onAccept?.(order.id);
     onStatusChange(order.id);
   };
 
   const handleCompleteAndDispatch = async () => {
+    if (!canChangeStatus) return;
     setShowCompleteOptions(false);
     setDispatchingDriver(true);
-    
-    if (column === 'new') {
-      onAccept?.(order.id);
-    }
-    // First complete the order
+    if (column === 'new') onAccept?.(order.id);
     onStatusChange(order.id);
-    
-    // Then dispatch the driver
     try {
       const response = await apiClient.dispatchDriver(order.id);
       if (response.success && response.data) {
@@ -541,10 +464,9 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     }
   };
 
-  // Collapsed card view
+  // ── COLLAPSED CARD ──
   if (!isExpanded) {
-    const isCompleteColumn = column === 'complete';
-    const collapsedBg = isCompleteColumn ? '#DC2626' : cardBackground;
+    const collapsedBg = isCompleteColumn ? COMPLETE_CARD_RED : cardBackground;
     const collapsedTextColor = isCompleteColumn ? '#ffffff' : colors.text;
     const collapsedSecondaryColor = isCompleteColumn ? 'rgba(255,255,255,0.8)' : colors.textSecondary;
     const collapsedMutedColor = isCompleteColumn ? 'rgba(255,255,255,0.9)' : colors.textMuted;
@@ -568,6 +490,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
           ref={panRef}
           onGestureEvent={handlePanGestureEvent}
           onHandlerStateChange={handlePanStateChange}
+          enabled={canChangeStatus}
           activeOffsetX={[-10, 10]}
           failOffsetY={[-10, 10]}
           simultaneousHandlers={simultaneousHandlers}
@@ -578,7 +501,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
               styles.card,
               {
                 backgroundColor: collapsedBg,
-                borderColor: isCompleteColumn ? '#DC2626' : borderColor,
+                borderColor: isCompleteColumn ? COMPLETE_CARD_RED : borderColor,
                 borderLeftColor: accentColor,
                 zIndex: zIndex,
                 elevation: zIndex,
@@ -615,11 +538,12 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                   <TouchableOpacity
                     style={styles.acceptButton}
                     onPress={() => handleAcceptPress()}
+                    onPressIn={() => { ignoreTapRef.current = true; }}
+                    onPressOut={() => { ignoreTapRef.current = false; }}
                     activeOpacity={0.85}
                     hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     testID="order-accept-button"
                     nativeID="order-accept-button"
-                    {...{ onPressIn: () => { ignoreTapRef.current = true; }, onPressOut: () => { ignoreTapRef.current = false; } }}
                   >
                     <Text style={styles.acceptButtonText}>Accept</Text>
                   </TouchableOpacity>
@@ -632,11 +556,15 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     );
   }
 
-  // Detect if we're in narrow mode (4-column layout)
+  // ── EXPANDED CARD ──
   const isNarrow = containerWidth < 300;
-
-  // Expanded card view - no PanResponder (drag only on collapsed cards)
-  const expandedHeight = containerHeight ? Math.max(300, containerHeight - 8) : 500;
+  const fallbackMaxHeight = Math.max(320, windowHeight - 120);
+  const resolvedMaxHeight =
+    containerHeight && containerHeight > 200
+      ? Math.max(240, containerHeight - 8)
+      : fallbackMaxHeight;
+  const expandedMaxHeight = resolvedMaxHeight;
+  const bodyMaxHeight = Math.max(200, expandedMaxHeight - Math.max(headerHeight, 80));
 
   return (
     <View 
@@ -645,13 +573,13 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
         { 
           backgroundColor: contentBackground,
           borderColor: colors.borderExpanded,
-          height: expandedHeight,
+          maxHeight: expandedMaxHeight,
         }
       ]}
       testID="order-card-expanded"
       nativeID="order-card-expanded"
     >
-      {/* Header with customer name - Soft red gradient - Tap anywhere to collapse */}
+      {/* Header */}
       <TouchableOpacity 
         activeOpacity={0.9} 
         onPress={() => onTap(order.id)}
@@ -660,40 +588,33 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
         nativeID="order-card-header"
       >
         <LinearGradient
-          colors={['#DC2626', '#B91C1C']}
+          colors={isCompleteColumn ? [COMPLETE_CARD_RED, COMPLETE_CARD_RED_DARK] : ['#DC2626', '#B91C1C']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
+          onLayout={(event) => {
+            const h = event.nativeEvent.layout.height;
+            if (h && h !== headerHeight) setHeaderHeight(h);
+          }}
           style={isNarrow ? styles.expandedHeaderCompact : styles.expandedHeader}
         >
           {isNarrow ? (
-            /* Compact header for 4-column view */
             <View style={styles.headerCompactContent}>
               <View style={styles.headerCompactRow1}>
                 <Text style={[styles.headerNameCompact, { color: colors.headerText }]} numberOfLines={1}>
                   {customerName}
                 </Text>
-                {/* Show dispatch options for delivery orders with dispatch available */}
-                {nextAction === 'complete' && orderType === 'delivery' && dispatchInfo?.dispatch_available && !driverDispatched ? (
+                {!canChangeStatus ? null : nextAction === 'complete' && orderType === 'delivery' && dispatchInfo?.dispatch_available && !driverDispatched ? (
                   <View style={styles.headerCompactBtnGroup}>
                     <TouchableOpacity 
                       style={styles.headerActionBtnCompact}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        if (column === 'new') {
-                          onAccept?.(order.id);
-                        }
-                        onStatusChange(order.id);
-                      }}
+                      onPress={(e) => { e.stopPropagation(); if (column === 'new') onAccept?.(order.id); onStatusChange(order.id); }}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.headerActionTextCompact}>→</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
                       style={[styles.headerActionBtnCompact, { backgroundColor: '#10b981', marginLeft: 4 }]}
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        handleCompleteAndDispatch();
-                      }}
+                      onPress={(e) => { e.stopPropagation(); handleCompleteAndDispatch(); }}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.headerActionTextCompact}>🚗</Text>
@@ -702,15 +623,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                 ) : (
                   <TouchableOpacity 
                     style={styles.headerActionBtnCompact}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      // For new orders use handleAcceptPress (no race condition)
-                      if (showAcceptButton) {
-                        handleAcceptPress();
-                      } else {
-                        handleAdvancePress();
-                      }
-                    }}
+                    onPress={(e) => { e.stopPropagation(); if (showAcceptButton) handleAcceptPress(); else handleAdvancePress(); }}
                     activeOpacity={0.7}
                   >
                     <Text style={styles.headerActionTextCompact}>
@@ -732,7 +645,6 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
               </View>
             </View>
           ) : (
-            /* Full header for 2-column view */
             <View style={styles.headerContent}>
               <View style={styles.headerLeft}>
                 <Text style={[styles.headerName, { color: colors.headerText }]} numberOfLines={1}>
@@ -753,8 +665,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                   </View>
                 </View>
               </View>
-              {/* Right side: Action button(s) */}
-              {showCompleteOptions ? (
+              {!canChangeStatus ? null : showCompleteOptions ? (
                 <View style={styles.headerActionGroup}>
                   <TouchableOpacity 
                     style={styles.headerActionBtnSmall}
@@ -781,17 +692,11 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                   nativeID="order-accept-button"
                   onPress={(e) => { 
                     e.stopPropagation();
-                    // For new orders use handleAcceptPress (acknowledge only, no race with status change)
-                    if (showAcceptButton) {
-                      handleAcceptPress();
-                    } else {
-                      handleAdvancePress();
-                    }
+                    if (showAcceptButton) handleAcceptPress();
+                    else handleAdvancePress();
                   }}
                 >
-                  <Text style={styles.headerActionText}>
-                    {nextActionLabel}
-                  </Text>
+                  <Text style={styles.headerActionText}>{nextActionLabel}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -799,57 +704,17 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
         </LinearGradient>
       </TouchableOpacity>
 
-      {/* Content */}
+      {/* Body - Items first, details collapsible at bottom */}
       <ScrollView
-        style={[styles.expandedBodyScroll, { backgroundColor: contentBackground }]}
+        style={[
+          styles.expandedBodyScroll,
+          { backgroundColor: contentBackground },
+          bodyMaxHeight ? { height: bodyMaxHeight, maxHeight: bodyMaxHeight } : null,
+        ]}
         contentContainerStyle={styles.expandedBodyContent}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled
       >
-        {/* Order Details */}
-        <View style={styles.detailsSection}>
-          <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Created</Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>{formatDate(order.created_at)}</Text>
-          </View>
-          
-          {customerPhone && (
-            <TouchableOpacity 
-              style={[styles.detailRow, { borderBottomColor: colors.border }]}
-              onPress={handlePhonePress}
-            >
-              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Phone</Text>
-              <Text style={[styles.detailValue, { color: colors.link }]}>{customerPhone}</Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Delivery Address */}
-          {orderType === 'delivery' && order.delivery_address && (
-            <View style={[styles.detailRowColumn, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Delivery Address</Text>
-              <View style={styles.addressBlock}>
-                {order.delivery_address.street && (
-                  <Text style={[styles.addressText, { color: colors.text }]}>{order.delivery_address.street}</Text>
-                )}
-                {(order.delivery_address.city || order.delivery_address.province || order.delivery_address.postal_code || order.delivery_address.postalCode) && (
-                  <Text style={[styles.addressText, { color: colors.text }]}>
-                    {[
-                      order.delivery_address.city, 
-                      order.delivery_address.province, 
-                      order.delivery_address.postal_code || order.delivery_address.postalCode
-                    ].filter(Boolean).join(', ')}
-                  </Text>
-                )}
-                {(order.delivery_address.instructions || order.delivery_address.delivery_instructions) && (
-                  <Text style={[styles.deliveryNotes, { color: colors.textSecondary }]}>
-                    Note: {order.delivery_address.instructions || order.delivery_address.delivery_instructions}
-                  </Text>
-                )}
-              </View>
-            </View>
-          )}
-        </View>
-
         {/* Items Section */}
         <View style={styles.itemsSection}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -861,7 +726,6 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
             const hasModifiers = modifiers.length > 0;
             const hasInstanceIndex = modifiers.some(m => m.instance_index != null);
 
-            // Build per-instance grouping when instance_index is present
             const instanceGroups: Array<{ instanceLabel: string; instanceMods: typeof modifiers }> | null =
               hasInstanceIndex
                 ? (() => {
@@ -878,7 +742,6 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                   })()
                 : null;
 
-            // Build group_name grouping for the showPrices path (non-instance)
             const groupedModifiers =
               showPricesEffective && !hasInstanceIndex
                 ? modifiers.reduce<Record<string, typeof modifiers>>((acc, mod) => {
@@ -891,13 +754,18 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
 
             return (
             <View key={index} style={[styles.itemRow, { borderBottomColor: colors.border }]}>
-              <View style={[styles.itemIcon, { backgroundColor: colors.itemBg }]}>
-                <Text style={styles.itemInitials}>{getInitials(item.name)}</Text>
-              </View>
               <View style={styles.itemDetails}>
-                <Text style={[styles.itemName, { color: colors.text }]}>
-                  {item.name}
-                </Text>
+                <View style={styles.itemHeaderRow}>
+                  <Text style={[styles.itemName, { color: colors.text }]}>
+                    <Text style={styles.itemQtyInline}>x{item.quantity} </Text>
+                    {item.name}
+                  </Text>
+                  {showPricesEffective && (
+                    <Text style={[styles.itemPrice, { color: colors.text }]}>
+                      {formatPrice((item.price || 0) * (item.quantity || 1))}
+                    </Text>
+                  )}
+                </View>
                 {/* Per-instance display (2-for-1 pizzas etc.) */}
                 {hasModifiers && hasInstanceIndex && instanceGroups && (
                   <View style={styles.modifierGroups}>
@@ -908,7 +776,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                         </Text>
                         {instanceMods.map((mod, modIndex) => (
                           <View key={`${mod.id ?? modIndex}-${modIndex}`} style={styles.modifierRow}>
-                            <Text style={[styles.modifierName, { color: colors.textMuted }]}>
+                            <Text style={[styles.modifierName, { color: colors.textSecondary }]}>
                               {mod.quantity && mod.quantity > 1 ? `${mod.quantity}x ` : ''}
                               {mod.name}
                             </Text>
@@ -925,9 +793,19 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                 )}
                 {/* Flat modifier list (no instance_index, no prices) */}
                 {hasModifiers && !hasInstanceIndex && !showPricesEffective && (
-                  <Text style={[styles.itemMods, { color: colors.textMuted }]}>
-                    {modifiers.map(m => m.name).join(', ')}
-                  </Text>
+                  <View style={styles.itemModsList}>
+                    {modifiers.map((mod, modIndex) => (
+                      <Text
+                        key={`${mod.id ?? modIndex}-${modIndex}`}
+                        style={[styles.itemModLine, { color: colors.textSecondary }]}
+                      >
+                        {'\u2022 '}
+                        {mod.group_name ? `${mod.group_name}: ` : ''}
+                        {mod.quantity && mod.quantity > 1 ? `${mod.quantity}x ` : ''}
+                        {mod.name}
+                      </Text>
+                    ))}
+                  </View>
                 )}
                 {/* Grouped by group_name with prices */}
                 {hasModifiers && !hasInstanceIndex && showPricesEffective && groupedModifiers && (
@@ -941,7 +819,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                         ) : null}
                         {groupMods.map((mod, modIndex) => (
                           <View key={`${mod.id ?? modIndex}-${modIndex}`} style={styles.modifierRow}>
-                            <Text style={[styles.modifierName, { color: colors.textMuted }]}>
+                            <Text style={[styles.modifierName, { color: colors.textSecondary }]}>
                               {mod.quantity && mod.quantity > 1 ? `${mod.quantity}x ` : ''}
                               {mod.name}
                             </Text>
@@ -957,14 +835,6 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                 {item.notes && (
                   <Text style={[styles.itemNotes, { color: colors.textSecondary }]}>
                     "{item.notes}"
-                  </Text>
-                )}
-              </View>
-              <View style={styles.itemPricing}>
-                <Text style={[styles.itemQty, { color: colors.textMuted }]}>x{item.quantity}</Text>
-                {showPricesEffective && (
-                  <Text style={[styles.itemPrice, { color: colors.text }]}>
-                    {formatPrice((item.price || 0) * (item.quantity || 1))}
                   </Text>
                 )}
               </View>
@@ -999,6 +869,58 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
           </View>
         )}
 
+        {/* Collapsible Details Toggle */}
+        <TouchableOpacity
+          style={[styles.detailsToggle, { borderColor: colors.border, backgroundColor: '#f8fafc' }]}
+          onPress={() => setShowDetails((prev) => !prev)}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.detailsToggleLabel, { color: colors.text }]}>
+            {showDetails ? 'Hide details' : 'Show details'}
+          </Text>
+          <Text style={[styles.detailsToggleChevron, { color: colors.textMuted }]}>
+            {showDetails ? '▴' : '▾'}
+          </Text>
+        </TouchableOpacity>
+
+        {showDetails && (
+          <View style={styles.detailsSection}>
+            <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Created</Text>
+              <Text style={[styles.detailValue, { color: colors.text }]}>{formatDate(order.created_at)}</Text>
+            </View>
+            {customerPhone && (
+              <TouchableOpacity 
+                style={[styles.detailRow, { borderBottomColor: colors.border }]}
+                onPress={handlePhonePress}
+              >
+                <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Phone</Text>
+                <Text style={[styles.detailValue, { color: colors.link }]}>{customerPhone}</Text>
+              </TouchableOpacity>
+            )}
+            {orderType === 'delivery' && order.delivery_address && (
+              <View style={[styles.detailRowColumn, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Delivery Address</Text>
+                <View style={styles.addressBlock}>
+                  {order.delivery_address.street && (
+                    <Text style={[styles.addressText, { color: colors.text }]}>{order.delivery_address.street}</Text>
+                  )}
+                  {(order.delivery_address.city || order.delivery_address.province || order.delivery_address.postal_code || order.delivery_address.postalCode) && (
+                    <Text style={[styles.addressText, { color: colors.text }]}>
+                      {[order.delivery_address.city, order.delivery_address.province, order.delivery_address.postal_code || order.delivery_address.postalCode].filter(Boolean).join(', ')}
+                    </Text>
+                  )}
+                  {(order.delivery_address.instructions || order.delivery_address.delivery_instructions) && (
+                    <Text style={[styles.deliveryNotes, { color: colors.textSecondary }]}>
+                      Note: {order.delivery_address.instructions || order.delivery_address.delivery_instructions}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Footer Actions */}
         {printerConnected && onPrint && (
           <View style={styles.footerActions}>
@@ -1019,7 +941,6 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  // Collapsed card styles
   card: {
     marginHorizontal: 8,
     marginVertical: 4,
@@ -1034,49 +955,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
   },
-  collapsedLeft: {
-    flex: 1,
-    marginRight: 12,
-  },
-  collapsedRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  collapsedMeta: {
-    alignItems: 'flex-end',
-    marginRight: 8,
-  },
-  collapsedName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  collapsedType: {
-    fontSize: 13,
-  },
-  collapsedTime: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  collapsedOrder: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
+  collapsedLeft: { flex: 1, marginRight: 12 },
+  collapsedRight: { flexDirection: 'row', alignItems: 'center', flexShrink: 0 },
+  collapsedMeta: { alignItems: 'flex-end', marginRight: 8 },
+  collapsedName: { fontSize: 16, fontWeight: '600', marginBottom: 2 },
+  collapsedType: { fontSize: 13 },
+  collapsedTime: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
+  collapsedOrder: { fontSize: 14, fontWeight: '700' },
   acceptButton: {
     backgroundColor: BRAND_PURPLE,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
   },
-  acceptButtonText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
+  acceptButtonText: { color: '#ffffff', fontSize: 12, fontWeight: '700' },
 
-  // Expanded card styles
   expandedCard: {
     marginHorizontal: 8,
     marginVertical: 4,
@@ -1089,152 +982,87 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
   },
-  headerTouchable: {
-    // Wrapper to make entire header tappable
-  },
-  expandedHeader: {
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerLeft: {
-    flex: 1,
-    marginRight: 16,
-  },
-  headerName: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  headerBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  headerMeta: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.8)',
-  },
+  headerTouchable: {},
+  expandedHeader: { paddingVertical: 10, paddingHorizontal: 12 },
+  headerContent: { flexDirection: 'row', alignItems: 'center' },
+  headerLeft: { flex: 1, marginRight: 12 },
+  headerName: { fontSize: 17, fontWeight: '700', marginBottom: 4 },
+  headerBadgeRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6 },
+  headerMeta: { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
   headerActionBtn: {
     backgroundColor: BRAND_PURPLE,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: HEADER_ACTION_BORDER,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  headerActionText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  headerActionGroup: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  headerActionText: { color: '#ffffff', fontSize: 13, fontWeight: '600' },
+  headerActionGroup: { flexDirection: 'row', gap: 8 },
   headerActionBtnSmall: {
     backgroundColor: BRAND_PURPLE,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    borderRadius: 7,
+    borderWidth: 1,
+    borderColor: HEADER_ACTION_BORDER,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  headerActionBtnDispatch: {
-    backgroundColor: '#10b981',
-  },
-  headerActionTextSmall: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  headerBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 5,
-  },
-  headerBadgeText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '600',
-  },
+  headerActionBtnDispatch: { backgroundColor: '#10b981' },
+  headerActionTextSmall: { color: '#ffffff', fontSize: 12, fontWeight: '600' },
+  headerBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 5 },
+  headerBadgeText: { color: '#ffffff', fontSize: 11, fontWeight: '600' },
 
-  // Compact header styles for 4-column view
-  expandedHeaderCompact: {
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    minHeight: 80,
-  },
-  headerCompactContent: {
-    width: '100%',
-  },
-  headerCompactRow1: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  headerCompactBtnGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerCompactNameArea: {
-    flex: 1,
-    marginRight: 8,
-  },
-  headerCompactMeta: {
-    flex: 1,
-  },
-  headerNameCompact: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
+  expandedHeaderCompact: { paddingVertical: 8, paddingHorizontal: 8, minHeight: 68 },
+  headerCompactContent: { width: '100%' },
+  headerCompactRow1: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  headerCompactBtnGroup: { flexDirection: 'row', alignItems: 'center' },
+  headerNameCompact: { fontSize: 13, fontWeight: '700', color: '#ffffff' },
   headerActionBtnCompact: {
     backgroundColor: BRAND_PURPLE,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: HEADER_ACTION_BORDER,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  headerActionTextCompact: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  headerMetaCompact: {
-    fontSize: 11,
-    color: '#ffffff',
-    marginBottom: 6,
-    opacity: 0.9,
-  },
-  headerBadgeRowCompact: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-  },
-  headerBadgeCompact: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  headerBadgeTextCompact: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '600',
-  },
+  headerActionTextCompact: { color: '#ffffff', fontSize: 16, fontWeight: '700' },
+  headerMetaCompact: { fontSize: 11, color: '#ffffff', marginBottom: 4, opacity: 0.9 },
+  headerBadgeRowCompact: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+  headerBadgeCompact: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  headerBadgeTextCompact: { color: '#ffffff', fontSize: 9, fontWeight: '600' },
 
-  // Body styles
-  expandedBodyScroll: {
-    flex: 1,
+  expandedBodyScroll: { minHeight: 160 },
+  expandedBodyContent: { padding: 16 },
+  detailsSection: { marginBottom: 16, marginTop: 8 },
+  detailsToggle: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  expandedBodyContent: {
-    padding: 16,
-  },
-  detailsSection: {
-    marginBottom: 16,
-  },
+  detailsToggleLabel: { fontSize: 13, fontWeight: '600' },
+  detailsToggleChevron: { fontSize: 14, fontWeight: '700' },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1242,177 +1070,45 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
   },
-  detailRowColumn: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  detailLabel: {
-    fontSize: 14,
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  addressBlock: {
-    marginTop: 4,
-  },
-  addressText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  deliveryNotes: {
-    fontSize: 13,
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
+  detailRowColumn: { paddingVertical: 12, borderBottomWidth: 1 },
+  detailLabel: { fontSize: 14 },
+  detailValue: { fontSize: 14, fontWeight: '500' },
+  addressBlock: { marginTop: 4 },
+  addressText: { fontSize: 14, lineHeight: 20 },
+  deliveryNotes: { fontSize: 13, marginTop: 4, fontStyle: 'italic' },
 
-  // Items section
-  itemsSection: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  itemIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  itemInitials: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  itemDetails: {
-    flex: 1,
-    marginRight: 12,
-  },
-  itemName: {
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  itemMods: {
-    fontSize: 13,
-    marginTop: 2,
-  },
-  modifierGroups: {
-    marginTop: 6,
-  },
-  modifierGroup: {
-    marginTop: 4,
-  },
-  modifierGroupLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  modifierRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 2,
-  },
-  modifierName: {
-    flex: 1,
-    fontSize: 13,
-    marginRight: 8,
-  },
-  modifierPrice: {
-    fontSize: 13,
-    textAlign: 'right',
-  },
-  itemNotes: {
-    fontSize: 13,
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  itemPricing: {
-    alignItems: 'flex-end',
-  },
-  itemQty: {
-    fontSize: 13,
-    marginBottom: 2,
-  },
-  itemPrice: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
+  itemsSection: { marginBottom: 16 },
+  sectionTitle: { fontSize: 15, fontWeight: '600', marginBottom: 12 },
+  itemRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 10, borderBottomWidth: 1 },
+  itemHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
+  itemDetails: { flex: 1 },
+  itemName: { fontSize: 15, fontWeight: '600', flex: 1 },
+  itemQtyInline: { fontSize: 13, fontWeight: '600', color: BRAND_PURPLE },
+  itemModsList: { marginTop: 4 },
+  itemModLine: { fontSize: 12, lineHeight: 16, marginTop: 1 },
+  modifierGroups: { marginTop: 6 },
+  modifierGroup: { marginTop: 4 },
+  modifierGroupLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5, marginBottom: 2 },
+  modifierRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
+  modifierName: { flex: 1, fontSize: 13, marginRight: 8 },
+  modifierPrice: { fontSize: 13, textAlign: 'right' },
+  itemNotes: { fontSize: 13, marginTop: 4, fontStyle: 'italic' },
+  itemPrice: { fontSize: 15, fontWeight: '600', marginLeft: 8 },
 
-  // Totals
-  totalsSection: {
-    paddingTop: 12,
-    borderTopWidth: 1,
-    marginBottom: 16,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  totalLabel: {
-    fontSize: 14,
-  },
-  totalValue: {
-    fontSize: 14,
-  },
-  grandTotal: {
-    marginTop: 8,
-    paddingTop: 8,
-  },
-  grandTotalLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  grandTotalValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#22c55e',
-  },
+  totalsSection: { paddingTop: 12, borderTopWidth: 1, marginBottom: 16 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  totalLabel: { fontSize: 14 },
+  totalValue: { fontSize: 14 },
+  grandTotal: { marginTop: 8, paddingTop: 8 },
+  grandTotalLabel: { fontSize: 16, fontWeight: '600' },
+  grandTotalValue: { fontSize: 18, fontWeight: '700', color: '#22c55e' },
 
-  // Notes
-  notesSection: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  notesTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  notesText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  footerActions: {
-    marginTop: 8,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  reprintButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: BRAND_PURPLE,
-  },
-  reprintButtonText: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-
-
+  notesSection: { padding: 12, borderRadius: 8, marginBottom: 16 },
+  notesTitle: { fontSize: 13, fontWeight: '600', marginBottom: 4 },
+  notesText: { fontSize: 14, lineHeight: 20 },
+  footerActions: { marginTop: 8, flexDirection: 'row', justifyContent: 'flex-end' },
+  reprintButton: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, backgroundColor: BRAND_PURPLE },
+  reprintButtonText: { color: '#ffffff', fontSize: 13, fontWeight: '600' },
 });
 
 export default ExpandableOrderCard;

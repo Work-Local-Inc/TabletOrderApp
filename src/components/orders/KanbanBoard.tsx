@@ -51,7 +51,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     text: themeMode === 'dark' ? '#f1f5f9' : '#1e293b',
     textMuted: themeMode === 'dark' ? '#94a3b8' : '#64748b',
     newDot: '#22c55e',
-    completeDot: '#DC2626',
+    completeDot: '#8B1E2D',
     countBadge: themeMode === 'dark' ? '#334155' : '#e2e8f0',
   };
 
@@ -195,12 +195,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             )}
           </ScrollView>
         </View>
-        {/* Drag hint */}
-        <View style={[styles.dragHint, { borderTopColor: colors.border }]}>
-          <Text style={[styles.dragHintText, { color: colors.textMuted }]}>
-            Drag right to complete
-          </Text>
-        </View>
       </View>
 
       {/* Complete Orders Column */}
@@ -289,12 +283,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             )}
           </ScrollView>
         </View>
-        {/* Drag hint */}
-        <View style={[styles.dragHint, { borderTopColor: colors.border }]}>
-          <Text style={[styles.dragHintText, { color: colors.textMuted }]}>
-            Drag left to reopen
-          </Text>
-        </View>
       </View>
     </View>
   );
@@ -377,6 +365,9 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: 'hidden',
   },
+  scrollViewDragging: {
+    overflow: 'visible',
+  },
   scrollContent: {
     paddingVertical: 8,
     paddingBottom: 20,
@@ -395,15 +386,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   recallBannerText: {
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  dragHint: {
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderTopWidth: 1,
-  },
-  dragHintText: {
     fontSize: 12,
     fontStyle: 'italic',
   },

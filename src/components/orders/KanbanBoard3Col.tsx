@@ -28,10 +28,12 @@ interface KanbanBoard3ColProps {
   refreshing?: boolean;
 }
 
-const COLUMN_CONFIG: { key: ColumnType; title: string; color: string; nextStatus: string; prevStatus: string; dragHint: string }[] = [
-  { key: 'new', title: 'New', color: '#f59e0b', nextStatus: 'confirmed', prevStatus: '', dragHint: 'Drag right →' },
-  { key: 'active', title: 'Active', color: '#3b82f6', nextStatus: 'ready', prevStatus: 'pending', dragHint: '← → Drag' },
-  { key: 'complete', title: 'Complete', color: '#DC2626', nextStatus: '', prevStatus: 'preparing', dragHint: '← Drag left' },
+const COMPLETE_COLUMN_COLOR = '#8B1E2D';
+
+const COLUMN_CONFIG: { key: ColumnType; title: string; color: string; nextStatus: string; prevStatus: string }[] = [
+  { key: 'new', title: 'New', color: '#f59e0b', nextStatus: 'confirmed', prevStatus: '' },
+  { key: 'active', title: 'Active', color: '#3b82f6', nextStatus: 'ready', prevStatus: 'pending' },
+  { key: 'complete', title: 'Complete', color: COMPLETE_COLUMN_COLOR, nextStatus: '', prevStatus: 'preparing' },
 ];
 
 export const KanbanBoard3Col: React.FC<KanbanBoard3ColProps> = ({
@@ -221,8 +223,8 @@ export const KanbanBoard3Col: React.FC<KanbanBoard3ColProps> = ({
         </View>
         <ScrollView
           ref={(ref) => { scrollRefs.current[config.key] = ref; }}
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={[styles.scrollView, draggingColumn === config.key ? styles.scrollViewDragging : null]}
+          contentContainerStyle={[styles.scrollContent, draggingColumn === config.key ? styles.scrollContentDragging : null]}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           onLayout={(event) => {
@@ -276,11 +278,6 @@ export const KanbanBoard3Col: React.FC<KanbanBoard3ColProps> = ({
             </>
           )}
         </ScrollView>
-        <View style={[styles.dragHint, { borderTopColor: colors.border }]}> 
-          <Text style={[styles.dragHintText, { color: colors.textMuted }]}> 
-            {config.dragHint}
-          </Text>
-        </View>
       </View>
     );
   };
@@ -374,10 +371,16 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: 'hidden',
   },
+  scrollViewDragging: {
+    overflow: 'visible',
+  },
   scrollContent: {
     paddingVertical: 4,
     paddingBottom: 16,
     overflow: 'hidden',
+  },
+  scrollContentDragging: {
+    overflow: 'visible',
   },
   emptyState: {
     padding: 20,
@@ -393,15 +396,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   recallBannerText: {
-    fontSize: 11,
-    fontStyle: 'italic',
-  },
-  dragHint: {
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderTopWidth: 1,
-  },
-  dragHintText: {
     fontSize: 11,
     fontStyle: 'italic',
   },
