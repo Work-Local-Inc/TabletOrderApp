@@ -37,13 +37,11 @@ export const OrdersBottomDock: React.FC<OrdersBottomDockProps> = ({
   return (
     <View style={[styles.dock, { backgroundColor: colors.surface, borderTopColor: colors.border, paddingBottom: Math.max(insets.bottom, 8) }]}>
       <View style={styles.left}>
-        <View style={[styles.logoContainer, { borderColor: colors.border }]}>
-          {locationLogoUrl ? (
-            <Image source={{ uri: locationLogoUrl }} style={styles.logo} resizeMode="contain" />
-          ) : (
-            <Image source={require('../../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
-          )}
-        </View>
+        {locationLogoUrl ? (
+          <Image source={{ uri: locationLogoUrl }} style={styles.logo} resizeMode="contain" />
+        ) : (
+          <Image source={require('../../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
+        )}
         <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{restaurantName}</Text>
       </View>
 
@@ -74,8 +72,7 @@ export const OrdersBottomDock: React.FC<OrdersBottomDockProps> = ({
 const styles = StyleSheet.create({
   dock: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1 },
   left: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, minWidth: 0 },
-  logoContainer: { width: 36, height: 36, borderRadius: 8, overflow: 'hidden', borderWidth: 1, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
-  logo: { width: 36, height: 36 },
+  logo: { width: 36, height: 36, borderRadius: 8 },
   name: { fontSize: 16, fontWeight: '700', flexShrink: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   btn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },

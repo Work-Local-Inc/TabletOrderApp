@@ -471,9 +471,6 @@ export const OrdersListScreen: React.FC = () => {
         // ONLY mark as printed if print ACTUALLY succeeded
         markAsPrinted(order.id);
         Vibration.vibrate(100);
-
-        // Keep order in New after auto-print; staff must explicitly Accept to move forward.
-        Alert.alert('✓ Printed', `Order #${order.order_number} printed successfully`);
       } else {
         console.error(`[Print] ❌ Print FAILED for order #${order.order_number}`);
         // Update settings to reflect that printer may be disconnected

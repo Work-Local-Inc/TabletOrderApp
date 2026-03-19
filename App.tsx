@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
-import { LogBox, Platform, StatusBar as RNStatusBar } from 'react-native';
+import { LogBox, Platform, StatusBar as RNStatusBar, BackHandler } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as NavigationBar from 'expo-navigation-bar';
+import * as Brightness from 'expo-brightness';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useKeepAwake } from 'expo-keep-awake';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -29,12 +31,20 @@ const AppContent: React.FC = () => {
   // Keep screen on at all times - prevents tablet from sleeping
   useKeepAwake();
 
-  // KDS kiosk mode: hide Android status bar for fullscreen display
+  // KDS kiosk mode: full immersive display
   useEffect(() => {
     if (Platform.OS === 'android') {
       RNStatusBar.setHidden(true);
       RNStatusBar.setTranslucent(true);
+      NavigationBar.setVisibilityAsync('hidden');
+      Brightness.setBrightnessAsync(1);
     }
+  }, []);
+
+  // Disable back button (prevent accidental exits)
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
   }, []);
 
   // Initialize network monitoring
