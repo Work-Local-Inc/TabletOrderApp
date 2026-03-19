@@ -421,6 +421,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     if (!canChangeStatus) return;
     if (column === 'new') {
       onAccept?.(order.id);
+      return; // Accept handler manages the status change
     }
     const shouldShowDispatchOptions =
       nextAction === 'complete' &&
@@ -437,7 +438,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   const handleCompleteOnly = () => {
     if (!canChangeStatus) return;
     setShowCompleteOptions(false);
-    if (column === 'new') onAccept?.(order.id);
+    if (column === 'new') { onAccept?.(order.id); return; }
     onStatusChange(order.id, nextStatus);
   };
 
@@ -445,7 +446,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     if (!canChangeStatus) return;
     setShowCompleteOptions(false);
     setDispatchingDriver(true);
-    if (column === 'new') onAccept?.(order.id);
+    if (column === 'new') { onAccept?.(order.id); return; }
     onStatusChange(order.id, nextStatus);
     try {
       const response = await apiClient.dispatchDriver(order.id);
@@ -618,7 +619,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                   <View style={styles.headerCompactBtnGroup}>
                     <TouchableOpacity 
                       style={styles.headerActionBtnCompact}
-                      onPress={(e) => { e.stopPropagation(); if (column === 'new') onAccept?.(order.id); onStatusChange(order.id, nextStatus); }}
+                      onPress={(e) => { e.stopPropagation(); if (column === 'new') { onAccept?.(order.id); return; } onStatusChange(order.id, nextStatus); }}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.headerActionTextCompact}>→</Text>
