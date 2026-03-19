@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore';
 import { apiClient } from '../api/client';
 import { detectStuckOrders } from '../utils/stuckOrderDetection';
 
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.23';
 const HEARTBEAT_INTERVAL = 60000; // 1 minute
 
 /**

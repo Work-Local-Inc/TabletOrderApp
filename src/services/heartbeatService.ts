@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore';
 import { HeartbeatPayload } from '../types';
 import * as Application from 'expo-application';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.4.23';
 let heartbeatInterval: NodeJS.Timeout | null = null;
 
 /**

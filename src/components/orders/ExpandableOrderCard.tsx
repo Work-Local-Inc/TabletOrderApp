@@ -45,7 +45,7 @@ interface ExpandableOrderCardProps {
   onDragStart?: () => void;
   onDragRelease?: () => void;
   onTap: (orderId: string) => void;
-  onStatusChange: (orderId: string) => void;
+  onStatusChange: (orderId: string, targetStatus: string) => void;
   onAccept?: (orderId: string) => void;
   onPrint?: (order: Order) => void;
   containerWidth: number;
@@ -164,6 +164,15 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
       if (column === 'ready') return 'complete';
     }
     return 'complete';
+  })();
+
+  const nextStatus = (() => {
+    switch (column) {
+      case 'new': return 'confirmed';
+      case 'active': return 'ready';
+      case 'complete': return '';
+      default: return '';
+    }
   })();
 
   const nextActionLabel = (() => {
@@ -420,14 +429,14 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
       setShowCompleteOptions(!showCompleteOptions);
       return;
     }
-    onStatusChange(order.id);
+    onStatusChange(order.id, nextStatus);
   };
 
   const handleCompleteOnly = () => {
     if (!canChangeStatus) return;
     setShowCompleteOptions(false);
     if (column === 'new') onAccept?.(order.id);
-    onStatusChange(order.id);
+    onStatusChange(order.id, nextStatus);
   };
 
   const handleCompleteAndDispatch = async () => {
@@ -435,7 +444,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
     setShowCompleteOptions(false);
     setDispatchingDriver(true);
     if (column === 'new') onAccept?.(order.id);
-    onStatusChange(order.id);
+    onStatusChange(order.id, nextStatus);
     try {
       const response = await apiClient.dispatchDriver(order.id);
       if (response.success && response.data) {
@@ -607,7 +616,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
                   <View style={styles.headerCompactBtnGroup}>
                     <TouchableOpacity 
                       style={styles.headerActionBtnCompact}
-                      onPress={(e) => { e.stopPropagation(); if (column === 'new') onAccept?.(order.id); onStatusChange(order.id); }}
+                      onPress={(e) => { e.stopPropagation(); if (column === 'new') onAccept?.(order.id); onStatusChange(order.id, nextStatus); }}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.headerActionTextCompact}>→</Text>
@@ -943,7 +952,7 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     marginHorizontal: 8,
-    marginVertical: 4,
+    marginVertical: 3,
     borderRadius: 10,
     borderWidth: 1,
     borderLeftWidth: 4,
@@ -952,16 +961,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 11,
   },
   collapsedLeft: { flex: 1, marginRight: 12 },
   collapsedRight: { flexDirection: 'row', alignItems: 'center', flexShrink: 0 },
   collapsedMeta: { alignItems: 'flex-end', marginRight: 8 },
-  collapsedName: { fontSize: 16, fontWeight: '600', marginBottom: 2 },
-  collapsedType: { fontSize: 13 },
-  collapsedTime: { fontSize: 15, fontWeight: '700', marginBottom: 2 },
-  collapsedOrder: { fontSize: 14, fontWeight: '700' },
+  collapsedName: { fontSize: 15, fontWeight: '600', marginBottom: 2 },
+  collapsedType: { fontSize: 12 },
+  collapsedTime: { fontSize: 14, fontWeight: '700', marginBottom: 1 },
+  collapsedOrder: { fontSize: 13, fontWeight: '700' },
   acceptButton: {
     backgroundColor: BRAND_PURPLE,
     paddingHorizontal: 10,
@@ -1048,64 +1057,64 @@ const styles = StyleSheet.create({
   headerBadgeCompact: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   headerBadgeTextCompact: { color: '#ffffff', fontSize: 9, fontWeight: '600' },
 
-  expandedBodyScroll: { minHeight: 160 },
-  expandedBodyContent: { padding: 16 },
+  expandedBodyScroll: { minHeight: 120 },
+  expandedBodyContent: { padding: 10, paddingTop: 8 },
   detailsSection: { marginBottom: 16, marginTop: 8 },
   detailsToggle: {
     borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    marginBottom: 8,
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginBottom: 6,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  detailsToggleLabel: { fontSize: 13, fontWeight: '600' },
-  detailsToggleChevron: { fontSize: 14, fontWeight: '700' },
+  detailsToggleLabel: { fontSize: 12, fontWeight: '600' },
+  detailsToggleChevron: { fontSize: 13, fontWeight: '700' },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
   },
-  detailRowColumn: { paddingVertical: 12, borderBottomWidth: 1 },
-  detailLabel: { fontSize: 14 },
-  detailValue: { fontSize: 14, fontWeight: '500' },
+  detailRowColumn: { paddingVertical: 8, borderBottomWidth: 1 },
+  detailLabel: { fontSize: 12 },
+  detailValue: { fontSize: 12, fontWeight: '500' },
   addressBlock: { marginTop: 4 },
   addressText: { fontSize: 14, lineHeight: 20 },
   deliveryNotes: { fontSize: 13, marginTop: 4, fontStyle: 'italic' },
 
-  itemsSection: { marginBottom: 16 },
-  sectionTitle: { fontSize: 15, fontWeight: '600', marginBottom: 12 },
-  itemRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 10, borderBottomWidth: 1 },
+  itemsSection: { marginBottom: 8 },
+  sectionTitle: { fontSize: 13, fontWeight: '600', marginBottom: 6 },
+  itemRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 6, borderBottomWidth: 1 },
   itemHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
   itemDetails: { flex: 1 },
-  itemName: { fontSize: 15, fontWeight: '600', flex: 1 },
-  itemQtyInline: { fontSize: 13, fontWeight: '600', color: BRAND_PURPLE },
-  itemModsList: { marginTop: 4 },
-  itemModLine: { fontSize: 12, lineHeight: 16, marginTop: 1 },
-  modifierGroups: { marginTop: 6 },
-  modifierGroup: { marginTop: 4 },
-  modifierGroupLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5, marginBottom: 2 },
-  modifierRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
-  modifierName: { flex: 1, fontSize: 13, marginRight: 8 },
-  modifierPrice: { fontSize: 13, textAlign: 'right' },
-  itemNotes: { fontSize: 13, marginTop: 4, fontStyle: 'italic' },
-  itemPrice: { fontSize: 15, fontWeight: '600', marginLeft: 8 },
+  itemName: { fontSize: 13, fontWeight: '600', flex: 1 },
+  itemQtyInline: { fontSize: 12, fontWeight: '600', color: BRAND_PURPLE },
+  itemModsList: { marginTop: 2 },
+  itemModLine: { fontSize: 11, lineHeight: 15, marginTop: 0 },
+  modifierGroups: { marginTop: 3 },
+  modifierGroup: { marginTop: 2 },
+  modifierGroupLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5, marginBottom: 1 },
+  modifierRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 1 },
+  modifierName: { flex: 1, fontSize: 12, marginRight: 6 },
+  modifierPrice: { fontSize: 12, textAlign: 'right' },
+  itemNotes: { fontSize: 12, marginTop: 2, fontStyle: 'italic' },
+  itemPrice: { fontSize: 13, fontWeight: '600', marginLeft: 6 },
 
-  totalsSection: { paddingTop: 12, borderTopWidth: 1, marginBottom: 16 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  totalLabel: { fontSize: 14 },
-  totalValue: { fontSize: 14 },
-  grandTotal: { marginTop: 8, paddingTop: 8 },
-  grandTotalLabel: { fontSize: 16, fontWeight: '600' },
-  grandTotalValue: { fontSize: 18, fontWeight: '700', color: '#22c55e' },
+  totalsSection: { paddingTop: 8, borderTopWidth: 1, marginBottom: 8 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
+  totalLabel: { fontSize: 12 },
+  totalValue: { fontSize: 12 },
+  grandTotal: { marginTop: 4, paddingTop: 4 },
+  grandTotalLabel: { fontSize: 14, fontWeight: '600' },
+  grandTotalValue: { fontSize: 15, fontWeight: '700', color: '#22c55e' },
 
-  notesSection: { padding: 12, borderRadius: 8, marginBottom: 16 },
-  notesTitle: { fontSize: 13, fontWeight: '600', marginBottom: 4 },
-  notesText: { fontSize: 14, lineHeight: 20 },
+  notesSection: { padding: 8, borderRadius: 6, marginBottom: 8 },
+  notesTitle: { fontSize: 12, fontWeight: '600', marginBottom: 2 },
+  notesText: { fontSize: 12, lineHeight: 17 },
   footerActions: { marginTop: 8, flexDirection: 'row', justifyContent: 'flex-end' },
   reprintButton: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, backgroundColor: BRAND_PURPLE },
   reprintButtonText: { color: '#ffffff', fontSize: 13, fontWeight: '600' },

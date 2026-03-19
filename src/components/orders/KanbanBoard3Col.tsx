@@ -263,7 +263,7 @@ export const KanbanBoard3Col: React.FC<KanbanBoard3ColProps> = ({
                 onDragStart={() => handleDragStart(config.key)}
                 onDragRelease={handleDragRelease}
                 onTap={handleOrderTap}
-                onStatusChange={() => handleStatusButtonPress(order.id, config.key)}
+                onStatusChange={onStatusChange}
                 onAccept={onAccept}
                 onPrint={onPrint}
                 onScrollLock={() => {
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 8,
-    paddingVertical: 12,
+    height: 44,
   },
   headerLeft: {
     flexDirection: 'row',
