@@ -167,10 +167,12 @@ export const ExpandableOrderCard: React.FC<ExpandableOrderCardProps> = ({
   })();
 
   const nextStatus = (() => {
-    switch (column) {
-      case 'new': return 'confirmed';
-      case 'active': return 'ready';
-      case 'complete': return '';
+    switch (order.status) {
+      case 'pending': return 'confirmed';
+      case 'confirmed': return 'preparing';
+      case 'preparing': return 'ready';
+      case 'ready': return 'completed';
+      case 'completed': return 'preparing'; // reopen
       default: return '';
     }
   })();

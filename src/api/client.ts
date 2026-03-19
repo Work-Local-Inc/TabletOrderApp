@@ -682,17 +682,20 @@ class ApiClient {
 
   async updateOrderStatus(
     orderId: string,
-    status: OrderStatus
+    status: OrderStatus,
+    force: boolean = false
   ): Promise<ApiResponse<Order>> {
     const endpoint = `/api/tablet/orders/${orderId}/status`;
     console.log(`[API] ====== STATUS UPDATE REQUEST ======`);
     console.log(`[API] URL: ${(this.client.defaults.baseURL || this.baseUrl)}${endpoint}`);
     console.log(`[API] Order ID: "${orderId}" (type: ${typeof orderId})`);
-    console.log(`[API] Status: "${status}"`);
+    console.log(`[API] Status: "${status}" force: ${force}`);
     console.log(`[API] Auth Token: ${this.sessionToken ? 'Present (' + this.sessionToken.substring(0, 20) + '...)' : 'MISSING!'}`);
-    
+
     try {
-      const response = await this.client.patch<any>(endpoint, { status });
+      const payload: any = { status };
+      if (force) payload.force = true;
+      const response = await this.client.patch<any>(endpoint, payload);
       
       console.log(`[API] ====== STATUS UPDATE RESPONSE ======`);
       console.log(`[API] HTTP Status: ${response.status}`);

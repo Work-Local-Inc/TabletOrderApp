@@ -91,44 +91,26 @@ export const KanbanBoard3Col: React.FC<KanbanBoard3ColProps> = ({
 
   const handleDragEnd = useCallback(
     (orderId: string, translationX: number, fromColumn: ColumnType) => {
-      const columnIndex = COLUMN_CONFIG.findIndex(c => c.key === fromColumn);
+      // Find the order's current status to determine valid transitions
+      const allOrders = [...newOrders, ...activeOrders, ...completeOrders];
+      const order = allOrders.find(o => o.id === orderId);
+      if (!order) return;
 
-      // Calculate how many columns the drag covers based on distance
-      const columnsCrossed = Math.max(1, Math.round(Math.abs(translationX) / columnWidth));
+      const STATUS_FLOW = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+      const currentIdx = STATUS_FLOW.indexOf(order.status);
+      if (currentIdx === -1) return;
 
-      if (translationX > 0) {
-        // Move forward
-        const targetIndex = Math.min(columnIndex + columnsCrossed, COLUMN_CONFIG.length - 1);
-        if (targetIndex > columnIndex) {
-          const targetConfig = COLUMN_CONFIG[targetIndex];
-          let targetStatus = '';
-          switch (targetConfig.key) {
-            case 'active': targetStatus = 'confirmed'; break;
-            case 'complete': targetStatus = 'ready'; break;
-          }
-          if (targetStatus) {
-            Vibration.vibrate(100);
-            onStatusChange(orderId, targetStatus);
-          }
-        }
-      } else if (translationX < 0) {
-        // Move backward
-        const targetIndex = Math.max(columnIndex - columnsCrossed, 0);
-        if (targetIndex < columnIndex) {
-          const targetConfig = COLUMN_CONFIG[targetIndex];
-          let targetStatus = '';
-          switch (targetConfig.key) {
-            case 'new': targetStatus = 'pending'; break;
-            case 'active': targetStatus = 'preparing'; break;
-          }
-          if (targetStatus) {
-            Vibration.vibrate(100);
-            onStatusChange(orderId, targetStatus);
-          }
-        }
+      if (translationX > 0 && currentIdx < STATUS_FLOW.length - 1) {
+        // Move forward one step
+        Vibration.vibrate(100);
+        onStatusChange(orderId, STATUS_FLOW[currentIdx + 1]);
+      } else if (translationX < 0 && currentIdx > 0) {
+        // Move backward one step
+        Vibration.vibrate(100);
+        onStatusChange(orderId, STATUS_FLOW[currentIdx - 1]);
       }
     },
-    [onStatusChange, columnWidth]
+    [onStatusChange, newOrders, activeOrders, completeOrders]
   );
 
   const handleOrderTap = useCallback(

@@ -1090,36 +1090,26 @@ export const OrdersListScreen: React.FC = () => {
           ? String(targetOrder.numeric_id)
           : null;
 
-      const runStatusUpdate = async (nextStatus: OrderStatus) => {
-        let result = await apiClient.updateOrderStatus(orderId, nextStatus);
-        const shouldRetryWithNumericId =
-          !result.success &&
-          !!fallbackOrderId &&
-          fallbackOrderId !== orderId &&
-          (result.error?.includes('Order not found') ||
-            result.error?.includes('not found') ||
-            result.error?.includes('Invalid order ID'));
+      // Detect backward transitions — these need force flag
+      const FORWARD_FLOW: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'completed'];
+      const prevIdx = FORWARD_FLOW.indexOf(previousStatus as OrderStatus);
+      const targetIdx = FORWARD_FLOW.indexOf(targetStatus as OrderStatus);
+      const isBackward = prevIdx > 0 && targetIdx >= 0 && targetIdx < prevIdx;
 
-        if (shouldRetryWithNumericId) {
-          console.warn(
-            `[KanbanStatusChange] Primary ID failed for ${orderId}; retrying with numeric_id ${fallbackOrderId}`
-          );
-          result = await apiClient.updateOrderStatus(fallbackOrderId!, nextStatus);
-        }
-        return result;
-      };
+      let result = await apiClient.updateOrderStatus(orderId, targetStatus as OrderStatus, isBackward);
+      const shouldRetryWithNumericId =
+        !result.success &&
+        !!fallbackOrderId &&
+        fallbackOrderId !== orderId &&
+        (result.error?.includes('Order not found') ||
+          result.error?.includes('not found') ||
+          result.error?.includes('Invalid order ID'));
 
-      const statusSequence: OrderStatus[] =
-        previousStatus === 'ready' && targetStatus === 'preparing'
-          ? ['pending', 'preparing']
-          : [targetStatus as OrderStatus];
-
-      let lastSuccessfulStatus: OrderStatus | null = null;
-      let result: { success: boolean; error?: string } = { success: true };
-      for (const nextStatus of statusSequence) {
-        result = await runStatusUpdate(nextStatus);
-        if (!result.success) break;
-        lastSuccessfulStatus = nextStatus;
+      if (shouldRetryWithNumericId) {
+        console.warn(
+          `[KanbanStatusChange] Primary ID failed for ${orderId}; retrying with numeric_id ${fallbackOrderId}`
+        );
+        result = await apiClient.updateOrderStatus(fallbackOrderId!, targetStatus as OrderStatus, isBackward);
       }
       
       if (!result.success) {
@@ -1132,7 +1122,7 @@ export const OrdersListScreen: React.FC = () => {
           Alert.alert('Order Removed', 'This order no longer exists and has been removed from the list.');
         } else {
           // Revert to last known-good local status (or previous status if nothing succeeded)
-          const fallbackStatus = lastSuccessfulStatus || previousStatus;
+          const fallbackStatus = previousStatus;
           const currentOrders = useStore.getState().orders.orders;
           const revertedOrders = currentOrders.map(order =>
             order.id === orderId && fallbackStatus

@@ -111,7 +111,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_STORAGE_KEY = '@app_theme_mode';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('light'); // Default to light
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('dark'); // Default to dark for KDS
 
   // Load saved theme on mount
   useEffect(() => {
