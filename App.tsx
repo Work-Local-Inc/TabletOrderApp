@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { LogBox } from 'react-native';
+import { LogBox, Platform, StatusBar as RNStatusBar } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -29,6 +29,14 @@ const AppContent: React.FC = () => {
   // Keep screen on at all times - prevents tablet from sleeping
   useKeepAwake();
 
+  // KDS kiosk mode: hide Android status bar for fullscreen display
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      RNStatusBar.setHidden(true);
+      RNStatusBar.setTranslucent(true);
+    }
+  }, []);
+
   // Initialize network monitoring
   useNetworkStatus();
 
@@ -56,7 +64,7 @@ const AppContent: React.FC = () => {
   if (versionGate.forceUpdate) {
     return (
       <>
-        <StatusBar style="light" />
+        <StatusBar hidden={true} translucent={true} style="light" />
         <ForceUpdateScreen
           message={versionGate.message}
           updateUrl={versionGate.updateUrl}
@@ -70,7 +78,7 @@ const AppContent: React.FC = () => {
 
   return (
     <>
-      <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
+      <StatusBar hidden={true} translucent={true} style={themeMode === 'dark' ? 'light' : 'dark'} />
       <AppNavigator />
     </>
   );
