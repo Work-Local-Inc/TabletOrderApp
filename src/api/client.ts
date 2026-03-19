@@ -299,6 +299,7 @@ class ApiClient {
           expires_at: rawData.expires_at,
           restaurant_id: rawData.device.restaurant_id.toString(),
           restaurant_name: rawData.device.restaurant_name,
+          restaurant_logo_url: rawData.device.restaurant_logo_url || null,
           device_name: rawData.device.name,
         };
         await this.storeAuthData(authData);
