@@ -11,6 +11,7 @@ interface AuthState {
   isLoading: boolean;
   restaurantId: string | null;
   restaurantName: string | null;
+  restaurantLogoUrl: string | null;
   deviceName: string | null;
 }
 
@@ -95,6 +96,7 @@ export const useStore = create<AppStore>()(
         isLoading: true,
         restaurantId: null,
         restaurantName: null,
+        restaurantLogoUrl: null,
         deviceName: null,
       },
       hasHydrated: false,
@@ -119,6 +121,7 @@ export const useStore = create<AppStore>()(
               isLoading: false,
               restaurantId: result.data.restaurant_id,
               restaurantName: result.data.restaurant_name,
+              restaurantLogoUrl: result.data.restaurant_logo_url || null,
               deviceName: result.data.device_name,
             },
           });
@@ -137,6 +140,7 @@ export const useStore = create<AppStore>()(
             isLoading: false,
             restaurantId: null,
             restaurantName: null,
+            restaurantLogoUrl: null,
             deviceName: null,
           },
           orders: {
@@ -165,6 +169,7 @@ export const useStore = create<AppStore>()(
             isLoading: false,
             restaurantId: restaurantInfo?.restaurant_id || null,
             restaurantName: restaurantInfo?.restaurant_name || null,
+            restaurantLogoUrl: restaurantInfo?.restaurant_logo_url || null,
             deviceName: restaurantInfo?.device_name || null,
           },
         });
@@ -268,6 +273,7 @@ export const useStore = create<AppStore>()(
                   isLoading: false,
                   restaurantId: null,
                   restaurantName: null,
+                  restaurantLogoUrl: null,
                   deviceName: null,
                 },
               });
